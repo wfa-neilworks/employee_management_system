@@ -16,21 +16,19 @@
 }
 
 .logo {
-  height: 70px;
+  height: 160px;
   display: flex;
   align-items: center;
-  padding: 0 24px;
+  justify-content: center;
+  padding: 20px;
   border-bottom: 1px solid var(--border-color);
+  background: white;
 }
 
-.logoText {
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.logoImage {
+  height: 130px;
+  width: 95%;
+  object-fit: contain;
 }
 
 .nav {

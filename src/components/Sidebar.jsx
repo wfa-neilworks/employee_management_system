@@ -8,7 +8,7 @@ export default function Sidebar({ departments, isOpen }) {
   return (
     <aside className={`${styles.sidebar} ${!isOpen ? styles.sidebarHidden : ''}`}>
       <div className={styles.logo}>
-        <h2 className={styles.logoText}>NL CORP.</h2>
+        <img src="/logo.png" alt="NL CORP" className={styles.logoImage} />
       </div>
 
       <nav className={styles.nav}>
