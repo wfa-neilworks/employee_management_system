@@ -18,12 +18,12 @@
 }
 
 .header {
-  margin-bottom: 40px;
+  margin-bottom: 32px;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 0;
 }
 
 .logo {
