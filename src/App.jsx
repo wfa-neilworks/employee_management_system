@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import DepartmentPage from './pages/DepartmentPage'
+import RosterPage from './pages/RosterPage'
 import Layout from './components/Layout'
 
 function PrivateRoute({ children }) {
@@ -39,6 +40,7 @@ function AppRoutes() {
       >
         <Route index element={<DashboardPage />} />
         <Route path="department/:departmentId" element={<DepartmentPage />} />
+        <Route path="roster" element={<RosterPage />} />
       </Route>
     </Routes>
   )

@@ -47,3 +47,9 @@ export const RESIGNATION_REASONS = [
   { value: 'RESIGN', label: 'Resign' },
   { value: 'TERMINATE', label: 'Terminate' }
 ]
+
+export const LEAVE_TYPES = [
+  { value: 'SICK_LEAVE', label: 'Sick Leave' },
+  { value: 'ANNUAL_LEAVE', label: 'Annual Leave' },
+  { value: 'LEAVE_WITHOUT_PAY', label: 'Leave Without Pay' }
+]
