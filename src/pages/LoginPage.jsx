@@ -31,7 +31,7 @@ export default function LoginPage() {
     <div className={styles.container}>
       <div className={styles.loginBox}>
         <div className={styles.header}>
-          <h1 className={styles.title}>NL CORP.</h1>
+          <img src="/logo.png" alt="Company Logo" className={styles.logo} />
           <p className={styles.subtitle}>Production Employee System</p>
         </div>
 
