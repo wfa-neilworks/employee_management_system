@@ -32,7 +32,6 @@ export default function LoginPage() {
       <div className={styles.loginBox}>
         <div className={styles.header}>
           <img src="/logo.png" alt="Company Logo" className={styles.logo} />
-          <p className={styles.subtitle}>Production Employee System</p>
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
