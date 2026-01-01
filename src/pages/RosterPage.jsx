@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import AddLeaveModal from '../components/modals/AddLeaveModal'
+import DayDetailsModal from '../components/modals/DayDetailsModal'
 import styles from './RosterPage.module.css'
 
 export default function RosterPage() {
@@ -8,6 +9,9 @@ export default function RosterPage() {
   const [loading, setLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
   const [showDatePicker, setShowDatePicker] = useState(false)
+  const [showDayDetailsModal, setShowDayDetailsModal] = useState(false)
+  const [selectedDayLeaves, setSelectedDayLeaves] = useState([])
+  const [selectedDayDate, setSelectedDayDate] = useState('')
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
@@ -82,6 +86,21 @@ export default function RosterPage() {
     })
   }
 
+  const handleDayClick = (day, dayLeaves) => {
+    if (dayLeaves.length > 0) {
+      const year = currentDate.getFullYear()
+      const month = currentDate.getMonth()
+      const dateStr = new Date(year, month, day).toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      })
+      setSelectedDayDate(dateStr)
+      setSelectedDayLeaves(dayLeaves)
+      setShowDayDetailsModal(true)
+    }
+  }
+
   const renderCalendar = () => {
     const daysInMonth = getDaysInMonth(currentDate)
     const firstDay = getFirstDayOfMonth(currentDate)
@@ -106,7 +125,17 @@ export default function RosterPage() {
           key={day}
           className={`${styles.calendarDay} ${isToday ? styles.today : ''}`}
         >
-          <div className={styles.dayNumber}>{day}</div>
+          <div className={styles.dayHeader}>
+            <div className={styles.dayNumber}>{day}</div>
+            {dayLeaves.length > 0 && (
+              <div
+                className={styles.dayCount}
+                onClick={() => handleDayClick(day, dayLeaves)}
+              >
+                {dayLeaves.length} {dayLeaves.length === 1 ? 'person' : 'people'}
+              </div>
+            )}
+          </div>
           <div className={styles.dayLeaves}>
             {dayLeaves.slice(0, 3).map((leave) => (
               <div
@@ -121,7 +150,10 @@ export default function RosterPage() {
               </div>
             ))}
             {dayLeaves.length > 3 && (
-              <div className={styles.moreIndicator}>
+              <div
+                className={styles.moreIndicator}
+                onClick={() => handleDayClick(day, dayLeaves)}
+              >
                 +{dayLeaves.length - 3} more
               </div>
             )}
@@ -274,6 +306,14 @@ export default function RosterPage() {
         <AddLeaveModal
           onClose={() => setShowAddModal(false)}
           onSuccess={fetchLeaves}
+        />
+      )}
+
+      {showDayDetailsModal && (
+        <DayDetailsModal
+          date={selectedDayDate}
+          leaves={selectedDayLeaves}
+          onClose={() => setShowDayDetailsModal(false)}
         />
       )}
     </div>
