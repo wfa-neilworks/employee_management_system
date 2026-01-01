@@ -6,6 +6,8 @@ import styles from './RosterPage.module.css'
 
 export default function RosterPage() {
   const [leaves, setLeaves] = useState([])
+  const [departments, setDepartments] = useState([])
+  const [selectedDepartment, setSelectedDepartment] = useState('ALL')
   const [loading, setLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
   const [showDatePicker, setShowDatePicker] = useState(false)
@@ -17,8 +19,23 @@ export default function RosterPage() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
 
   useEffect(() => {
+    fetchDepartments()
     fetchLeaves()
   }, [currentDate])
+
+  const fetchDepartments = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('departments')
+        .select('id, display_name')
+        .order('display_name')
+
+      if (error) throw error
+      setDepartments(data || [])
+    } catch (error) {
+      console.error('Error fetching departments:', error)
+    }
+  }
 
   const fetchLeaves = async () => {
     try {
@@ -33,7 +50,8 @@ export default function RosterPage() {
             name,
             english_name,
             payroll_number,
-            departments (display_name)
+            department_id,
+            departments (id, display_name)
           )
         `)
         .order('start_date', { ascending: false })
@@ -82,7 +100,14 @@ export default function RosterPage() {
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 
     return leaves.filter((leave) => {
-      return dateStr >= leave.start_date && dateStr <= leave.end_date
+      const isInDateRange = dateStr >= leave.start_date && dateStr <= leave.end_date
+
+      // Filter by department if not "ALL"
+      if (selectedDepartment === 'ALL') {
+        return isInDateRange
+      }
+
+      return isInDateRange && leave.employees?.department_id === selectedDepartment
     })
   }
 
@@ -197,12 +222,29 @@ export default function RosterPage() {
     <div className={styles.container}>
       <div className={styles.header}>
         <h1 className={styles.title}>Roster - Leave Management</h1>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className={styles.addButton}
-        >
-          + Add Leave
-        </button>
+        <div className={styles.headerActions}>
+          <div className={styles.departmentFilter}>
+            <label className={styles.filterLabel}>Department:</label>
+            <select
+              value={selectedDepartment}
+              onChange={(e) => setSelectedDepartment(e.target.value)}
+              className={styles.filterSelect}
+            >
+              <option value="ALL">ALL</option>
+              {departments.map((dept) => (
+                <option key={dept.id} value={dept.id}>
+                  {dept.display_name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className={styles.addButton}
+          >
+            + Add Leave
+          </button>
+        </div>
       </div>
 
       <div className={styles.calendarHeader}>

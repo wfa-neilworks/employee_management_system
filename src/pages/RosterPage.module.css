@@ -8,12 +8,54 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 32px;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .title {
   font-size: 32px;
   font-weight: 700;
   color: var(--text-primary);
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.departmentFilter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filterLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.filterSelect {
+  padding: 10px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 180px;
+}
+
+.filterSelect:hover {
+  border-color: var(--accent-primary);
+}
+
+.filterSelect:focus {
+  border-color: var(--accent-primary);
+  outline: none;
 }
 
 .addButton {
@@ -312,8 +354,21 @@
 @media (max-width: 768px) {
   .header {
     flex-direction: column;
-    gap: 16px;
     align-items: flex-start;
+  }
+
+  .headerActions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .departmentFilter {
+    width: 100%;
+  }
+
+  .filterSelect {
+    flex: 1;
+    min-width: auto;
   }
 
   .addButton {
