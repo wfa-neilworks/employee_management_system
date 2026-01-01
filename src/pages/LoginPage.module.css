@@ -18,7 +18,7 @@
 }
 
 .header {
-  margin-bottom: 32px;
+  margin-bottom: 16px;
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -27,7 +27,7 @@
 }
 
 .logo {
-  height: 250px;
+  height: 280px;
   width: auto;
   object-fit: contain;
 }
