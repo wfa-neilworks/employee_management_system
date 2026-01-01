@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { supabase, EMPLOYMENT_STATUS } from '../../lib/supabase'
+import { supabase, EMPLOYMENT_STATUS, WAGE_STATUS } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import Modal from './Modal'
 import styles from './FormModal.module.css'
@@ -12,8 +12,10 @@ export default function EditEmployeeModal({ employee, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     name: employee.name || '',
     english_name: employee.english_name || '',
+    payroll_number: employee.payroll_number || '',
     department_id: employee.department_id || '',
     employment_status: employee.employment_status || 'CASUAL',
+    wage_status: employee.wage_status || 'WFA',
     locker_number: employee.locker_number || '',
     start_date: employee.start_date || ''
   })
@@ -54,8 +56,10 @@ export default function EditEmployeeModal({ employee, onClose, onSuccess }) {
         .update({
           name: formData.name,
           english_name: formData.english_name || null,
+          payroll_number: formData.payroll_number || null,
           department_id: formData.department_id,
           employment_status: formData.employment_status,
+          wage_status: formData.wage_status,
           locker_number: formData.locker_number || null,
           start_date: formData.start_date,
           updated_by: user.id
@@ -114,6 +118,18 @@ export default function EditEmployeeModal({ employee, onClose, onSuccess }) {
         </div>
 
         <div className={styles.formGroup}>
+          <label className={styles.label}>Payroll Number</label>
+          <input
+            type="text"
+            name="payroll_number"
+            value={formData.payroll_number}
+            onChange={handleChange}
+            className={styles.input}
+            disabled={loading}
+          />
+        </div>
+
+        <div className={styles.formGroup}>
           <label className={styles.label}>Department *</label>
           <select
             name="department_id"
@@ -143,6 +159,24 @@ export default function EditEmployeeModal({ employee, onClose, onSuccess }) {
             disabled={loading}
           >
             {EMPLOYMENT_STATUS.map((status) => (
+              <option key={status.value} value={status.value}>
+                {status.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className={styles.formGroup}>
+          <label className={styles.label}>Wage Status *</label>
+          <select
+            name="wage_status"
+            value={formData.wage_status}
+            onChange={handleChange}
+            className={styles.select}
+            required
+            disabled={loading}
+          >
+            {WAGE_STATUS.map((status) => (
               <option key={status.value} value={status.value}>
                 {status.label}
               </option>

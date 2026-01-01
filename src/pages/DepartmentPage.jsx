@@ -62,6 +62,7 @@ export default function DepartmentPage() {
     return (
       emp.name?.toLowerCase().includes(query) ||
       emp.english_name?.toLowerCase().includes(query) ||
+      emp.payroll_number?.toLowerCase().includes(query) ||
       emp.locker_number?.toLowerCase().includes(query)
     )
   })
@@ -101,10 +102,12 @@ export default function DepartmentPage() {
         <table className={styles.table}>
           <thead>
             <tr>
+              <th>Payroll #</th>
               <th>Name</th>
               <th>English Name</th>
-              <th>Status</th>
               <th>Locker</th>
+              <th>Employment Status</th>
+              <th>Wage Status</th>
               <th>Gears</th>
               <th>Start Date</th>
               <th>Actions</th>
@@ -113,21 +116,27 @@ export default function DepartmentPage() {
           <tbody>
             {filteredEmployees.length === 0 ? (
               <tr>
-                <td colSpan="7" className={styles.noResults}>
+                <td colSpan="9" className={styles.noResults}>
                   {searchQuery ? 'No employees found' : 'No employees in this department'}
                 </td>
               </tr>
             ) : (
               filteredEmployees.map((employee) => (
                 <tr key={employee.id}>
+                  <td>{employee.payroll_number || '-'}</td>
                   <td>{employee.name}</td>
                   <td>{employee.english_name || '-'}</td>
+                  <td>{employee.locker_number || '-'}</td>
                   <td>
                     <span className={`${styles.badge} ${styles[employee.employment_status?.toLowerCase()]}`}>
                       {employee.employment_status?.replace('_', ' ')}
                     </span>
                   </td>
-                  <td>{employee.locker_number || '-'}</td>
+                  <td>
+                    <span className={`${styles.badge} ${styles[employee.wage_status?.toLowerCase()]}`}>
+                      {employee.wage_status?.replace('_', ' ')}
+                    </span>
+                  </td>
                   <td>
                     <div className={styles.gears}>
                       {employee.employee_gears?.length > 0 ? (

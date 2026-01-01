@@ -73,6 +73,7 @@ export default function DashboardPage() {
     return (
       emp.name?.toLowerCase().includes(query) ||
       emp.english_name?.toLowerCase().includes(query) ||
+      emp.payroll_number?.toLowerCase().includes(query) ||
       emp.locker_number?.toLowerCase().includes(query) ||
       emp.departments?.display_name?.toLowerCase().includes(query)
     )
@@ -144,18 +145,20 @@ export default function DashboardPage() {
           <table className={styles.table}>
             <thead>
               <tr>
+                <th>Payroll #</th>
                 <th>Name</th>
                 <th>English Name</th>
                 <th>Department</th>
-                <th>Status</th>
                 <th>Locker</th>
+                <th>Employment Status</th>
+                <th>Wage Status</th>
                 <th>Start Date</th>
               </tr>
             </thead>
             <tbody>
               {filteredEmployees.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className={styles.noResults}>
+                  <td colSpan="8" className={styles.noResults}>
                     {searchQuery ? 'No employees found' : 'No employees yet'}
                   </td>
                 </tr>
@@ -166,15 +169,21 @@ export default function DashboardPage() {
                     onClick={() => handleEmployeeClick(employee)}
                     className={styles.tableRow}
                   >
+                    <td>{employee.payroll_number || '-'}</td>
                     <td>{employee.name}</td>
                     <td>{employee.english_name || '-'}</td>
                     <td>{employee.departments?.display_name || '-'}</td>
+                    <td>{employee.locker_number || '-'}</td>
                     <td>
                       <span className={`${styles.badge} ${styles[employee.employment_status?.toLowerCase()]}`}>
                         {employee.employment_status?.replace('_', ' ')}
                       </span>
                     </td>
-                    <td>{employee.locker_number || '-'}</td>
+                    <td>
+                      <span className={`${styles.badge} ${styles[employee.wage_status?.toLowerCase()]}`}>
+                        {employee.wage_status?.replace('_', ' ')}
+                      </span>
+                    </td>
                     <td>{new Date(employee.start_date).toLocaleDateString()}</td>
                   </tr>
                 ))

@@ -37,6 +37,11 @@ export const EMPLOYMENT_STATUS = [
   { value: 'FULL_TIME', label: 'Full Time' }
 ]
 
+export const WAGE_STATUS = [
+  { value: 'WFA', label: 'WFA' },
+  { value: 'LABOR_HIRE', label: 'Labor Hire' }
+]
+
 export const RESIGNATION_REASONS = [
   { value: 'RESIGN', label: 'Resign' },
   { value: 'TERMINATE', label: 'Terminate' }
