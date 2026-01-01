@@ -21,7 +21,8 @@ export const DEPARTMENTS = [
   { value: 'RENDERING', label: 'Rendering' },
   { value: 'COLD_STORE', label: 'Cold Store' },
   { value: 'HOOK_ROOM', label: 'Hook Room' },
-  { value: 'MAINTENANCE', label: 'Maintenance' }
+  { value: 'MAINTENANCE', label: 'Maintenance' },
+  { value: 'CLEANING', label: 'Cleaning' }
 ]
 
 export const GEARS = [
