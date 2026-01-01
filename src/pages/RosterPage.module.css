@@ -54,10 +54,96 @@
   border-radius: 12px;
 }
 
+.monthYearSelector {
+  position: relative;
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
 .monthYear {
   font-size: 24px;
   font-weight: 600;
   color: var(--text-primary);
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.monthYear:hover {
+  background: var(--hover-bg);
+}
+
+.datePickerDropdown {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+  min-width: 280px;
+}
+
+.datePickerContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pickerGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pickerLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.pickerSelect {
+  padding: 10px 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pickerSelect:focus {
+  border-color: var(--accent-primary);
+  outline: none;
+}
+
+.pickerApplyButton {
+  padding: 10px 16px;
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pickerApplyButton:hover {
+  background: var(--accent-secondary);
+  transform: translateY(-1px);
+}
+
+.pickerApplyButton:active {
+  transform: translateY(0);
 }
 
 .navButton {

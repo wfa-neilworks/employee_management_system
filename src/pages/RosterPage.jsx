@@ -7,7 +7,10 @@ export default function RosterPage() {
   const [leaves, setLeaves] = useState([])
   const [loading, setLoading] = useState(true)
   const [showAddModal, setShowAddModal] = useState(false)
+  const [showDatePicker, setShowDatePicker] = useState(false)
   const [currentDate, setCurrentDate] = useState(new Date())
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
 
   useEffect(() => {
     fetchLeaves()
@@ -143,6 +146,17 @@ export default function RosterPage() {
     year: 'numeric'
   })
 
+  const handleMonthYearSelect = () => {
+    setCurrentDate(new Date(selectedYear, selectedMonth))
+    setShowDatePicker(false)
+  }
+
+  const years = Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - 5 + i)
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ]
+
   if (loading) {
     return <div className={styles.loading}>Loading...</div>
   }
@@ -163,7 +177,54 @@ export default function RosterPage() {
         <button onClick={previousMonth} className={styles.navButton}>
           ‹ Previous
         </button>
-        <h2 className={styles.monthYear}>{currentMonthYear}</h2>
+        <div className={styles.monthYearSelector}>
+          <h2
+            className={styles.monthYear}
+            onClick={() => setShowDatePicker(!showDatePicker)}
+          >
+            {currentMonthYear}
+          </h2>
+          {showDatePicker && (
+            <div className={styles.datePickerDropdown}>
+              <div className={styles.datePickerContent}>
+                <div className={styles.pickerGroup}>
+                  <label className={styles.pickerLabel}>Month</label>
+                  <select
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                    className={styles.pickerSelect}
+                  >
+                    {months.map((month, index) => (
+                      <option key={index} value={index}>
+                        {month}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className={styles.pickerGroup}>
+                  <label className={styles.pickerLabel}>Year</label>
+                  <select
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                    className={styles.pickerSelect}
+                  >
+                    {years.map((year) => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button
+                  onClick={handleMonthYearSelect}
+                  className={styles.pickerApplyButton}
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
         <button onClick={nextMonth} className={styles.navButton}>
           Next ›
         </button>
