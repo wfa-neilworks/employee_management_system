@@ -53,3 +53,12 @@ export const LEAVE_TYPES = [
   { value: 'ANNUAL_LEAVE', label: 'Annual Leave' },
   { value: 'LEAVE_WITHOUT_PAY', label: 'Leave Without Pay' }
 ]
+
+export const GLOVE_SIZES = [
+  { value: 'BROWN', label: 'Brown' },
+  { value: 'GREEN', label: 'Green' },
+  { value: 'RED', label: 'Red' },
+  { value: 'WHITE', label: 'White' },
+  { value: 'BLUE', label: 'Blue' },
+  { value: 'ORANGE', label: 'Orange' }
+]

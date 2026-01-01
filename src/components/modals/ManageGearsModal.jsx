@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { supabase, GEARS } from '../../lib/supabase'
+import { supabase, GEARS, GLOVE_SIZES } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import Modal from './Modal'
 import styles from './FormModal.module.css'
@@ -9,16 +9,26 @@ export default function ManageGearsModal({ employee, onClose, onSuccess }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [selectedGears, setSelectedGears] = useState([])
+  const [gloveSize, setGloveSize] = useState('')
 
   useEffect(() => {
     if (employee.employee_gears) {
       setSelectedGears(employee.employee_gears.map(g => g.gear_type))
+      // Set glove size if mesh gloves are assigned
+      const meshGlove = employee.employee_gears.find(g => g.gear_type === 'MESH_GLOVES')
+      if (meshGlove && meshGlove.size) {
+        setGloveSize(meshGlove.size)
+      }
     }
   }, [employee])
 
   const handleGearToggle = (gearType) => {
     if (selectedGears.includes(gearType)) {
       setSelectedGears(selectedGears.filter(g => g !== gearType))
+      // Clear glove size if mesh gloves are unchecked
+      if (gearType === 'MESH_GLOVES') {
+        setGloveSize('')
+      }
     } else {
       setSelectedGears([...selectedGears, gearType])
     }
@@ -27,6 +37,13 @@ export default function ManageGearsModal({ employee, onClose, onSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+
+    // Validate that glove size is selected if mesh gloves are selected
+    if (selectedGears.includes('MESH_GLOVES') && !gloveSize) {
+      setError('Please select a size for Mesh Gloves')
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -39,7 +56,9 @@ export default function ManageGearsModal({ employee, onClose, onSuccess }) {
         const gearsToInsert = selectedGears.map(gearType => ({
           employee_id: employee.id,
           gear_type: gearType,
-          assigned_by: user.id
+          assigned_by: user.id,
+          // Add size only for mesh gloves
+          ...(gearType === 'MESH_GLOVES' && gloveSize ? { size: gloveSize } : {})
         }))
 
         const { error: insertError } = await supabase
@@ -78,6 +97,26 @@ export default function ManageGearsModal({ employee, onClose, onSuccess }) {
             ))}
           </div>
         </div>
+
+        {selectedGears.includes('MESH_GLOVES') && (
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Glove Size *</label>
+            <select
+              value={gloveSize}
+              onChange={(e) => setGloveSize(e.target.value)}
+              className={styles.select}
+              required
+              disabled={loading}
+            >
+              <option value="">Select size...</option>
+              {GLOVE_SIZES.map((size) => (
+                <option key={size.value} value={size.value}>
+                  {size.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {error && (
           <div className={styles.error}>{error}</div>

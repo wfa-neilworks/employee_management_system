@@ -39,7 +39,7 @@ export default function DepartmentPage() {
           .single(),
         supabase
           .from('employees')
-          .select('*, employee_gears(gear_type)')
+          .select('*, employee_gears(gear_type, size)')
           .eq('department_id', departmentId)
           .eq('is_active', true)
           .order('name')
@@ -143,6 +143,7 @@ export default function DepartmentPage() {
                         employee.employee_gears.map((gear, idx) => (
                           <span key={idx} className={styles.gearBadge}>
                             {gear.gear_type.replace('_', ' ')}
+                            {gear.size && ` (${gear.size})`}
                           </span>
                         ))
                       ) : (
