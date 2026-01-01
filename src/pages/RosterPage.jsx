@@ -72,13 +72,10 @@ export default function RosterPage() {
   const getLeavesForDate = (day) => {
     const year = currentDate.getFullYear()
     const month = currentDate.getMonth()
-    const date = new Date(year, month, day)
-    const dateStr = date.toISOString().split('T')[0]
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 
     return leaves.filter((leave) => {
-      const startDate = new Date(leave.start_date)
-      const endDate = new Date(leave.end_date)
-      return date >= startDate && date <= endDate
+      return dateStr >= leave.start_date && dateStr <= leave.end_date
     })
   }
 
