@@ -110,10 +110,10 @@ export default function RosterPage() {
                 key={leave.id}
                 className={styles.leaveIndicator}
                 style={{ background: getLeaveColor(leave.leave_type) }}
-                title={`${leave.employees.name} - ${formatLeaveType(leave.leave_type)}`}
+                title={`${leave.employees.name} (${leave.employees.departments?.display_name || 'N/A'}) - ${formatLeaveType(leave.leave_type)}`}
               >
                 <span className={styles.leaveName}>
-                  {leave.employees.name}
+                  {leave.employees.name} ({leave.employees.departments?.display_name || 'N/A'})
                 </span>
               </div>
             ))}
