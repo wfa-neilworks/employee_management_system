@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
+import { PieChart, Pie, BarChart, Bar, XAxis, YAxis, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
 import styles from './DashboardPage.module.css'
 
 const COLORS = ['#d4ff00', '#00ff88', '#00d4ff', '#ff00ff', '#ff8800', '#88ff00', '#ff0088', '#0088ff', '#ffff00', '#00ffff', '#ff00ff']
+const WAGE_COLORS = ['#00ff88', '#ff8800'] // WFA (green), Labor Hire (orange)
 
 export default function DashboardPage() {
   const [employees, setEmployees] = useState([])
@@ -13,7 +14,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({
     total: 0,
-    byDepartment: []
+    byDepartment: [],
+    byWageStatus: []
   })
   const navigate = useNavigate()
 
@@ -55,17 +57,27 @@ export default function DashboardPage() {
     const total = employeeData.length
 
     const byDepartment = {}
+    const byWageStatus = {}
+
     employeeData.forEach((emp) => {
       const deptName = emp.departments?.display_name || 'Unassigned'
       byDepartment[deptName] = (byDepartment[deptName] || 0) + 1
+
+      const wageStatus = emp.wage_status || 'Unknown'
+      byWageStatus[wageStatus] = (byWageStatus[wageStatus] || 0) + 1
     })
 
-    const chartData = Object.entries(byDepartment).map(([name, value]) => ({
+    const departmentChartData = Object.entries(byDepartment).map(([name, value]) => ({
       name,
       value
     }))
 
-    setStats({ total, byDepartment: chartData })
+    const wageStatusChartData = Object.entries(byWageStatus).map(([name, value]) => ({
+      name,
+      value
+    }))
+
+    setStats({ total, byDepartment: departmentChartData, byWageStatus: wageStatusChartData })
   }
 
   const filteredEmployees = employees.filter((emp) => {
@@ -96,33 +108,49 @@ export default function DashboardPage() {
       </div>
 
       <div className={styles.statsGrid}>
-        <div className={styles.statCard}>
-          <div className={styles.statValue}>{stats.total}</div>
-          <div className={styles.statLabel}>Total Employees</div>
+        <div className={styles.chartCard}>
+          <h3 className={styles.chartTitle}>Employees by Wage Status</h3>
+          {stats.byWageStatus.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={stats.byWageStatus}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent, value }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {stats.byWageStatus.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={WAGE_COLORS[index % WAGE_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className={styles.noData}>No data available</div>
+          )}
         </div>
 
         <div className={styles.chartCard}>
           <h3 className={styles.chartTitle}>Employees by Department</h3>
           {stats.byDepartment.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={stats.byDepartment}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
+              <BarChart data={stats.byDepartment}>
+                <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="value" name="Employees">
                   {stats.byDepartment.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
+                </Bar>
+              </BarChart>
             </ResponsiveContainer>
           ) : (
             <div className={styles.noData}>No data available</div>
