@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { supabase, DEPARTMENTS, EMPLOYMENT_STATUS, WAGE_STATUS } from '../../lib/supabase'
+import { supabase, EMPLOYMENT_STATUS, WAGE_STATUS } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import Modal from './Modal'
 import styles from './FormModal.module.css'
@@ -8,6 +8,7 @@ export default function AddEmployeeModal({ departmentId, onClose, onSuccess }) {
   const { user } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [departments, setDepartments] = useState([])
   const [formData, setFormData] = useState({
     name: '',
     english_name: '',
@@ -18,6 +19,24 @@ export default function AddEmployeeModal({ departmentId, onClose, onSuccess }) {
     locker_number: '',
     start_date: new Date().toISOString().split('T')[0]
   })
+
+  useEffect(() => {
+    fetchDepartments()
+  }, [])
+
+  const fetchDepartments = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('departments')
+        .select('id, display_name')
+        .order('display_name')
+
+      if (error) throw error
+      setDepartments(data || [])
+    } catch (err) {
+      console.error('Error fetching departments:', err)
+    }
+  }
 
   const handleChange = (e) => {
     setFormData({
@@ -111,9 +130,9 @@ export default function AddEmployeeModal({ departmentId, onClose, onSuccess }) {
             disabled={loading}
           >
             <option value="">Select Department</option>
-            {DEPARTMENTS.map((dept) => (
-              <option key={dept.value} value={dept.value}>
-                {dept.label}
+            {departments.map((dept) => (
+              <option key={dept.id} value={dept.id}>
+                {dept.display_name}
               </option>
             ))}
           </select>
