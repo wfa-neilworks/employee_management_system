@@ -210,6 +210,14 @@ export default function TimesheetPage() {
                 background: #f9fafb !important;
               }
 
+              #printable-timesheet table tbody tr.onLeave {
+                background: #ffe5e5 !important;
+              }
+
+              #printable-timesheet table tbody tr.onLeave:nth-child(even) {
+                background: #ffd5d5 !important;
+              }
+
               @media print {
                 @page {
                   size: A4 landscape;
@@ -239,6 +247,14 @@ export default function TimesheetPage() {
 
                 #printable-timesheet table tbody tr:nth-child(even) {
                   background: #f9fafb !important;
+                }
+
+                #printable-timesheet table tbody tr.onLeave {
+                  background: #ffe5e5 !important;
+                }
+
+                #printable-timesheet table tbody tr.onLeave:nth-child(even) {
+                  background: #ffd5d5 !important;
                 }
               }
             </style>
@@ -361,7 +377,7 @@ export default function TimesheetPage() {
                   const isOnLeave = !!leaveCode
 
                   return (
-                    <tr key={employee.id}>
+                    <tr key={employee.id} className={isOnLeave ? 'onLeave' : ''}>
                       <td>{employee.payroll_number || '-'}</td>
                       <td>
                         {employee.name}

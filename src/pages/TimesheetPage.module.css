@@ -205,6 +205,14 @@
   background: #f3f4f6;
 }
 
+.timesheetTable tbody :global(.onLeave) {
+  background: #ffe5e5;
+}
+
+.timesheetTable tbody :global(.onLeave):nth-child(even) {
+  background: #ffd5d5;
+}
+
 /* Print styles */
 @media print {
   @page {
