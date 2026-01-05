@@ -356,6 +356,7 @@ export default function RosterPage() {
           date={selectedDayDate}
           leaves={selectedDayLeaves}
           onClose={() => setShowDayDetailsModal(false)}
+          onUpdate={fetchLeaves}
         />
       )}
     </div>

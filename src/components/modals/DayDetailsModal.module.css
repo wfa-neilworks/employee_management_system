@@ -60,8 +60,65 @@
   font-style: italic;
 }
 
+.leaveActions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.editButton,
+.deleteButton {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.editButton {
+  background: var(--accent-primary);
+  color: white;
+}
+
+.editButton:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.deleteButton {
+  background: #dc2626;
+  color: white;
+}
+
+.deleteButton:hover:not(:disabled) {
+  background: #b91c1c;
+  transform: translateY(-1px);
+}
+
+.editButton:disabled,
+.deleteButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 @media (max-width: 768px) {
   .leaveList {
     max-height: 400px;
+  }
+
+  .leaveItem {
+    flex-direction: column;
+  }
+
+  .leaveActions {
+    flex-direction: row;
+  }
+
+  .editButton,
+  .deleteButton {
+    flex: 1;
   }
 }
