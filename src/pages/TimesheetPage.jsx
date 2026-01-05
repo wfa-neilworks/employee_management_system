@@ -43,7 +43,7 @@ export default function TimesheetPage() {
         .select('id, name, english_name, payroll_number')
         .eq('department_id', selectedDepartment)
         .eq('is_active', true)
-        .order('payroll_number')
+        .order('name')
 
       if (empError) throw empError
 
