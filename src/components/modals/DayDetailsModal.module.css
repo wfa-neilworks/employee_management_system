@@ -79,12 +79,12 @@
 }
 
 .editButton {
-  background: var(--accent-primary);
+  background: #2563eb;
   color: white;
 }
 
 .editButton:hover:not(:disabled) {
-  opacity: 0.9;
+  background: #1d4ed8;
   transform: translateY(-1px);
 }
 
