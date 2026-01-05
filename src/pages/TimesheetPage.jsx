@@ -137,19 +137,19 @@ export default function TimesheetPage() {
               #printable-timesheet .header {
                 display: flex;
                 align-items: center;
-                gap: 15px;
-                margin-bottom: 20px;
-                padding-bottom: 15px;
+                gap: 12px;
+                margin-bottom: 15px;
+                padding-bottom: 12px;
                 border-bottom: 2px solid #000;
               }
 
               #printable-timesheet .logo {
-                height: 50px;
+                height: 35px;
                 width: auto;
               }
 
               #printable-timesheet .companyName {
-                font-size: 24px;
+                font-size: 20px;
                 font-weight: 700;
                 color: #000;
                 margin: 0;
