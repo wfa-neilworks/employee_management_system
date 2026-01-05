@@ -144,11 +144,11 @@ export default function TimesheetPage() {
               }
 
               #printable-timesheet .logo {
-                max-height: 40px;
-                max-width: 40px;
-                height: auto;
-                width: auto;
-                object-fit: contain;
+                max-height: 30px !important;
+                max-width: 30px !important;
+                height: 30px !important;
+                width: auto !important;
+                object-fit: contain !important;
               }
 
               #printable-timesheet .companyName {
