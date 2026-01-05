@@ -143,12 +143,20 @@ export default function TimesheetPage() {
                 border-bottom: 2px solid #000;
               }
 
-              #printable-timesheet .logo {
+              #printable-timesheet img.logo {
+                display: block !important;
                 max-height: 30px !important;
                 max-width: 30px !important;
                 height: 30px !important;
-                width: auto !important;
+                width: 30px !important;
                 object-fit: contain !important;
+              }
+
+              #printable-timesheet .header img {
+                max-height: 30px !important;
+                max-width: 30px !important;
+                height: 30px !important;
+                width: 30px !important;
               }
 
               #printable-timesheet .companyName {
@@ -211,6 +219,13 @@ export default function TimesheetPage() {
                 body {
                   print-color-adjust: exact !important;
                   -webkit-print-color-adjust: exact !important;
+                }
+
+                img {
+                  max-height: 30px !important;
+                  max-width: 30px !important;
+                  height: 30px !important;
+                  width: 30px !important;
                 }
 
                 #printable-timesheet table th {
@@ -310,7 +325,12 @@ export default function TimesheetPage() {
 
           <div className={styles.printableArea} id="printable-timesheet">
             <div className={styles.header}>
-              <img src="/woodwardlogo.png" alt="Woodward Foods" className={styles.logo} />
+              <img
+                src="/woodwardlogo.png"
+                alt="Woodward Foods"
+                className={styles.logo}
+                style={{ height: '30px', width: '30px', maxHeight: '30px', maxWidth: '30px' }}
+              />
               <h2 className={styles.companyName}>Woodward Foods Australia</h2>
             </div>
 
