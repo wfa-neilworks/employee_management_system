@@ -71,6 +71,16 @@ export default function Sidebar({ departments, isOpen }) {
           <span className={styles.navIcon}>📅</span>
           <span className={styles.navLabel}>ROSTER</span>
         </NavLink>
+
+        <NavLink
+          to="/timesheet"
+          className={({ isActive }) =>
+            `${styles.navItem} ${isActive ? styles.navItemActive : ''}`
+          }
+        >
+          <span className={styles.navIcon}>📋</span>
+          <span className={styles.navLabel}>TIMESHEET</span>
+        </NavLink>
       </nav>
     </aside>
   )
