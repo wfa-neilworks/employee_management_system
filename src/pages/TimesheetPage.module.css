@@ -136,37 +136,38 @@
 .header {
   display: flex;
   align-items: center;
-  gap: 20px;
-  margin-bottom: 30px;
-  padding-bottom: 20px;
+  gap: 12px;
+  margin-bottom: 15px;
+  padding-bottom: 12px;
   border-bottom: 2px solid #000;
 }
 
 .logo {
-  height: 80px;
+  height: 10px;
   width: auto;
+  object-fit: contain;
 }
 
 .companyName {
-  font-size: 28px;
+  font-size: 20px;
   font-weight: 700;
   color: #000;
   margin: 0;
 }
 
 .timesheetInfo {
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 .timesheetInfo h3 {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
   color: #000;
-  margin: 0 0 8px 0;
+  margin: 0 0 6px 0;
 }
 
 .timesheetInfo p {
-  font-size: 16px;
+  font-size: 14px;
   color: #333;
   margin: 0;
 }
@@ -174,21 +175,23 @@
 .timesheetTable {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 20px;
+  margin-top: 10px;
 }
 
 .timesheetTable th {
   background: #f3f4f6;
-  padding: 12px;
+  padding: 8px 10px;
   text-align: left;
   font-weight: 600;
-  border: 1px solid #d1d5db;
+  font-size: 14px;
+  border: 1px solid #000;
   color: #000;
 }
 
 .timesheetTable td {
-  padding: 10px 12px;
-  border: 1px solid #d1d5db;
+  padding: 8px 10px;
+  font-size: 13px;
+  border: 1px solid #000;
   color: #000;
 }
 
