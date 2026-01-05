@@ -62,7 +62,7 @@
 .previewButton {
   padding: 12px 24px;
   background: var(--accent-primary);
-  color: white;
+  color: #000;
   border: none;
   border-radius: 8px;
   font-size: 14px;
