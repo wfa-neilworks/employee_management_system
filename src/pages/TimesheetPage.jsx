@@ -144,8 +144,8 @@ export default function TimesheetPage() {
               }
 
               #printable-timesheet .logo {
-                height: 45px;
-                width: 45px;
+                height: 10px;
+                width: auto;
                 object-fit: contain;
               }
 
