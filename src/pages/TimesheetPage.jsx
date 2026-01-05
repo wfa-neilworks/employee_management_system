@@ -128,13 +128,13 @@ export default function TimesheetPage() {
                 background: white;
               }
 
-              .printableArea {
+              #printable-timesheet {
                 background: white;
                 padding: 20px;
                 color: #000;
               }
 
-              .header {
+              #printable-timesheet .header {
                 display: flex;
                 align-items: center;
                 gap: 20px;
@@ -143,58 +143,58 @@ export default function TimesheetPage() {
                 border-bottom: 2px solid #000;
               }
 
-              .logo {
+              #printable-timesheet .logo {
                 height: 80px;
                 width: auto;
               }
 
-              .companyName {
+              #printable-timesheet .companyName {
                 font-size: 28px;
                 font-weight: 700;
                 color: #000;
                 margin: 0;
               }
 
-              .timesheetInfo {
+              #printable-timesheet .timesheetInfo {
                 margin-bottom: 30px;
               }
 
-              .timesheetInfo h3 {
+              #printable-timesheet .timesheetInfo h3 {
                 font-size: 20px;
                 font-weight: 600;
                 color: #000;
                 margin: 0 0 8px 0;
               }
 
-              .timesheetInfo p {
+              #printable-timesheet .timesheetInfo p {
                 font-size: 16px;
                 color: #333;
                 margin: 0;
               }
 
-              .timesheetTable {
+              #printable-timesheet table {
                 width: 100%;
                 border-collapse: collapse;
                 margin-top: 20px;
               }
 
-              .timesheetTable th {
-                background: #f3f4f6;
+              #printable-timesheet table th {
+                background: #f3f4f6 !important;
                 padding: 12px;
                 text-align: left;
                 font-weight: 600;
-                border: 1px solid #d1d5db;
+                border: 1px solid #000 !important;
                 color: #000;
               }
 
-              .timesheetTable td {
+              #printable-timesheet table td {
                 padding: 10px 12px;
-                border: 1px solid #d1d5db;
+                border: 1px solid #000 !important;
                 color: #000;
               }
 
-              .timesheetTable tbody tr:nth-child(even) {
-                background: #f9fafb;
+              #printable-timesheet table tbody tr:nth-child(even) {
+                background: #f9fafb !important;
               }
 
               @media print {
@@ -204,8 +204,21 @@ export default function TimesheetPage() {
                 }
 
                 body {
-                  print-color-adjust: exact;
-                  -webkit-print-color-adjust: exact;
+                  print-color-adjust: exact !important;
+                  -webkit-print-color-adjust: exact !important;
+                }
+
+                #printable-timesheet table th {
+                  background: #f3f4f6 !important;
+                  border: 1px solid #000 !important;
+                }
+
+                #printable-timesheet table td {
+                  border: 1px solid #000 !important;
+                }
+
+                #printable-timesheet table tbody tr:nth-child(even) {
+                  background: #f9fafb !important;
                 }
               }
             </style>
