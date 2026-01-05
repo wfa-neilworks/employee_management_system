@@ -100,7 +100,131 @@ export default function TimesheetPage() {
   }
 
   const handlePrint = () => {
-    window.print()
+    // Create a new window for printing only the timesheet
+    const printWindow = window.open('', '_blank')
+    const printContent = document.getElementById('printable-timesheet')
+
+    if (printWindow && printContent) {
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Timesheet - ${timesheetData.departmentName}</title>
+            <style>
+              @page {
+                size: A4;
+                margin: 20mm;
+              }
+
+              * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+              }
+
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                color: #000;
+                background: white;
+              }
+
+              .printableArea {
+                background: white;
+                padding: 20px;
+                color: #000;
+              }
+
+              .header {
+                display: flex;
+                align-items: center;
+                gap: 20px;
+                margin-bottom: 30px;
+                padding-bottom: 20px;
+                border-bottom: 2px solid #000;
+              }
+
+              .logo {
+                height: 80px;
+                width: auto;
+              }
+
+              .companyName {
+                font-size: 28px;
+                font-weight: 700;
+                color: #000;
+                margin: 0;
+              }
+
+              .timesheetInfo {
+                margin-bottom: 30px;
+              }
+
+              .timesheetInfo h3 {
+                font-size: 20px;
+                font-weight: 600;
+                color: #000;
+                margin: 0 0 8px 0;
+              }
+
+              .timesheetInfo p {
+                font-size: 16px;
+                color: #333;
+                margin: 0;
+              }
+
+              .timesheetTable {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 20px;
+              }
+
+              .timesheetTable th {
+                background: #f3f4f6;
+                padding: 12px;
+                text-align: left;
+                font-weight: 600;
+                border: 1px solid #d1d5db;
+                color: #000;
+              }
+
+              .timesheetTable td {
+                padding: 10px 12px;
+                border: 1px solid #d1d5db;
+                color: #000;
+              }
+
+              .timesheetTable tbody tr:nth-child(even) {
+                background: #f9fafb;
+              }
+
+              @media print {
+                @page {
+                  size: A4;
+                  margin: 20mm;
+                }
+
+                body {
+                  print-color-adjust: exact;
+                  -webkit-print-color-adjust: exact;
+                }
+              }
+            </style>
+          </head>
+          <body>
+            ${printContent.outerHTML}
+          </body>
+        </html>
+      `)
+      printWindow.document.close()
+
+      // Wait for images to load before printing
+      printWindow.onload = () => {
+        setTimeout(() => {
+          printWindow.print()
+          printWindow.close()
+        }, 250)
+      }
+    }
   }
 
   return (

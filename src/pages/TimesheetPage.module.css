@@ -202,6 +202,11 @@
 
 /* Print styles */
 @media print {
+  @page {
+    size: A4;
+    margin: 20mm;
+  }
+
   .formSection,
   .previewActions {
     display: none !important;
@@ -227,6 +232,11 @@
 
   .timesheetTable tbody tr:nth-child(even) {
     background: #f9fafb;
+  }
+
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
   }
 }
 
