@@ -203,8 +203,8 @@
 /* Print styles */
 @media print {
   @page {
-    size: A4;
-    margin: 20mm;
+    size: A4 landscape;
+    margin: 15mm;
   }
 
   .formSection,

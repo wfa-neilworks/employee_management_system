@@ -112,8 +112,8 @@ export default function TimesheetPage() {
             <title>Timesheet - ${timesheetData.departmentName}</title>
             <style>
               @page {
-                size: A4;
-                margin: 20mm;
+                size: A4 landscape;
+                margin: 15mm;
               }
 
               * {
@@ -199,8 +199,8 @@ export default function TimesheetPage() {
 
               @media print {
                 @page {
-                  size: A4;
-                  margin: 20mm;
+                  size: A4 landscape;
+                  margin: 15mm;
                 }
 
                 body {
