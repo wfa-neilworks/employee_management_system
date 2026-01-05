@@ -23,6 +23,10 @@
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
 
+.modal.wide {
+  max-width: 1200px;
+}
+
 .header {
   display: flex;
   justify-content: space-between;

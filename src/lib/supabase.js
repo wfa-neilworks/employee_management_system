@@ -43,10 +43,16 @@ export const WAGE_STATUS = [
   { value: 'LABOR_HIRE', label: 'Labor Hire' }
 ]
 
-export const RESIGNATION_REASONS = [
-  { value: 'RESIGN', label: 'Resign' },
-  { value: 'TERMINATE', label: 'Terminate' }
+export const TERMINATION_TYPES = [
+  { value: 'TERMINATED', label: 'Terminated' },
+  { value: 'RESIGNED', label: 'Resigned' },
+  { value: 'SUMMARY_DISMISSAL', label: 'Summary Dismissal' },
+  { value: 'REDUNDANCY', label: 'Redundancy' },
+  { value: 'PROBATION_NOT_CONTINUED', label: 'Employment not continued after probationary period' }
 ]
+
+// Keep for backward compatibility
+export const RESIGNATION_REASONS = TERMINATION_TYPES
 
 export const LEAVE_TYPES = [
   { value: 'SICK_LEAVE', label: 'Sick Leave' },

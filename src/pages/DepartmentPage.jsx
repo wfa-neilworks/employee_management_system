@@ -39,7 +39,7 @@ export default function DepartmentPage() {
           .single(),
         supabase
           .from('employees')
-          .select('*, employee_gears(gear_type, size)')
+          .select('*, employee_gears(gear_type, size), departments(id, display_name)')
           .eq('department_id', departmentId)
           .eq('is_active', true)
           .order('name')
