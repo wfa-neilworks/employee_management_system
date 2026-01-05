@@ -137,37 +137,37 @@ export default function TimesheetPage() {
               #printable-timesheet .header {
                 display: flex;
                 align-items: center;
-                gap: 20px;
-                margin-bottom: 30px;
-                padding-bottom: 20px;
+                gap: 15px;
+                margin-bottom: 20px;
+                padding-bottom: 15px;
                 border-bottom: 2px solid #000;
               }
 
               #printable-timesheet .logo {
-                height: 80px;
+                height: 50px;
                 width: auto;
               }
 
               #printable-timesheet .companyName {
-                font-size: 28px;
+                font-size: 24px;
                 font-weight: 700;
                 color: #000;
                 margin: 0;
               }
 
               #printable-timesheet .timesheetInfo {
-                margin-bottom: 30px;
+                margin-bottom: 20px;
               }
 
               #printable-timesheet .timesheetInfo h3 {
-                font-size: 20px;
+                font-size: 18px;
                 font-weight: 600;
                 color: #000;
-                margin: 0 0 8px 0;
+                margin: 0 0 6px 0;
               }
 
               #printable-timesheet .timesheetInfo p {
-                font-size: 16px;
+                font-size: 14px;
                 color: #333;
                 margin: 0;
               }
@@ -175,20 +175,22 @@ export default function TimesheetPage() {
               #printable-timesheet table {
                 width: 100%;
                 border-collapse: collapse;
-                margin-top: 20px;
+                margin-top: 10px;
               }
 
               #printable-timesheet table th {
                 background: #f3f4f6 !important;
-                padding: 12px;
+                padding: 8px 10px;
                 text-align: left;
                 font-weight: 600;
+                font-size: 14px;
                 border: 1px solid #000 !important;
                 color: #000;
               }
 
               #printable-timesheet table td {
-                padding: 10px 12px;
+                padding: 8px 10px;
+                font-size: 13px;
                 border: 1px solid #000 !important;
                 color: #000;
               }
