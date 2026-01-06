@@ -84,10 +84,52 @@ export default function AttendancePage() {
 
       if (attError) throw attError
 
-      // Create attendance map
+      // Fetch roster/leave data for selected date
+      const { data: leaveData, error: leaveError } = await supabase
+        .from('leave')
+        .select('employee_id, leave_type')
+        .lte('start_date', selectedDate)
+        .gte('end_date', selectedDate)
+        .in('employee_id', empData.map(e => e.id))
+
+      if (leaveError) throw leaveError
+
+      // Create attendance map with auto-population from roster
       const attMap = {}
+
+      // First, add existing attendance records
       attData.forEach(att => {
         attMap[att.employee_id] = att
+      })
+
+      // Then, auto-populate from roster/leave data if no attendance record exists
+      leaveData.forEach(leave => {
+        if (!attMap[leave.employee_id]) {
+          // Map leave types to attendance statuses
+          let status = 'PRESENT'
+          switch (leave.leave_type) {
+            case 'SICK_LEAVE':
+              status = 'SICK_LEAVE'
+              break
+            case 'ANNUAL_LEAVE':
+              status = 'ANNUAL_LEAVE'
+              break
+            case 'LEAVE_WITHOUT_PAY':
+              status = 'LEAVE_WITHOUT_PAY'
+              break
+            case 'ABSENT':
+              status = 'ABSENT'
+              break
+          }
+
+          // Create virtual attendance record (not yet saved to DB)
+          attMap[leave.employee_id] = {
+            employee_id: leave.employee_id,
+            date: selectedDate,
+            status: status,
+            isFromRoster: true // Flag to indicate it's from roster
+          }
+        }
       })
 
       setAttendance(attMap)
@@ -136,13 +178,68 @@ export default function AttendancePage() {
 
       if (attError) throw attError
 
+      // Fetch roster/leave data for selected month
+      const { data: leaveData, error: leaveError } = await supabase
+        .from('leave')
+        .select('employee_id, leave_type, start_date, end_date')
+        .lte('start_date', endDateStr)
+        .gte('end_date', startDate)
+        .in('employee_id', empData.map(e => e.id))
+
+      if (leaveError) throw leaveError
+
       // Create attendance map: employee_id -> { date -> attendance }
       const attMap = {}
+
+      // First, add existing attendance records
       attData.forEach(att => {
         if (!attMap[att.employee_id]) {
           attMap[att.employee_id] = {}
         }
         attMap[att.employee_id][att.date] = att
+      })
+
+      // Then, auto-populate from roster/leave data for dates without attendance
+      leaveData.forEach(leave => {
+        // Get all dates for this leave within the selected month
+        const leaveStart = new Date(Math.max(new Date(leave.start_date), new Date(startDate)))
+        const leaveEnd = new Date(Math.min(new Date(leave.end_date), new Date(endDateStr)))
+
+        // Map leave type to attendance status
+        let status = 'PRESENT'
+        switch (leave.leave_type) {
+          case 'SICK_LEAVE':
+            status = 'SICK_LEAVE'
+            break
+          case 'ANNUAL_LEAVE':
+            status = 'ANNUAL_LEAVE'
+            break
+          case 'LEAVE_WITHOUT_PAY':
+            status = 'LEAVE_WITHOUT_PAY'
+            break
+          case 'ABSENT':
+            status = 'ABSENT'
+            break
+        }
+
+        // Fill in each day of the leave
+        for (let d = new Date(leaveStart); d <= leaveEnd; d.setDate(d.getDate() + 1)) {
+          const dateStr = d.toISOString().split('T')[0]
+
+          if (!attMap[leave.employee_id]) {
+            attMap[leave.employee_id] = {}
+          }
+
+          // Only auto-populate if no attendance record exists for this date
+          if (!attMap[leave.employee_id][dateStr]) {
+            attMap[leave.employee_id][dateStr] = {
+              employee_id: leave.employee_id,
+              date: dateStr,
+              status: status,
+              isFromRoster: true
+            }
+          }
+        }
       })
 
       setAttendance(attMap)
@@ -169,16 +266,22 @@ export default function AttendancePage() {
 
       const existing = attendance[employeeId]
 
-      if (existing) {
-        // Update existing record
+      if (existing && existing.id && !existing.isFromRoster) {
+        // Update existing database record
         const { error } = await supabase
           .from('attendance')
           .update(attendanceRecord)
           .eq('id', existing.id)
 
         if (error) throw error
+
+        // Update local state for existing
+        setAttendance(prev => ({
+          ...prev,
+          [employeeId]: { ...existing, ...attendanceRecord }
+        }))
       } else {
-        // Insert new record
+        // Insert new record (either no record exists or it's from roster)
         attendanceRecord.created_by = user.id
 
         const { data, error } = await supabase
@@ -194,14 +297,7 @@ export default function AttendancePage() {
           ...prev,
           [employeeId]: data
         }))
-        return
       }
-
-      // Update local state for existing
-      setAttendance(prev => ({
-        ...prev,
-        [employeeId]: { ...existing, ...attendanceRecord }
-      }))
     } catch (error) {
       console.error('Error updating attendance:', error)
       alert('Failed to update attendance')
