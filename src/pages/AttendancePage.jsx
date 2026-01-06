@@ -715,17 +715,32 @@ export default function AttendancePage() {
 
     return (
       <svg width={size} height={size} className={styles.pieChart}>
-        {slices.map((slice, index) => (
-          <g key={slice.status.value}>
-            <path
-              d={describeArc(center, center, radius, slice.startAngle, slice.endAngle)}
-              fill={slice.status.color}
-              stroke="#fff"
-              strokeWidth="2"
-            />
-            <title>{`${slice.status.label}: ${slice.count} (${slice.percentage.toFixed(1)}%)`}</title>
-          </g>
-        ))}
+        {slices.length === 1 ? (
+          // Special case: single status = full circle
+          <circle
+            cx={center}
+            cy={center}
+            r={radius}
+            fill={slices[0].status.color}
+            stroke="#fff"
+            strokeWidth="2"
+          >
+            <title>{`${slices[0].status.label}: ${slices[0].count} (${slices[0].percentage.toFixed(1)}%)`}</title>
+          </circle>
+        ) : (
+          // Multiple statuses = pie slices
+          slices.map((slice, index) => (
+            <g key={slice.status.value}>
+              <path
+                d={describeArc(center, center, radius, slice.startAngle, slice.endAngle)}
+                fill={slice.status.color}
+                stroke="#fff"
+                strokeWidth="2"
+              />
+              <title>{`${slice.status.label}: ${slice.count} (${slice.percentage.toFixed(1)}%)`}</title>
+            </g>
+          ))
+        )}
         {/* Center circle for donut effect */}
         <circle
           cx={center}
