@@ -57,7 +57,8 @@ export const RESIGNATION_REASONS = TERMINATION_TYPES
 export const LEAVE_TYPES = [
   { value: 'SICK_LEAVE', label: 'Sick Leave' },
   { value: 'ANNUAL_LEAVE', label: 'Annual Leave' },
-  { value: 'LEAVE_WITHOUT_PAY', label: 'Leave Without Pay' }
+  { value: 'LEAVE_WITHOUT_PAY', label: 'Leave Without Pay' },
+  { value: 'ABSENT', label: 'Absent (No Notice)' }
 ]
 
 export const GLOVE_SIZES = [

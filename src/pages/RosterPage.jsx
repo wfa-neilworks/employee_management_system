@@ -89,6 +89,8 @@ export default function RosterPage() {
         return '#00ff88'
       case 'LEAVE_WITHOUT_PAY':
         return '#ff0088'
+      case 'ABSENT':
+        return '#ff0000'
       default:
         return '#888'
     }
@@ -340,6 +342,13 @@ export default function RosterPage() {
               style={{ background: getLeaveColor('LEAVE_WITHOUT_PAY') }}
             ></span>
             Leave Without Pay
+          </div>
+          <div className={styles.legendItem}>
+            <span
+              className={styles.legendColor}
+              style={{ background: getLeaveColor('ABSENT') }}
+            ></span>
+            Absent (No Notice)
           </div>
         </div>
       </div>

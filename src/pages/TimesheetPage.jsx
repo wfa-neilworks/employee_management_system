@@ -100,6 +100,8 @@ export default function TimesheetPage() {
         return 'AL'
       case 'LEAVE_WITHOUT_PAY':
         return 'LWP'
+      case 'ABSENT':
+        return 'ABS'
       default:
         return ''
     }
