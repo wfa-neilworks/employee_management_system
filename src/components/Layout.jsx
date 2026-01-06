@@ -1,15 +1,28 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import Sidebar from './Sidebar'
 import styles from './Layout.module.css'
 
+const GREETINGS = [
+  'Welcome',
+  'Good day',
+  'Hello',
+  'Greetings',
+  'Hi there'
+]
+
 export default function Layout() {
   const { account, signOut } = useAuth()
   const navigate = useNavigate()
   const [departments, setDepartments] = useState([])
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+
+  // Pick a random greeting on component mount
+  const greeting = useMemo(() => {
+    return GREETINGS[Math.floor(Math.random() * GREETINGS.length)]
+  }, [])
 
   useEffect(() => {
     fetchDepartments()
@@ -53,7 +66,7 @@ export default function Layout() {
           </div>
           <div className={styles.headerRight}>
             <div className={styles.accountInfo}>
-              <span className={styles.accountType}>{account?.account_type}</span>
+              <span className={styles.accountType}>{greeting}, {account?.email}</span>
               <button className={styles.signOutButton} onClick={handleSignOut}>
                 Sign Out
               </button>
