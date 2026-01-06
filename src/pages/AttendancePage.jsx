@@ -26,10 +26,12 @@ export default function AttendancePage() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7))
   const [selectedDepartment, setSelectedDepartment] = useState('')
+  const [selectedDepartments, setSelectedDepartments] = useState([]) // For daily view checkboxes
   const [view, setView] = useState('daily') // 'daily' or 'monthly'
   const [departments, setDepartments] = useState([])
   const [employees, setEmployees] = useState([])
   const [attendance, setAttendance] = useState({})
+  const [departmentData, setDepartmentData] = useState({}) // Store data for each department
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -38,14 +40,19 @@ export default function AttendancePage() {
   }, [])
 
   useEffect(() => {
-    if (selectedDepartment) {
-      if (view === 'daily') {
-        fetchDailyData()
+    if (view === 'daily') {
+      if (selectedDepartments.length > 0) {
+        fetchDailyDataForMultipleDepartments()
       } else {
+        setDepartmentData({})
+        setLoading(false)
+      }
+    } else {
+      if (selectedDepartment) {
         fetchMonthlyData()
       }
     }
-  }, [selectedDepartment, selectedDate, selectedMonth, view])
+  }, [selectedDepartments, selectedDepartment, selectedDate, selectedMonth, view])
 
   const fetchDepartments = async () => {
     try {
@@ -58,6 +65,106 @@ export default function AttendancePage() {
       setDepartments(data || [])
     } catch (error) {
       console.error('Error fetching departments:', error)
+    }
+  }
+
+  const handleDepartmentToggle = (deptId) => {
+    setSelectedDepartments(prev => {
+      if (prev.includes(deptId)) {
+        return prev.filter(id => id !== deptId)
+      } else {
+        return [...prev, deptId]
+      }
+    })
+  }
+
+  const fetchDailyDataForMultipleDepartments = async () => {
+    try {
+      setLoading(true)
+      const deptDataMap = {}
+
+      // Fetch data for each selected department
+      for (const deptId of selectedDepartments) {
+        const { data: empData, error: empError } = await supabase
+          .from('employees')
+          .select('id, name, english_name, payroll_number, wage_status')
+          .eq('department_id', deptId)
+          .eq('is_active', true)
+
+        if (empError) throw empError
+
+        // Sort employees: WFA first, then LABOR_HIRE
+        empData.sort((a, b) => {
+          if (a.wage_status === 'WFA' && b.wage_status !== 'WFA') return -1
+          if (a.wage_status !== 'WFA' && b.wage_status === 'WFA') return 1
+          return a.name.localeCompare(b.name)
+        })
+
+        // Fetch roster/leave data for selected date
+        const { data: leaveData, error: leaveError } = await supabase
+          .from('leave')
+          .select('employee_id, leave_type')
+          .lte('start_date', selectedDate)
+          .gte('end_date', selectedDate)
+          .in('employee_id', empData.map(e => e.id))
+
+        if (leaveError) throw leaveError
+
+        // Create attendance map with auto-population from roster
+        const attMap = {}
+
+        // Auto-populate from roster/leave data
+        leaveData.forEach(leave => {
+          let status = 'PRESENT'
+          switch (leave.leave_type) {
+            case 'SICK_LEAVE':
+              status = 'SICK_LEAVE'
+              break
+            case 'ANNUAL_LEAVE':
+              status = 'ANNUAL_LEAVE'
+              break
+            case 'LEAVE_WITHOUT_PAY':
+              status = 'LEAVE_WITHOUT_PAY'
+              break
+            case 'ABSENT':
+              status = 'ABSENT'
+              break
+          }
+
+          attMap[leave.employee_id] = {
+            employee_id: leave.employee_id,
+            date: selectedDate,
+            status: status,
+            isFromRoster: true
+          }
+        })
+
+        // Auto-mark as PRESENT for past dates (skip weekends)
+        const today = new Date().toISOString().split('T')[0]
+        if (selectedDate < today && !isWeekend(selectedDate)) {
+          empData.forEach(emp => {
+            if (!attMap[emp.id]) {
+              attMap[emp.id] = {
+                employee_id: emp.id,
+                date: selectedDate,
+                status: 'PRESENT',
+                isAutoPresent: true
+              }
+            }
+          })
+        }
+
+        deptDataMap[deptId] = {
+          employees: empData,
+          attendance: attMap
+        }
+      }
+
+      setDepartmentData(deptDataMap)
+    } catch (error) {
+      console.error('Error fetching daily data:', error)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -538,19 +645,24 @@ export default function AttendancePage() {
     a.click()
   }
 
-  const renderPieChart = () => {
+  const renderPieChart = (deptId, deptName) => {
+    const deptData = departmentData[deptId]
+    if (!deptData) return null
+
+    const { employees: deptEmployees, attendance: deptAttendance } = deptData
+
     // Calculate attendance statistics
     const stats = {}
     ATTENDANCE_STATUSES.forEach(status => {
-      stats[status.value] = employees.filter(emp => {
-        const att = attendance[emp.id]
+      stats[status.value] = deptEmployees.filter(emp => {
+        const att = deptAttendance[emp.id]
         return att?.status === status.value
       }).length
     })
 
-    const total = employees.length
+    const total = deptEmployees.length
     if (total === 0) {
-      return <div className={styles.noData}>No employees in this department</div>
+      return <div className={styles.noData}>No employees in {deptName}</div>
     }
 
     // Calculate pie slices
@@ -678,58 +790,69 @@ export default function AttendancePage() {
             />
           </div>
 
-          <div className={styles.departmentRadioGroup}>
+          <div className={styles.departmentCheckboxGroup}>
             {departments.map((dept) => (
-              <label key={dept.id} className={styles.radioLabel}>
+              <label key={dept.id} className={styles.checkboxLabel}>
                 <input
-                  type="radio"
-                  name="department"
+                  type="checkbox"
                   value={dept.id}
-                  checked={selectedDepartment === dept.id}
-                  onChange={(e) => setSelectedDepartment(e.target.value)}
-                  className={styles.radioInput}
+                  checked={selectedDepartments.includes(dept.id)}
+                  onChange={() => handleDepartmentToggle(dept.id)}
+                  className={styles.checkboxInput}
                 />
-                <span className={styles.radioText}>{dept.display_name}</span>
+                <span className={styles.checkboxText}>{dept.display_name}</span>
               </label>
             ))}
           </div>
 
-          {!selectedDepartment ? (
-            <div className={styles.emptyState}>Please select a department to view attendance</div>
+          {selectedDepartments.length === 0 ? (
+            <div className={styles.emptyState}>Please select at least one department to view attendance</div>
           ) : loading ? (
             <div className={styles.loading}>Loading...</div>
           ) : (
-            <div className={styles.dailyView}>
-              <div className={styles.pieChartContainer}>
-                <h2 className={styles.chartTitle}>
-                  {departments.find(d => d.id === selectedDepartment)?.display_name} - {new Date(selectedDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                </h2>
-                {renderPieChart()}
-              </div>
+            <div className={styles.pieChartsGrid}>
+              {selectedDepartments.map(deptId => {
+                const dept = departments.find(d => d.id === deptId)
+                const deptData = departmentData[deptId]
+                if (!dept || !deptData) return null
 
-              <div className={styles.statsGrid}>
-                {ATTENDANCE_STATUSES.map(status => {
-                  const count = employees.filter(emp => {
-                    const att = attendance[emp.id]
-                    return att?.status === status.value
-                  }).length
+                const { employees: deptEmployees, attendance: deptAttendance } = deptData
 
-                  if (count === 0) return null
-
-                  return (
-                    <div key={status.value} className={styles.statCard}>
-                      <div
-                        className={styles.statColor}
-                        style={{ backgroundColor: status.color }}
-                      ></div>
-                      <div className={styles.statInfo}>
-                        <div className={styles.statLabel}>{status.label}</div>
-                        <div className={styles.statCount}>{count}</div>
-                      </div>
+                return (
+                  <div key={deptId} className={styles.departmentCard}>
+                    <div className={styles.pieChartContainer}>
+                      <h2 className={styles.chartTitle}>
+                        {dept.display_name}
+                      </h2>
+                      {renderPieChart(deptId, dept.display_name)}
                     </div>
-                  )
-                })}
-              </div>
+
+                    <div className={styles.statsGrid}>
+                      {ATTENDANCE_STATUSES.map(status => {
+                        const count = deptEmployees.filter(emp => {
+                          const att = deptAttendance[emp.id]
+                          return att?.status === status.value
+                        }).length
+
+                        if (count === 0) return null
+
+                        return (
+                          <div key={status.value} className={styles.statCard}>
+                            <div
+                              className={styles.statColor}
+                              style={{ backgroundColor: status.color }}
+                            ></div>
+                            <div className={styles.statInfo}>
+                              <div className={styles.statLabel}>{status.label}</div>
+                              <div className={styles.statCount}>{count}</div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           )}
         </div>
