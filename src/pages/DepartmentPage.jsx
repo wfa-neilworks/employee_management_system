@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useLocation } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import AddEmployeeModal from '../components/modals/AddEmployeeModal'
@@ -10,6 +10,7 @@ import styles from './DepartmentPage.module.css'
 
 export default function DepartmentPage() {
   const { departmentId } = useParams()
+  const location = useLocation()
   const { isHR, isProcurement } = useAuth()
   const [department, setDepartment] = useState(null)
   const [employees, setEmployees] = useState([])
@@ -21,34 +22,48 @@ export default function DepartmentPage() {
   const [resigningEmployee, setResigningEmployee] = useState(null)
   const [managingGearsEmployee, setManagingGearsEmployee] = useState(null)
 
+  const isResignedView = location.pathname === '/resigned'
+
   useEffect(() => {
-    if (departmentId) {
-      fetchData()
-    }
-  }, [departmentId])
+    fetchData()
+  }, [departmentId, isResignedView])
 
   const fetchData = async () => {
     try {
       setLoading(true)
 
-      const [deptResult, empResult] = await Promise.all([
-        supabase
-          .from('departments')
-          .select('*')
-          .eq('id', departmentId)
-          .single(),
-        supabase
+      if (isResignedView) {
+        // Fetch all resigned (inactive) employees
+        const empResult = await supabase
           .from('employees')
           .select('*, employee_gears(gear_type, size), departments(id, display_name)')
-          .eq('department_id', departmentId)
-          .eq('is_active', true)
-      ])
+          .eq('is_active', false)
 
-      if (deptResult.error) throw deptResult.error
-      if (empResult.error) throw empResult.error
+        if (empResult.error) throw empResult.error
 
-      setDepartment(deptResult.data)
-      setEmployees(empResult.data)
+        setDepartment({ display_name: 'Resigned Employees' })
+        setEmployees(empResult.data)
+      } else {
+        // Fetch specific department and its active employees
+        const [deptResult, empResult] = await Promise.all([
+          supabase
+            .from('departments')
+            .select('*')
+            .eq('id', departmentId)
+            .single(),
+          supabase
+            .from('employees')
+            .select('*, employee_gears(gear_type, size), departments(id, display_name)')
+            .eq('department_id', departmentId)
+            .eq('is_active', true)
+        ])
+
+        if (deptResult.error) throw deptResult.error
+        if (empResult.error) throw empResult.error
+
+        setDepartment(deptResult.data)
+        setEmployees(empResult.data)
+      }
     } catch (error) {
       console.error('Error fetching data:', error)
     } finally {
@@ -85,7 +100,7 @@ export default function DepartmentPage() {
           <h1 className={styles.title}>{department?.display_name}</h1>
           <p className={styles.subtitle}>{employees.length} employees</p>
         </div>
-        {isHR() && (
+        {isHR() && !isResignedView && (
           <button
             className={styles.addButton}
             onClick={() => setShowAddModal(true)}
@@ -112,19 +127,21 @@ export default function DepartmentPage() {
               <th>Payroll #</th>
               <th>Name</th>
               <th>English Name</th>
+              {isResignedView && <th>Department</th>}
               <th>Locker</th>
               <th>Employment Status</th>
               <th>Wage Status</th>
               <th>Gears</th>
               <th>Start Date</th>
-              <th>Actions</th>
+              {isResignedView && <th>End Date</th>}
+              {!isResignedView && <th>Actions</th>}
             </tr>
           </thead>
           <tbody>
             {filteredEmployees.length === 0 ? (
               <tr>
-                <td colSpan="9" className={styles.noResults}>
-                  {searchQuery ? 'No employees found' : 'No employees in this department'}
+                <td colSpan={isResignedView ? "10" : "9"} className={styles.noResults}>
+                  {searchQuery ? 'No employees found' : isResignedView ? 'No resigned employees' : 'No employees in this department'}
                 </td>
               </tr>
             ) : (
@@ -133,6 +150,7 @@ export default function DepartmentPage() {
                   <td>{employee.payroll_number || '-'}</td>
                   <td>{employee.name}</td>
                   <td>{employee.english_name || '-'}</td>
+                  {isResignedView && <td>{employee.departments?.display_name || '-'}</td>}
                   <td>{employee.locker_number || '-'}</td>
                   <td>
                     <span className={`${styles.badge} ${styles[employee.employment_status?.toLowerCase()]}`}>
@@ -159,34 +177,39 @@ export default function DepartmentPage() {
                     </div>
                   </td>
                   <td>{new Date(employee.start_date).toLocaleDateString()}</td>
-                  <td>
-                    <div className={styles.actions}>
-                      {isHR() && (
-                        <>
+                  {isResignedView && (
+                    <td>{employee.end_date ? new Date(employee.end_date).toLocaleDateString() : '-'}</td>
+                  )}
+                  {!isResignedView && (
+                    <td>
+                      <div className={styles.actions}>
+                        {isHR() && (
+                          <>
+                            <button
+                              className={styles.actionButton}
+                              onClick={() => setEditingEmployee(employee)}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className={`${styles.actionButton} ${styles.resignButton}`}
+                              onClick={() => setResigningEmployee(employee)}
+                            >
+                              Resign
+                            </button>
+                          </>
+                        )}
+                        {isProcurement() && (
                           <button
                             className={styles.actionButton}
-                            onClick={() => setEditingEmployee(employee)}
+                            onClick={() => setManagingGearsEmployee(employee)}
                           >
-                            Edit
+                            Manage Gears
                           </button>
-                          <button
-                            className={`${styles.actionButton} ${styles.resignButton}`}
-                            onClick={() => setResigningEmployee(employee)}
-                          >
-                            Resign
-                          </button>
-                        </>
-                      )}
-                      {isProcurement() && (
-                        <button
-                          className={styles.actionButton}
-                          onClick={() => setManagingGearsEmployee(employee)}
-                        >
-                          Manage Gears
-                        </button>
-                      )}
-                    </div>
-                  </td>
+                        )}
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))
             )}
@@ -194,7 +217,7 @@ export default function DepartmentPage() {
         </table>
       </div>
 
-      {showAddModal && (
+      {showAddModal && !isResignedView && (
         <AddEmployeeModal
           departmentId={departmentId}
           onClose={() => setShowAddModal(false)}

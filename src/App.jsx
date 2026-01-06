@@ -41,6 +41,7 @@ function AppRoutes() {
       >
         <Route index element={<DashboardPage />} />
         <Route path="department/:departmentId" element={<DepartmentPage />} />
+        <Route path="resigned" element={<DepartmentPage />} />
         <Route path="roster" element={<RosterPage />} />
         <Route path="timesheet" element={<TimesheetPage />} />
       </Route>

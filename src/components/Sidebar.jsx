@@ -48,6 +48,14 @@ export default function Sidebar({ departments, isOpen }) {
                   {dept.display_name}
                 </NavLink>
               ))}
+              <NavLink
+                to="/resigned"
+                className={({ isActive }) =>
+                  `${styles.subNavItem} ${isActive ? styles.subNavItemActive : ''}`
+                }
+              >
+                Resigned Employees
+              </NavLink>
             </div>
           )}
         </div>
