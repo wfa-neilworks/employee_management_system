@@ -5,6 +5,7 @@ import DashboardPage from './pages/DashboardPage'
 import DepartmentPage from './pages/DepartmentPage'
 import RosterPage from './pages/RosterPage'
 import TimesheetPage from './pages/TimesheetPage'
+import AttendancePage from './pages/AttendancePage'
 import Layout from './components/Layout'
 
 function PrivateRoute({ children }) {
@@ -44,6 +45,7 @@ function AppRoutes() {
         <Route path="resigned" element={<DepartmentPage />} />
         <Route path="roster" element={<RosterPage />} />
         <Route path="timesheet" element={<TimesheetPage />} />
+        <Route path="attendance" element={<AttendancePage />} />
       </Route>
     </Routes>
   )

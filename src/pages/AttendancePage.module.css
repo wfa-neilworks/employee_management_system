@@ -1,0 +1,351 @@
+.container {
+  padding: 32px;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.title {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.viewToggle {
+  display: flex;
+  gap: 8px;
+}
+
+.toggleButton {
+  padding: 8px 16px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggleButton:hover {
+  background: var(--bg-tertiary);
+}
+
+.toggleButton.active {
+  background: var(--accent-primary);
+  color: #000;
+  border-color: var(--accent-primary);
+}
+
+.controls {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 200px;
+}
+
+.label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.select,
+.input {
+  padding: 10px 12px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.select:focus,
+.input:focus {
+  border-color: var(--accent-primary);
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.markAllButton,
+.exportButton {
+  padding: 10px 20px;
+  background: var(--accent-primary);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.markAllButton:hover,
+.exportButton:hover {
+  opacity: 0.8;
+}
+
+.markAllButton:disabled,
+.exportButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.exportButton {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.emptyState {
+  text-align: center;
+  padding: 64px 32px;
+  color: var(--text-secondary);
+  font-size: 16px;
+}
+
+.loading {
+  text-align: center;
+  padding: 64px 32px;
+  color: var(--text-secondary);
+  font-size: 16px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  margin-bottom: 24px;
+  align-items: center;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legendColor {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+/* Daily View */
+.dailyView {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.tableContainer {
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  background: var(--bg-tertiary);
+  padding: 16px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.table td {
+  padding: 16px;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody tr:hover {
+  background: var(--bg-tertiary);
+}
+
+.noResults {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 32px !important;
+}
+
+.statusSelect {
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  color: #000;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  min-width: 200px;
+  transition: all 0.2s ease;
+}
+
+.statusSelect:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.statusSelect option {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+/* Monthly View */
+.monthlyView {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.monthlyTableContainer {
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+}
+
+.monthlyTable {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1200px;
+}
+
+.monthlyTable th {
+  background: var(--bg-tertiary);
+  padding: 12px 8px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.monthlyTable td {
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 12px;
+  text-align: center;
+}
+
+.stickyCol {
+  position: sticky;
+  left: 0;
+  background: var(--bg-secondary);
+  z-index: 10;
+  text-align: left !important;
+  min-width: 120px;
+}
+
+.stickyCol:first-child {
+  left: 0;
+  z-index: 11;
+  min-width: 100px;
+}
+
+.stickyCol:nth-child(2) {
+  left: 100px;
+  z-index: 11;
+}
+
+.monthlyTable thead th.stickyCol {
+  z-index: 12;
+  background: var(--bg-tertiary);
+}
+
+.dayCell {
+  min-width: 40px;
+  font-weight: 600;
+  cursor: default;
+}
+
+.statsCol {
+  background: var(--bg-tertiary) !important;
+  font-weight: 600;
+  min-width: 50px;
+}
+
+.monthlyTable tbody tr:hover td:not(.statsCol) {
+  background: var(--bg-tertiary);
+}
+
+.monthlyTable tbody tr:hover .stickyCol {
+  background: var(--bg-tertiary);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .container {
+    padding: 16px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .controls {
+    flex-direction: column;
+  }
+
+  .formGroup {
+    width: 100%;
+  }
+
+  .actions {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .markAllButton,
+  .exportButton {
+    flex: 1;
+  }
+
+  .stickyCol:nth-child(2) {
+    left: 80px;
+  }
+}

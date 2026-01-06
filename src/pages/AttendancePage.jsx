@@ -1,0 +1,589 @@
+import { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
+import { useAuth } from '../context/AuthContext'
+import styles from './AttendancePage.module.css'
+
+const ATTENDANCE_STATUSES = [
+  { value: 'PRESENT', label: 'Present', color: '#00ff88' },
+  { value: 'ABSENT', label: 'Absent', color: '#ff0088' },
+  { value: 'SICK_LEAVE', label: 'Sick Leave', color: '#ff8800' },
+  { value: 'ANNUAL_LEAVE', label: 'Annual Leave', color: '#00d4ff' },
+  { value: 'LEAVE_WITHOUT_PAY', label: 'Leave Without Pay', color: '#888888' },
+  { value: 'PUBLIC_HOLIDAY', label: 'Public Holiday', color: '#d4ff00' },
+  { value: 'REST_DAY', label: 'Rest Day', color: '#aa88ff' }
+]
+
+export default function AttendancePage() {
+  const { isHR } = useAuth()
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7))
+  const [selectedDepartment, setSelectedDepartment] = useState('')
+  const [view, setView] = useState('daily') // 'daily' or 'monthly'
+  const [departments, setDepartments] = useState([])
+  const [employees, setEmployees] = useState([])
+  const [attendance, setAttendance] = useState({})
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    fetchDepartments()
+  }, [])
+
+  useEffect(() => {
+    if (selectedDepartment) {
+      if (view === 'daily') {
+        fetchDailyData()
+      } else {
+        fetchMonthlyData()
+      }
+    }
+  }, [selectedDepartment, selectedDate, selectedMonth, view])
+
+  const fetchDepartments = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('departments')
+        .select('id, display_name')
+        .order('display_name')
+
+      if (error) throw error
+      setDepartments(data || [])
+    } catch (error) {
+      console.error('Error fetching departments:', error)
+    }
+  }
+
+  const fetchDailyData = async () => {
+    try {
+      setLoading(true)
+
+      // Fetch employees
+      const { data: empData, error: empError } = await supabase
+        .from('employees')
+        .select('id, name, english_name, payroll_number, wage_status')
+        .eq('department_id', selectedDepartment)
+        .eq('is_active', true)
+
+      if (empError) throw empError
+
+      // Sort employees: WFA first, then LABOR_HIRE
+      empData.sort((a, b) => {
+        if (a.wage_status === 'WFA' && b.wage_status !== 'WFA') return -1
+        if (a.wage_status !== 'WFA' && b.wage_status === 'WFA') return 1
+        return a.name.localeCompare(b.name)
+      })
+
+      setEmployees(empData)
+
+      // Fetch attendance for selected date
+      const { data: attData, error: attError } = await supabase
+        .from('attendance')
+        .select('*')
+        .eq('date', selectedDate)
+        .in('employee_id', empData.map(e => e.id))
+
+      if (attError) throw attError
+
+      // Create attendance map
+      const attMap = {}
+      attData.forEach(att => {
+        attMap[att.employee_id] = att
+      })
+
+      setAttendance(attMap)
+    } catch (error) {
+      console.error('Error fetching daily data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchMonthlyData = async () => {
+    try {
+      setLoading(true)
+
+      // Fetch employees
+      const { data: empData, error: empError } = await supabase
+        .from('employees')
+        .select('id, name, english_name, payroll_number, wage_status')
+        .eq('department_id', selectedDepartment)
+        .eq('is_active', true)
+
+      if (empError) throw empError
+
+      // Sort employees
+      empData.sort((a, b) => {
+        if (a.wage_status === 'WFA' && b.wage_status !== 'WFA') return -1
+        if (a.wage_status !== 'WFA' && b.wage_status === 'WFA') return 1
+        return a.name.localeCompare(b.name)
+      })
+
+      setEmployees(empData)
+
+      // Fetch attendance for selected month
+      const startDate = `${selectedMonth}-01`
+      const endDate = new Date(selectedMonth + '-01')
+      endDate.setMonth(endDate.getMonth() + 1)
+      endDate.setDate(0)
+      const endDateStr = endDate.toISOString().split('T')[0]
+
+      const { data: attData, error: attError } = await supabase
+        .from('attendance')
+        .select('*')
+        .gte('date', startDate)
+        .lte('date', endDateStr)
+        .in('employee_id', empData.map(e => e.id))
+
+      if (attError) throw attError
+
+      // Create attendance map: employee_id -> { date -> attendance }
+      const attMap = {}
+      attData.forEach(att => {
+        if (!attMap[att.employee_id]) {
+          attMap[att.employee_id] = {}
+        }
+        attMap[att.employee_id][att.date] = att
+      })
+
+      setAttendance(attMap)
+    } catch (error) {
+      console.error('Error fetching monthly data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleStatusChange = async (employeeId, status) => {
+    if (!isHR()) return
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+
+      const attendanceRecord = {
+        employee_id: employeeId,
+        date: selectedDate,
+        status: status,
+        updated_by: user.id,
+        updated_at: new Date().toISOString()
+      }
+
+      const existing = attendance[employeeId]
+
+      if (existing) {
+        // Update existing record
+        const { error } = await supabase
+          .from('attendance')
+          .update(attendanceRecord)
+          .eq('id', existing.id)
+
+        if (error) throw error
+      } else {
+        // Insert new record
+        attendanceRecord.created_by = user.id
+
+        const { data, error } = await supabase
+          .from('attendance')
+          .insert([attendanceRecord])
+          .select()
+          .single()
+
+        if (error) throw error
+
+        // Update local state
+        setAttendance(prev => ({
+          ...prev,
+          [employeeId]: data
+        }))
+        return
+      }
+
+      // Update local state for existing
+      setAttendance(prev => ({
+        ...prev,
+        [employeeId]: { ...existing, ...attendanceRecord }
+      }))
+    } catch (error) {
+      console.error('Error updating attendance:', error)
+      alert('Failed to update attendance')
+    }
+  }
+
+  const markAllPresent = async () => {
+    if (!isHR()) return
+    if (!confirm('Mark all employees as present for this date?')) return
+
+    try {
+      setSaving(true)
+      const { data: { user } } = await supabase.auth.getUser()
+
+      const records = employees.map(emp => ({
+        employee_id: emp.id,
+        date: selectedDate,
+        status: 'PRESENT',
+        created_by: user.id,
+        updated_by: user.id
+      }))
+
+      // Delete existing records for this date
+      await supabase
+        .from('attendance')
+        .delete()
+        .eq('date', selectedDate)
+        .in('employee_id', employees.map(e => e.id))
+
+      // Insert new records
+      const { data, error } = await supabase
+        .from('attendance')
+        .insert(records)
+        .select()
+
+      if (error) throw error
+
+      // Update local state
+      const newAttendance = {}
+      data.forEach(att => {
+        newAttendance[att.employee_id] = att
+      })
+      setAttendance(newAttendance)
+
+      alert('All employees marked as present')
+    } catch (error) {
+      console.error('Error marking all present:', error)
+      alert('Failed to mark all present')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const getDaysInMonth = (yearMonth) => {
+    const [year, month] = yearMonth.split('-').map(Number)
+    return new Date(year, month, 0).getDate()
+  }
+
+  const getMonthlyStats = (employeeId) => {
+    const empAttendance = attendance[employeeId] || {}
+    const stats = {
+      PRESENT: 0,
+      ABSENT: 0,
+      SICK_LEAVE: 0,
+      ANNUAL_LEAVE: 0,
+      LEAVE_WITHOUT_PAY: 0,
+      PUBLIC_HOLIDAY: 0,
+      REST_DAY: 0
+    }
+
+    Object.values(empAttendance).forEach(att => {
+      if (stats[att.status] !== undefined) {
+        stats[att.status]++
+      }
+    })
+
+    return stats
+  }
+
+  const exportToCSV = () => {
+    if (view === 'daily') {
+      exportDailyCSV()
+    } else {
+      exportMonthlyCSV()
+    }
+  }
+
+  const exportDailyCSV = () => {
+    const headers = ['Payroll #', 'Name', 'English Name', 'Status', 'Notes']
+    const rows = employees.map(emp => {
+      const att = attendance[emp.id]
+      return [
+        emp.payroll_number || '',
+        emp.name,
+        emp.english_name || '',
+        att ? ATTENDANCE_STATUSES.find(s => s.value === att.status)?.label || '' : '',
+        att?.notes || ''
+      ]
+    })
+
+    const csv = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `attendance-${selectedDate}.csv`
+    a.click()
+  }
+
+  const exportMonthlyCSV = () => {
+    const daysInMonth = getDaysInMonth(selectedMonth)
+    const dates = Array.from({ length: daysInMonth }, (_, i) => {
+      const day = String(i + 1).padStart(2, '0')
+      return `${selectedMonth}-${day}`
+    })
+
+    const headers = ['Payroll #', 'Name', 'English Name', ...dates, 'P', 'A', 'SL', 'AL', 'LWP', 'PH', 'RD']
+    const rows = employees.map(emp => {
+      const empAtt = attendance[emp.id] || {}
+      const stats = getMonthlyStats(emp.id)
+
+      const statusCells = dates.map(date => {
+        const att = empAtt[date]
+        if (!att) return ''
+        const status = ATTENDANCE_STATUSES.find(s => s.value === att.status)
+        return status?.label.charAt(0) || ''
+      })
+
+      return [
+        emp.payroll_number || '',
+        emp.name,
+        emp.english_name || '',
+        ...statusCells,
+        stats.PRESENT,
+        stats.ABSENT,
+        stats.SICK_LEAVE,
+        stats.ANNUAL_LEAVE,
+        stats.LEAVE_WITHOUT_PAY,
+        stats.PUBLIC_HOLIDAY,
+        stats.REST_DAY
+      ]
+    })
+
+    const csv = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `attendance-${selectedMonth}.csv`
+    a.click()
+  }
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <h1 className={styles.title}>Attendance Tracking</h1>
+        <div className={styles.viewToggle}>
+          <button
+            className={`${styles.toggleButton} ${view === 'daily' ? styles.active : ''}`}
+            onClick={() => setView('daily')}
+          >
+            Daily View
+          </button>
+          <button
+            className={`${styles.toggleButton} ${view === 'monthly' ? styles.active : ''}`}
+            onClick={() => setView('monthly')}
+          >
+            Monthly View
+          </button>
+        </div>
+      </div>
+
+      <div className={styles.controls}>
+        <div className={styles.formGroup}>
+          <label className={styles.label}>Department *</label>
+          <select
+            value={selectedDepartment}
+            onChange={(e) => setSelectedDepartment(e.target.value)}
+            className={styles.select}
+          >
+            <option value="">Select Department</option>
+            {departments.map((dept) => (
+              <option key={dept.id} value={dept.id}>
+                {dept.display_name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {view === 'daily' ? (
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Date *</label>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className={styles.input}
+            />
+          </div>
+        ) : (
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Month *</label>
+            <input
+              type="month"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className={styles.input}
+            />
+          </div>
+        )}
+
+        <div className={styles.actions}>
+          {isHR() && view === 'daily' && (
+            <button
+              onClick={markAllPresent}
+              className={styles.markAllButton}
+              disabled={!selectedDepartment || saving}
+            >
+              {saving ? 'Saving...' : 'Mark All Present'}
+            </button>
+          )}
+          <button
+            onClick={exportToCSV}
+            className={styles.exportButton}
+            disabled={!selectedDepartment || employees.length === 0}
+          >
+            Export to CSV
+          </button>
+        </div>
+      </div>
+
+      {!selectedDepartment ? (
+        <div className={styles.emptyState}>Please select a department to view attendance</div>
+      ) : loading ? (
+        <div className={styles.loading}>Loading...</div>
+      ) : view === 'daily' ? (
+        <div className={styles.dailyView}>
+          <div className={styles.legend}>
+            {ATTENDANCE_STATUSES.map(status => (
+              <div key={status.value} className={styles.legendItem}>
+                <div className={styles.legendColor} style={{ backgroundColor: status.color }}></div>
+                <span>{status.label}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className={styles.tableContainer}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Payroll #</th>
+                  <th>Name</th>
+                  <th>English Name</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {employees.length === 0 ? (
+                  <tr>
+                    <td colSpan="4" className={styles.noResults}>
+                      No active employees in this department
+                    </td>
+                  </tr>
+                ) : (
+                  employees.map((employee) => {
+                    const att = attendance[employee.id]
+                    const currentStatus = att?.status || ''
+
+                    return (
+                      <tr key={employee.id}>
+                        <td>{employee.payroll_number || '-'}</td>
+                        <td>{employee.name}</td>
+                        <td>{employee.english_name || '-'}</td>
+                        <td>
+                          <select
+                            value={currentStatus}
+                            onChange={(e) => handleStatusChange(employee.id, e.target.value)}
+                            className={styles.statusSelect}
+                            disabled={!isHR()}
+                            style={{
+                              backgroundColor: currentStatus
+                                ? ATTENDANCE_STATUSES.find(s => s.value === currentStatus)?.color
+                                : 'transparent'
+                            }}
+                          >
+                            <option value="">Not Marked</option>
+                            {ATTENDANCE_STATUSES.map(status => (
+                              <option key={status.value} value={status.value}>
+                                {status.label}
+                              </option>
+                            ))}
+                          </select>
+                        </td>
+                      </tr>
+                    )
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : (
+        <div className={styles.monthlyView}>
+          <div className={styles.monthlyTableContainer}>
+            <table className={styles.monthlyTable}>
+              <thead>
+                <tr>
+                  <th className={styles.stickyCol}>Payroll #</th>
+                  <th className={styles.stickyCol}>Name</th>
+                  {Array.from({ length: getDaysInMonth(selectedMonth) }, (_, i) => (
+                    <th key={i + 1}>{i + 1}</th>
+                  ))}
+                  <th className={styles.statsCol}>P</th>
+                  <th className={styles.statsCol}>A</th>
+                  <th className={styles.statsCol}>SL</th>
+                  <th className={styles.statsCol}>AL</th>
+                  <th className={styles.statsCol}>LWP</th>
+                  <th className={styles.statsCol}>PH</th>
+                  <th className={styles.statsCol}>RD</th>
+                </tr>
+              </thead>
+              <tbody>
+                {employees.length === 0 ? (
+                  <tr>
+                    <td colSpan={getDaysInMonth(selectedMonth) + 9} className={styles.noResults}>
+                      No active employees in this department
+                    </td>
+                  </tr>
+                ) : (
+                  employees.map((employee) => {
+                    const empAtt = attendance[employee.id] || {}
+                    const stats = getMonthlyStats(employee.id)
+
+                    return (
+                      <tr key={employee.id}>
+                        <td className={styles.stickyCol}>{employee.payroll_number || '-'}</td>
+                        <td className={styles.stickyCol}>{employee.name}</td>
+                        {Array.from({ length: getDaysInMonth(selectedMonth) }, (_, i) => {
+                          const day = String(i + 1).padStart(2, '0')
+                          const date = `${selectedMonth}-${day}`
+                          const att = empAtt[date]
+                          const status = att ? ATTENDANCE_STATUSES.find(s => s.value === att.status) : null
+
+                          return (
+                            <td
+                              key={date}
+                              className={styles.dayCell}
+                              style={{
+                                backgroundColor: status ? status.color : 'transparent'
+                              }}
+                              title={status ? status.label : 'Not marked'}
+                            >
+                              {status ? status.label.charAt(0) : ''}
+                            </td>
+                          )
+                        })}
+                        <td className={styles.statsCol}>{stats.PRESENT}</td>
+                        <td className={styles.statsCol}>{stats.ABSENT}</td>
+                        <td className={styles.statsCol}>{stats.SICK_LEAVE}</td>
+                        <td className={styles.statsCol}>{stats.ANNUAL_LEAVE}</td>
+                        <td className={styles.statsCol}>{stats.LEAVE_WITHOUT_PAY}</td>
+                        <td className={styles.statsCol}>{stats.PUBLIC_HOLIDAY}</td>
+                        <td className={styles.statsCol}>{stats.REST_DAY}</td>
+                      </tr>
+                    )
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <div className={styles.legend}>
+            <strong>Legend:</strong>
+            {ATTENDANCE_STATUSES.map(status => (
+              <div key={status.value} className={styles.legendItem}>
+                <div className={styles.legendColor} style={{ backgroundColor: status.color }}></div>
+                <span>{status.label} ({status.label.charAt(0)})</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
