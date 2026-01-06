@@ -85,11 +85,8 @@ export default function AttendancePage() {
       if (attError) {
         // If attendance table doesn't exist, continue without existing records
         console.warn('Attendance table query failed:', attError)
-        if (attError.code === 'PGRST116' || attError.message?.includes('does not exist')) {
-          console.warn('Attendance table does not exist. Please run the migration SQL.')
-        } else {
-          throw attError
-        }
+        console.warn('Attendance table does not exist. Please run the migration SQL from migrations/create-attendance-table.sql')
+        // Don't throw error - continue with empty attendance data
       }
 
       // Fetch roster/leave data for selected date
@@ -209,11 +206,8 @@ export default function AttendancePage() {
       if (attError) {
         // If attendance table doesn't exist, continue without existing records
         console.warn('Attendance table query failed:', attError)
-        if (attError.code === 'PGRST116' || attError.message?.includes('does not exist')) {
-          console.warn('Attendance table does not exist. Please run the migration SQL.')
-        } else {
-          throw attError
-        }
+        console.warn('Attendance table does not exist. Please run the migration SQL from migrations/create-attendance-table.sql')
+        // Don't throw error - continue with empty attendance data
       }
 
       // Fetch roster/leave data for selected month
