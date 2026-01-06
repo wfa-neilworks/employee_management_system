@@ -88,11 +88,13 @@ export default function AttendancePage() {
       const { data: leaveData, error: leaveError } = await supabase
         .from('leave')
         .select('employee_id, leave_type')
-        .lte('start_date', selectedDate)
-        .gte('end_date', selectedDate)
+        .lte('start_date', selectedDate)  // Leave starts on or before selected date
+        .gte('end_date', selectedDate)    // Leave ends on or after selected date
         .in('employee_id', empData.map(e => e.id))
 
       if (leaveError) throw leaveError
+
+      console.log('Daily - Fetched leave data:', leaveData)
 
       // Create attendance map with auto-population from roster
       const attMap = {}
@@ -129,9 +131,11 @@ export default function AttendancePage() {
             status: status,
             isFromRoster: true // Flag to indicate it's from roster
           }
+          console.log('Daily - Auto-populated:', leave.employee_id, status)
         }
       })
 
+      console.log('Daily - Final attendance map:', attMap)
       setAttendance(attMap)
     } catch (error) {
       console.error('Error fetching daily data:', error)
@@ -179,14 +183,17 @@ export default function AttendancePage() {
       if (attError) throw attError
 
       // Fetch roster/leave data for selected month
+      // A leave overlaps with the month if: start_date <= month_end AND end_date >= month_start
       const { data: leaveData, error: leaveError } = await supabase
         .from('leave')
         .select('employee_id, leave_type, start_date, end_date')
-        .lte('start_date', endDateStr)
-        .gte('end_date', startDate)
+        .lte('start_date', endDateStr)  // Leave starts before or during the month
+        .gte('end_date', startDate)     // Leave ends during or after the month
         .in('employee_id', empData.map(e => e.id))
 
       if (leaveError) throw leaveError
+
+      console.log('Fetched leave data for month:', leaveData)
 
       // Create attendance map: employee_id -> { date -> attendance }
       const attMap = {}
@@ -201,9 +208,11 @@ export default function AttendancePage() {
 
       // Then, auto-populate from roster/leave data for dates without attendance
       leaveData.forEach(leave => {
-        // Get all dates for this leave within the selected month
-        const leaveStart = new Date(Math.max(new Date(leave.start_date), new Date(startDate)))
-        const leaveEnd = new Date(Math.min(new Date(leave.end_date), new Date(endDateStr)))
+        console.log('Processing leave:', leave)
+
+        // Determine the actual date range within the selected month
+        const actualStart = leave.start_date > startDate ? leave.start_date : startDate
+        const actualEnd = leave.end_date < endDateStr ? leave.end_date : endDateStr
 
         // Map leave type to attendance status
         let status = 'PRESENT'
@@ -222,9 +231,16 @@ export default function AttendancePage() {
             break
         }
 
+        // Parse dates properly (avoid timezone issues)
+        const [startYear, startMonth, startDay] = actualStart.split('-').map(Number)
+        const [endYear, endMonth, endDay] = actualEnd.split('-').map(Number)
+
+        const currentDate = new Date(startYear, startMonth - 1, startDay)
+        const endDate = new Date(endYear, endMonth - 1, endDay)
+
         // Fill in each day of the leave
-        for (let d = new Date(leaveStart); d <= leaveEnd; d.setDate(d.getDate() + 1)) {
-          const dateStr = d.toISOString().split('T')[0]
+        while (currentDate <= endDate) {
+          const dateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`
 
           if (!attMap[leave.employee_id]) {
             attMap[leave.employee_id] = {}
@@ -238,9 +254,14 @@ export default function AttendancePage() {
               status: status,
               isFromRoster: true
             }
+            console.log('Auto-populated:', leave.employee_id, dateStr, status)
           }
+
+          currentDate.setDate(currentDate.getDate() + 1)
         }
       })
+
+      console.log('Final attendance map:', attMap)
 
       setAttendance(attMap)
     } catch (error) {
