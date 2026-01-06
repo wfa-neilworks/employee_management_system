@@ -538,6 +538,114 @@ export default function AttendancePage() {
     a.click()
   }
 
+  const renderPieChart = () => {
+    // Calculate attendance statistics
+    const stats = {}
+    ATTENDANCE_STATUSES.forEach(status => {
+      stats[status.value] = employees.filter(emp => {
+        const att = attendance[emp.id]
+        return att?.status === status.value
+      }).length
+    })
+
+    const total = employees.length
+    if (total === 0) {
+      return <div className={styles.noData}>No employees in this department</div>
+    }
+
+    // Calculate pie slices
+    let currentAngle = 0
+    const slices = []
+
+    ATTENDANCE_STATUSES.forEach(status => {
+      const count = stats[status.value]
+      if (count > 0) {
+        const percentage = (count / total) * 100
+        const angle = (count / total) * 360
+
+        slices.push({
+          status: status,
+          count: count,
+          percentage: percentage,
+          startAngle: currentAngle,
+          endAngle: currentAngle + angle
+        })
+
+        currentAngle += angle
+      }
+    })
+
+    // SVG pie chart
+    const size = 300
+    const center = size / 2
+    const radius = size / 2 - 20
+
+    const polarToCartesian = (centerX, centerY, radius, angleInDegrees) => {
+      const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0
+      return {
+        x: centerX + (radius * Math.cos(angleInRadians)),
+        y: centerY + (radius * Math.sin(angleInRadians))
+      }
+    }
+
+    const describeArc = (x, y, radius, startAngle, endAngle) => {
+      const start = polarToCartesian(x, y, radius, endAngle)
+      const end = polarToCartesian(x, y, radius, startAngle)
+      const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1'
+
+      return [
+        'M', x, y,
+        'L', start.x, start.y,
+        'A', radius, radius, 0, largeArcFlag, 0, end.x, end.y,
+        'Z'
+      ].join(' ')
+    }
+
+    return (
+      <svg width={size} height={size} className={styles.pieChart}>
+        {slices.map((slice, index) => (
+          <g key={slice.status.value}>
+            <path
+              d={describeArc(center, center, radius, slice.startAngle, slice.endAngle)}
+              fill={slice.status.color}
+              stroke="#fff"
+              strokeWidth="2"
+            />
+            <title>{`${slice.status.label}: ${slice.count} (${slice.percentage.toFixed(1)}%)`}</title>
+          </g>
+        ))}
+        {/* Center circle for donut effect */}
+        <circle
+          cx={center}
+          cy={center}
+          r={radius * 0.5}
+          fill="#1a1a1a"
+        />
+        <text
+          x={center}
+          y={center}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fill="#fff"
+          fontSize="32"
+          fontWeight="bold"
+        >
+          {total}
+        </text>
+        <text
+          x={center}
+          y={center + 25}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fill="#888"
+          fontSize="14"
+        >
+          Total
+        </text>
+      </svg>
+    )
+  }
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -558,26 +666,10 @@ export default function AttendancePage() {
         </div>
       </div>
 
-      <div className={styles.controls}>
-        <div className={styles.formGroup}>
-          <label className={styles.label}>Department *</label>
-          <select
-            value={selectedDepartment}
-            onChange={(e) => setSelectedDepartment(e.target.value)}
-            className={styles.select}
-          >
-            <option value="">Select Department</option>
-            {departments.map((dept) => (
-              <option key={dept.id} value={dept.id}>
-                {dept.display_name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {view === 'daily' ? (
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Date *</label>
+      {view === 'daily' ? (
+        <div className={styles.dailyViewContainer}>
+          <div className={styles.dateSelector}>
+            <label className={styles.label}>Date:</label>
             <input
               type="date"
               value={selectedDate}
@@ -585,111 +677,109 @@ export default function AttendancePage() {
               className={styles.input}
             />
           </div>
-        ) : (
-          <div className={styles.formGroup}>
-            <label className={styles.label}>Month *</label>
-            <input
-              type="month"
-              value={selectedMonth}
-              onChange={(e) => setSelectedMonth(e.target.value)}
-              className={styles.input}
-            />
-          </div>
-        )}
 
-        <div className={styles.actions}>
-          {isHR() && view === 'daily' && (
-            <button
-              onClick={markAllPresent}
-              className={styles.markAllButton}
-              disabled={!selectedDepartment || saving}
-            >
-              {saving ? 'Saving...' : 'Mark All Present'}
-            </button>
-          )}
-          <button
-            onClick={exportToCSV}
-            className={styles.exportButton}
-            disabled={!selectedDepartment || employees.length === 0}
-          >
-            Export to CSV
-          </button>
-        </div>
-      </div>
-
-      {!selectedDepartment ? (
-        <div className={styles.emptyState}>Please select a department to view attendance</div>
-      ) : loading ? (
-        <div className={styles.loading}>Loading...</div>
-      ) : view === 'daily' ? (
-        <div className={styles.dailyView}>
-          <div className={styles.legend}>
-            {ATTENDANCE_STATUSES.map(status => (
-              <div key={status.value} className={styles.legendItem}>
-                <div className={styles.legendColor} style={{ backgroundColor: status.color }}></div>
-                <span>{status.label}</span>
-              </div>
+          <div className={styles.departmentRadioGroup}>
+            {departments.map((dept) => (
+              <label key={dept.id} className={styles.radioLabel}>
+                <input
+                  type="radio"
+                  name="department"
+                  value={dept.id}
+                  checked={selectedDepartment === dept.id}
+                  onChange={(e) => setSelectedDepartment(e.target.value)}
+                  className={styles.radioInput}
+                />
+                <span className={styles.radioText}>{dept.display_name}</span>
+              </label>
             ))}
           </div>
 
-          <div className={styles.tableContainer}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Payroll #</th>
-                  <th>Name</th>
-                  <th>English Name</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {employees.length === 0 ? (
-                  <tr>
-                    <td colSpan="4" className={styles.noResults}>
-                      No active employees in this department
-                    </td>
-                  </tr>
-                ) : (
-                  employees.map((employee) => {
-                    const att = attendance[employee.id]
-                    const currentStatus = att?.status || ''
+          {!selectedDepartment ? (
+            <div className={styles.emptyState}>Please select a department to view attendance</div>
+          ) : loading ? (
+            <div className={styles.loading}>Loading...</div>
+          ) : (
+            <div className={styles.dailyView}>
+              <div className={styles.pieChartContainer}>
+                <h2 className={styles.chartTitle}>
+                  {departments.find(d => d.id === selectedDepartment)?.display_name} - {new Date(selectedDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                </h2>
+                {renderPieChart()}
+              </div>
 
-                    return (
-                      <tr key={employee.id}>
-                        <td>{employee.payroll_number || '-'}</td>
-                        <td>{employee.name}</td>
-                        <td>{employee.english_name || '-'}</td>
-                        <td>
-                          <select
-                            value={currentStatus}
-                            onChange={(e) => handleStatusChange(employee.id, e.target.value)}
-                            className={styles.statusSelect}
-                            disabled={!isHR()}
-                            style={{
-                              backgroundColor: currentStatus
-                                ? ATTENDANCE_STATUSES.find(s => s.value === currentStatus)?.color
-                                : 'transparent'
-                            }}
-                          >
-                            <option value="">Not Marked</option>
-                            {ATTENDANCE_STATUSES.map(status => (
-                              <option key={status.value} value={status.value}>
-                                {status.label}
-                              </option>
-                            ))}
-                          </select>
-                        </td>
-                      </tr>
-                    )
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+              <div className={styles.statsGrid}>
+                {ATTENDANCE_STATUSES.map(status => {
+                  const count = employees.filter(emp => {
+                    const att = attendance[emp.id]
+                    return att?.status === status.value
+                  }).length
+
+                  if (count === 0) return null
+
+                  return (
+                    <div key={status.value} className={styles.statCard}>
+                      <div
+                        className={styles.statColor}
+                        style={{ backgroundColor: status.color }}
+                      ></div>
+                      <div className={styles.statInfo}>
+                        <div className={styles.statLabel}>{status.label}</div>
+                        <div className={styles.statCount}>{count}</div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
       ) : (
-        <div className={styles.monthlyView}>
-          <div className={styles.monthlyTableContainer}>
+        <div className={styles.monthlyViewContainer}>
+          <div className={styles.controls}>
+            <div className={styles.formGroup}>
+              <label className={styles.label}>Department *</label>
+              <select
+                value={selectedDepartment}
+                onChange={(e) => setSelectedDepartment(e.target.value)}
+                className={styles.select}
+              >
+                <option value="">Select Department</option>
+                {departments.map((dept) => (
+                  <option key={dept.id} value={dept.id}>
+                    {dept.display_name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className={styles.formGroup}>
+              <label className={styles.label}>Month *</label>
+              <input
+                type="month"
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className={styles.input}
+              />
+            </div>
+
+            <div className={styles.actions}>
+              <button
+                onClick={exportToCSV}
+                className={styles.exportButton}
+                disabled={!selectedDepartment || employees.length === 0}
+              >
+                Export to CSV
+              </button>
+            </div>
+          </div>
+
+          {!selectedDepartment ? (
+            <div className={styles.emptyState}>Please select a department to view attendance</div>
+          ) : loading ? (
+            <div className={styles.loading}>Loading...</div>
+          ) : (
+            <div className={styles.monthlyView}>
+              <div className={styles.monthlyTableContainer}>
             <table className={styles.monthlyTable}>
               <thead>
                 <tr>
@@ -757,15 +847,17 @@ export default function AttendancePage() {
             </table>
           </div>
 
-          <div className={styles.legend}>
-            <strong>Legend:</strong>
-            {ATTENDANCE_STATUSES.map(status => (
-              <div key={status.value} className={styles.legendItem}>
-                <div className={styles.legendColor} style={{ backgroundColor: status.color }}></div>
-                <span>{status.label} ({status.code})</span>
+              <div className={styles.legend}>
+                <strong>Legend:</strong>
+                {ATTENDANCE_STATUSES.map(status => (
+                  <div key={status.value} className={styles.legendItem}>
+                    <div className={styles.legendColor} style={{ backgroundColor: status.color }}></div>
+                    <span>{status.label} ({status.code})</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          )}
         </div>
       )}
     </div>
