@@ -82,7 +82,15 @@ export default function AttendancePage() {
         .eq('date', selectedDate)
         .in('employee_id', empData.map(e => e.id))
 
-      if (attError) throw attError
+      if (attError) {
+        // If attendance table doesn't exist, continue without existing records
+        console.warn('Attendance table query failed:', attError)
+        if (attError.code === 'PGRST116' || attError.message?.includes('does not exist')) {
+          console.warn('Attendance table does not exist. Please run the migration SQL.')
+        } else {
+          throw attError
+        }
+      }
 
       // Fetch roster/leave data for selected date
       const { data: leaveData, error: leaveError } = await supabase
@@ -99,10 +107,12 @@ export default function AttendancePage() {
       // Create attendance map with auto-population from roster
       const attMap = {}
 
-      // First, add existing attendance records
-      attData.forEach(att => {
-        attMap[att.employee_id] = att
-      })
+      // First, add existing attendance records (if any)
+      if (attData) {
+        attData.forEach(att => {
+          attMap[att.employee_id] = att
+        })
+      }
 
       // Then, auto-populate from roster/leave data if no attendance record exists
       leaveData.forEach(leave => {
@@ -134,6 +144,22 @@ export default function AttendancePage() {
           console.log('Daily - Auto-populated:', leave.employee_id, status)
         }
       })
+
+      // Auto-mark as PRESENT for past dates (employees without leaves and without attendance records)
+      const today = new Date().toISOString().split('T')[0]
+      if (selectedDate < today) {
+        empData.forEach(emp => {
+          if (!attMap[emp.id]) {
+            // No leave and no attendance record for past date = mark as present
+            attMap[emp.id] = {
+              employee_id: emp.id,
+              date: selectedDate,
+              status: 'PRESENT',
+              isAutoPresent: true // Flag for auto-present
+            }
+          }
+        })
+      }
 
       console.log('Daily - Final attendance map:', attMap)
       setAttendance(attMap)
@@ -180,7 +206,15 @@ export default function AttendancePage() {
         .lte('date', endDateStr)
         .in('employee_id', empData.map(e => e.id))
 
-      if (attError) throw attError
+      if (attError) {
+        // If attendance table doesn't exist, continue without existing records
+        console.warn('Attendance table query failed:', attError)
+        if (attError.code === 'PGRST116' || attError.message?.includes('does not exist')) {
+          console.warn('Attendance table does not exist. Please run the migration SQL.')
+        } else {
+          throw attError
+        }
+      }
 
       // Fetch roster/leave data for selected month
       // A leave overlaps with the month if: start_date <= month_end AND end_date >= month_start
@@ -198,13 +232,15 @@ export default function AttendancePage() {
       // Create attendance map: employee_id -> { date -> attendance }
       const attMap = {}
 
-      // First, add existing attendance records
-      attData.forEach(att => {
-        if (!attMap[att.employee_id]) {
-          attMap[att.employee_id] = {}
-        }
-        attMap[att.employee_id][att.date] = att
-      })
+      // First, add existing attendance records (if any)
+      if (attData) {
+        attData.forEach(att => {
+          if (!attMap[att.employee_id]) {
+            attMap[att.employee_id] = {}
+          }
+          attMap[att.employee_id][att.date] = att
+        })
+      }
 
       // Then, auto-populate from roster/leave data for dates without attendance
       leaveData.forEach(leave => {
@@ -260,6 +296,33 @@ export default function AttendancePage() {
           currentDate.setDate(currentDate.getDate() + 1)
         }
       })
+
+      // Auto-mark as PRESENT for past dates (employees without leaves and without attendance records)
+      const today = new Date().toISOString().split('T')[0]
+      const daysInMonth = getDaysInMonth(selectedMonth)
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${selectedMonth}-${String(day).padStart(2, '0')}`
+
+        // Only auto-mark past dates
+        if (dateStr < today) {
+          empData.forEach(emp => {
+            if (!attMap[emp.id]) {
+              attMap[emp.id] = {}
+            }
+
+            if (!attMap[emp.id][dateStr]) {
+              // No leave and no attendance record for past date = mark as present
+              attMap[emp.id][dateStr] = {
+                employee_id: emp.id,
+                date: dateStr,
+                status: 'PRESENT',
+                isAutoPresent: true
+              }
+            }
+          })
+        }
+      }
 
       console.log('Final attendance map:', attMap)
 
