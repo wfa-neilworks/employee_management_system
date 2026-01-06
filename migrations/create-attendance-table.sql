@@ -42,7 +42,7 @@ CREATE POLICY "HR can insert attendance"
     EXISTS (
       SELECT 1 FROM accounts
       WHERE accounts.id = auth.uid()
-      AND accounts.role = 'HR'
+      AND accounts.account_type = 'HR'
     )
   );
 
@@ -52,7 +52,7 @@ CREATE POLICY "HR can update attendance"
     EXISTS (
       SELECT 1 FROM accounts
       WHERE accounts.id = auth.uid()
-      AND accounts.role = 'HR'
+      AND accounts.account_type = 'HR'
     )
   );
 
@@ -62,6 +62,6 @@ CREATE POLICY "HR can delete attendance"
     EXISTS (
       SELECT 1 FROM accounts
       WHERE accounts.id = auth.uid()
-      AND accounts.role = 'HR'
+      AND accounts.account_type = 'HR'
     )
   );

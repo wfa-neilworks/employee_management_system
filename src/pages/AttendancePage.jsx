@@ -4,14 +4,22 @@ import { useAuth } from '../context/AuthContext'
 import styles from './AttendancePage.module.css'
 
 const ATTENDANCE_STATUSES = [
-  { value: 'PRESENT', label: 'Present', color: '#00ff88' },
-  { value: 'ABSENT', label: 'Absent', color: '#ff0088' },
-  { value: 'SICK_LEAVE', label: 'Sick Leave', color: '#ff8800' },
-  { value: 'ANNUAL_LEAVE', label: 'Annual Leave', color: '#00d4ff' },
-  { value: 'LEAVE_WITHOUT_PAY', label: 'Leave Without Pay', color: '#888888' },
-  { value: 'PUBLIC_HOLIDAY', label: 'Public Holiday', color: '#d4ff00' },
-  { value: 'REST_DAY', label: 'Rest Day', color: '#aa88ff' }
+  { value: 'PRESENT', label: 'Present', code: 'P', color: '#00ff88' },
+  { value: 'ABSENT', label: 'Absent', code: 'A', color: '#ff0088' },
+  { value: 'SICK_LEAVE', label: 'Sick Leave', code: 'SL', color: '#ff8800' },
+  { value: 'ANNUAL_LEAVE', label: 'Annual Leave', code: 'AL', color: '#00d4ff' },
+  { value: 'LEAVE_WITHOUT_PAY', label: 'Leave Without Pay', code: 'LWP', color: '#888888' },
+  { value: 'PUBLIC_HOLIDAY', label: 'Public Holiday', code: 'PH', color: '#d4ff00' },
+  { value: 'REST_DAY', label: 'Rest Day', code: 'RD', color: '#aa88ff' }
 ]
+
+// Helper function to check if a date is a weekend (Saturday = 6, Sunday = 0)
+const isWeekend = (dateStr) => {
+  const [year, month, day] = dateStr.split('-').map(Number)
+  const date = new Date(year, month - 1, day)
+  const dayOfWeek = date.getDay()
+  return dayOfWeek === 0 || dayOfWeek === 6
+}
 
 export default function AttendancePage() {
   const { isHR } = useAuth()
@@ -143,8 +151,9 @@ export default function AttendancePage() {
       })
 
       // Auto-mark as PRESENT for past dates (employees without leaves and without attendance records)
+      // Skip weekends (Saturday/Sunday)
       const today = new Date().toISOString().split('T')[0]
-      if (selectedDate < today) {
+      if (selectedDate < today && !isWeekend(selectedDate)) {
         empData.forEach(emp => {
           if (!attMap[emp.id]) {
             // No leave and no attendance record for past date = mark as present
@@ -292,14 +301,15 @@ export default function AttendancePage() {
       })
 
       // Auto-mark as PRESENT for past dates (employees without leaves and without attendance records)
+      // Skip weekends (Saturday/Sunday)
       const today = new Date().toISOString().split('T')[0]
       const daysInMonth = getDaysInMonth(selectedMonth)
 
       for (let day = 1; day <= daysInMonth; day++) {
         const dateStr = `${selectedMonth}-${String(day).padStart(2, '0')}`
 
-        // Only auto-mark past dates
-        if (dateStr < today) {
+        // Only auto-mark past dates and skip weekends
+        if (dateStr < today && !isWeekend(dateStr)) {
           empData.forEach(emp => {
             if (!attMap[emp.id]) {
               attMap[emp.id] = {}
@@ -501,7 +511,7 @@ export default function AttendancePage() {
         const att = empAtt[date]
         if (!att) return ''
         const status = ATTENDANCE_STATUSES.find(s => s.value === att.status)
-        return status?.label.charAt(0) || ''
+        return status?.code || ''
       })
 
       return [
@@ -728,7 +738,7 @@ export default function AttendancePage() {
                               }}
                               title={status ? status.label : 'Not marked'}
                             >
-                              {status ? status.label.charAt(0) : ''}
+                              {status ? status.code : ''}
                             </td>
                           )
                         })}
@@ -752,7 +762,7 @@ export default function AttendancePage() {
             {ATTENDANCE_STATUSES.map(status => (
               <div key={status.value} className={styles.legendItem}>
                 <div className={styles.legendColor} style={{ backgroundColor: status.color }}></div>
-                <span>{status.label} ({status.label.charAt(0)})</span>
+                <span>{status.label} ({status.code})</span>
               </div>
             ))}
           </div>
