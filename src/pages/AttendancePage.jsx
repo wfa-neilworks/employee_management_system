@@ -701,14 +701,14 @@ export default function AttendancePage() {
     }
 
     const describeArc = (x, y, radius, startAngle, endAngle) => {
-      const start = polarToCartesian(x, y, radius, endAngle)
-      const end = polarToCartesian(x, y, radius, startAngle)
-      const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1'
+      const start = polarToCartesian(x, y, radius, startAngle)
+      const end = polarToCartesian(x, y, radius, endAngle)
+      const largeArcFlag = endAngle - startAngle > 180 ? '1' : '0'
 
       return [
         'M', x, y,
         'L', start.x, start.y,
-        'A', radius, radius, 0, largeArcFlag, 0, end.x, end.y,
+        'A', radius, radius, 0, largeArcFlag, 1, end.x, end.y,
         'Z'
       ].join(' ')
     }
