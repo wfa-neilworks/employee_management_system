@@ -40,12 +40,18 @@ export default function TimesheetPage() {
       // Fetch employees from selected department
       const { data: employees, error: empError } = await supabase
         .from('employees')
-        .select('id, name, english_name, payroll_number')
+        .select('id, name, english_name, payroll_number, wage_status')
         .eq('department_id', selectedDepartment)
         .eq('is_active', true)
-        .order('name')
 
       if (empError) throw empError
+
+      // Sort employees: WFA first (alphabetically), then LABOR_HIRE (alphabetically)
+      employees.sort((a, b) => {
+        if (a.wage_status === 'WFA' && b.wage_status !== 'WFA') return -1
+        if (a.wage_status !== 'WFA' && b.wage_status === 'WFA') return 1
+        return a.name.localeCompare(b.name)
+      })
 
       // Fetch leaves for the selected date
       const { data: leaves, error: leaveError } = await supabase

@@ -42,7 +42,6 @@ export default function DepartmentPage() {
           .select('*, employee_gears(gear_type, size), departments(id, display_name)')
           .eq('department_id', departmentId)
           .eq('is_active', true)
-          .order('name')
       ])
 
       if (deptResult.error) throw deptResult.error
@@ -57,15 +56,23 @@ export default function DepartmentPage() {
     }
   }
 
-  const filteredEmployees = employees.filter((emp) => {
-    const query = searchQuery.toLowerCase()
-    return (
-      emp.name?.toLowerCase().includes(query) ||
-      emp.english_name?.toLowerCase().includes(query) ||
-      emp.payroll_number?.toLowerCase().includes(query) ||
-      emp.locker_number?.toLowerCase().includes(query)
-    )
-  })
+  const filteredEmployees = employees
+    .filter((emp) => {
+      const query = searchQuery.toLowerCase()
+      return (
+        emp.name?.toLowerCase().includes(query) ||
+        emp.english_name?.toLowerCase().includes(query) ||
+        emp.payroll_number?.toLowerCase().includes(query) ||
+        emp.locker_number?.toLowerCase().includes(query)
+      )
+    })
+    .sort((a, b) => {
+      // WFA first, then LABOR_HIRE (LH)
+      if (a.wage_status === 'WFA' && b.wage_status !== 'WFA') return -1
+      if (a.wage_status !== 'WFA' && b.wage_status === 'WFA') return 1
+      // Within same wage status, sort alphabetically by name
+      return a.name.localeCompare(b.name)
+    })
 
   if (loading) {
     return <div className={styles.loading}>Loading...</div>
