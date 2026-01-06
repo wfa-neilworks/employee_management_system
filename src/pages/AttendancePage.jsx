@@ -129,6 +129,9 @@ export default function AttendancePage() {
             case 'ABSENT':
               status = 'ABSENT'
               break
+            case 'PUBLIC_HOLIDAY':
+              status = 'PUBLIC_HOLIDAY'
+              break
           }
 
           attMap[leave.employee_id] = {
@@ -243,6 +246,9 @@ export default function AttendancePage() {
               break
             case 'ABSENT':
               status = 'ABSENT'
+              break
+            case 'PUBLIC_HOLIDAY':
+              status = 'PUBLIC_HOLIDAY'
               break
           }
 
@@ -374,6 +380,9 @@ export default function AttendancePage() {
             break
           case 'ABSENT':
             status = 'ABSENT'
+            break
+          case 'PUBLIC_HOLIDAY':
+            status = 'PUBLIC_HOLIDAY'
             break
         }
 

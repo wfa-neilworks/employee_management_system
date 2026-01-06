@@ -91,6 +91,8 @@ export default function RosterPage() {
         return '#ff0088'
       case 'ABSENT':
         return '#ff0000'
+      case 'PUBLIC_HOLIDAY':
+        return '#d4ff00'
       default:
         return '#888'
     }
@@ -349,6 +351,13 @@ export default function RosterPage() {
               style={{ background: getLeaveColor('ABSENT') }}
             ></span>
             Absent (No Notice)
+          </div>
+          <div className={styles.legendItem}>
+            <span
+              className={styles.legendColor}
+              style={{ background: getLeaveColor('PUBLIC_HOLIDAY') }}
+            ></span>
+            Public Holiday
           </div>
         </div>
       </div>

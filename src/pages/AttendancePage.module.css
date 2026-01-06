@@ -413,8 +413,32 @@
 
 .pieChartsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  grid-template-columns: repeat(5, 1fr);
   gap: 24px;
+}
+
+@media (max-width: 2400px) {
+  .pieChartsGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 1800px) {
+  .pieChartsGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 1400px) {
+  .pieChartsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .pieChartsGrid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .departmentCard {
