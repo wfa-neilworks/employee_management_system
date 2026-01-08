@@ -80,6 +80,8 @@ export const AuthProvider = ({ children }) => {
 
   const isHR = () => account?.account_type === 'HR'
   const isProcurement = () => account?.account_type === 'PROCUREMENT'
+  const isViewer = () => account?.account_type === 'VIEWER'
+  const canEdit = () => isHR() || isProcurement() // VIEWER cannot edit
 
   const value = {
     user,
@@ -88,7 +90,9 @@ export const AuthProvider = ({ children }) => {
     signIn,
     signOut,
     isHR,
-    isProcurement
+    isProcurement,
+    isViewer,
+    canEdit
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

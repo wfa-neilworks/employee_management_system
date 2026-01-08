@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import styles from './Sidebar.module.css'
 
 export default function Sidebar({ departments, isOpen }) {
-  const { isProcurement } = useAuth()
+  const { isProcurement, isViewer } = useAuth()
   const [isDepartmentsOpen, setIsDepartmentsOpen] = useState(true)
   const [isKnifeDocketsOpen, setIsKnifeDocketsOpen] = useState(true)
 
@@ -103,7 +103,7 @@ export default function Sidebar({ departments, isOpen }) {
           <span className={styles.navLabel}>ATTENDANCE</span>
         </NavLink>
 
-        {isProcurement() && (
+        {(isProcurement() || isViewer()) && (
           <div className={styles.section}>
             <button
               className={styles.sectionHeader}
