@@ -71,14 +71,15 @@ export default function TransactionHistoryPage() {
 
       if (empError) {
         console.error('Error fetching employee:', empError)
-        alert('Could not fetch employee signature. The signature field may not exist in the database yet.')
-        return
+        // Continue without signature if there's an error
       }
 
-      if (!employee?.signature) {
-        console.warn('No signature found for employee:', transaction.employee_name)
-        alert('No signature found for this employee. They may need to sign a new document first.')
-        return
+      // Debug: Log signature status
+      console.log('Employee data:', employee)
+      console.log('Has signature:', !!employee?.signature)
+      if (employee?.signature) {
+        console.log('Signature length:', employee.signature.length)
+        console.log('Signature preview:', employee.signature.substring(0, 50))
       }
 
       // Generate PDF
