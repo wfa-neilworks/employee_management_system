@@ -297,7 +297,15 @@ export default function SellToEmployeeModal({ products, onClose, onSuccess }) {
         subtotal: item.product.selling_price * item.quantity
       }))
 
-      // Save to database
+      // Save signature to employee record (replaces old signature)
+      const { error: signatureError } = await supabase
+        .from('employees')
+        .update({ signature: signature })
+        .eq('id', selectedEmployee.id)
+
+      if (signatureError) throw signatureError
+
+      // Save transaction to database
       const { error: insertError } = await supabase
         .from('knife_sales')
         .insert([{

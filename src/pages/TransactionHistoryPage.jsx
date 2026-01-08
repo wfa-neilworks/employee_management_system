@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase, PRODUCT_CATEGORIES } from '../lib/supabase'
+import jsPDF from 'jspdf'
 import styles from './KnifeDocketsPage.module.css'
 
 export default function TransactionHistoryPage() {
@@ -57,6 +58,128 @@ export default function TransactionHistoryPage() {
     setSearchQuery('')
     setFilterDateFrom('')
     setFilterDateTo('')
+  }
+
+  const handlePrintInvoice = async (transaction) => {
+    try {
+      // Fetch employee to get signature
+      const { data: employee, error: empError } = await supabase
+        .from('employees')
+        .select('signature')
+        .eq('id', transaction.employee_id)
+        .single()
+
+      if (empError) throw empError
+
+      // Generate PDF
+      const doc = new jsPDF()
+      const pageWidth = doc.internal.pageSize.width
+      const margin = 15
+
+      // Header - Invoice Number and Date
+      doc.setFontSize(12)
+      doc.setFont(undefined, 'bold')
+      doc.text(transaction.invoice_number, margin, 20)
+      doc.text(formatDate(transaction.sale_date), pageWidth - margin, 20, { align: 'right' })
+
+      // To and From
+      let yPos = 35
+      doc.setFontSize(11)
+      doc.setFont(undefined, 'normal')
+      doc.text(`To: ${transaction.employee_payroll || 'N/A'} - ${transaction.employee_name}`, margin, yPos)
+      yPos += 7
+      const wageDisplay = transaction.wage_status === 'WFA' ? 'Woodward' : 'Labour Hire'
+      doc.text(`From: ${wageDisplay} - ${transaction.department_name}`, margin, yPos)
+      yPos += 15
+
+      // Table Header
+      doc.setFontSize(10)
+      doc.setFont(undefined, 'bold')
+      const colWidths = { qty: 15, code: 40, name: 70, price: 30 }
+      doc.text('QTY', margin, yPos)
+      doc.text('Product Code/Classification', margin + colWidths.qty, yPos)
+      doc.text('Product Name', margin + colWidths.qty + colWidths.code, yPos)
+      doc.text('Price + GST', pageWidth - margin - 30, yPos, { align: 'right' })
+      yPos += 5
+      doc.line(margin, yPos, pageWidth - margin, yPos)
+      yPos += 7
+
+      // Table Items
+      doc.setFont(undefined, 'normal')
+      transaction.items.forEach((item) => {
+        if (yPos > 250) {
+          doc.addPage()
+          yPos = 20
+        }
+        doc.text(item.quantity.toString(), margin, yPos)
+        doc.text(item.product_code, margin + colWidths.qty, yPos)
+        doc.text(item.product_name, margin + colWidths.qty + colWidths.code, yPos)
+        doc.text(formatPrice(item.subtotal), pageWidth - margin, yPos, { align: 'right' })
+        yPos += 7
+      })
+
+      yPos += 5
+      doc.line(margin, yPos, pageWidth - margin, yPos)
+      yPos += 10
+
+      // Totals
+      doc.setFont(undefined, 'normal')
+      doc.text(`Subtotal: ${formatPrice(transaction.subtotal)}`, pageWidth - margin, yPos, { align: 'right' })
+      yPos += 7
+      doc.text(`GST (10%): ${formatPrice(transaction.gst)}`, pageWidth - margin, yPos, { align: 'right' })
+      yPos += 7
+      doc.setFontSize(12)
+      doc.text(`Total Amount: ${formatPrice(transaction.total_amount)}`, pageWidth - margin, yPos, { align: 'right' })
+      yPos += 20
+
+      // Authorization Statement with underlines
+      doc.setFontSize(10)
+      doc.setFont(undefined, 'normal')
+      doc.text('I ', margin, yPos)
+      const iWidth = doc.getTextWidth('I ')
+
+      // Employee name with underline
+      const nameText = transaction.employee_name
+      doc.text(nameText, margin + iWidth, yPos)
+      const nameWidth = doc.getTextWidth(nameText)
+      doc.line(margin + iWidth, yPos + 1, margin + iWidth + nameWidth, yPos + 1)
+
+      // Text between name and amount
+      const middleText = ', authorize the company to deduct the following amount '
+      doc.text(middleText, margin + iWidth + nameWidth, yPos)
+      const middleWidth = doc.getTextWidth(middleText)
+
+      // Amount with underline
+      const amountText = `${formatPrice(transaction.total_amount)}`
+      const amountX = margin + iWidth + nameWidth + middleWidth
+      doc.text(amountText, amountX, yPos)
+      const amountWidth = doc.getTextWidth(amountText)
+      doc.line(amountX, yPos + 1, amountX + amountWidth, yPos + 1)
+
+      // Remaining text on next line
+      yPos += 7
+      const endText = ' from my salary for buying tools I need for my work.'
+      const splitEndText = doc.splitTextToSize(endText, pageWidth - (margin * 2))
+      doc.text(splitEndText, margin, yPos)
+      yPos += splitEndText.length * 7 + 10
+
+      // Signature
+      if (employee?.signature) {
+        doc.addImage(employee.signature, 'PNG', margin, yPos, 60, 20)
+        yPos += 22
+      }
+
+      // Signature Line
+      doc.line(margin, yPos, pageWidth - margin, yPos)
+      yPos += 5
+      doc.text('Employee Signature', margin, yPos)
+
+      // Download PDF
+      doc.save(`${transaction.invoice_number}_${transaction.employee_name.replace(/\s+/g, '_')}.pdf`)
+    } catch (error) {
+      console.error('Error printing invoice:', error)
+      alert('Failed to generate invoice PDF')
+    }
   }
 
   if (loading) {
@@ -121,6 +244,7 @@ export default function TransactionHistoryPage() {
                 <th className={styles.priceColumn}>Subtotal</th>
                 <th className={styles.priceColumn}>GST</th>
                 <th className={styles.priceColumn}>Total</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -150,6 +274,23 @@ export default function TransactionHistoryPage() {
                   <td className={styles.priceColumn}>{formatPrice(transaction.gst)}</td>
                   <td className={styles.priceColumn} style={{ fontWeight: 'bold' }}>
                     {formatPrice(transaction.total_amount)}
+                  </td>
+                  <td>
+                    <button
+                      onClick={() => handlePrintInvoice(transaction)}
+                      className={styles.actionButton}
+                      style={{
+                        padding: '6px 12px',
+                        fontSize: '12px',
+                        background: 'var(--accent-primary)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Print Invoice
+                    </button>
                   </td>
                 </tr>
               ))}
