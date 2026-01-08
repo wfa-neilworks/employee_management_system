@@ -69,7 +69,17 @@ export default function TransactionHistoryPage() {
         .eq('id', transaction.employee_id)
         .single()
 
-      if (empError) throw empError
+      if (empError) {
+        console.error('Error fetching employee:', empError)
+        alert('Could not fetch employee signature. The signature field may not exist in the database yet.')
+        return
+      }
+
+      if (!employee?.signature) {
+        console.warn('No signature found for employee:', transaction.employee_name)
+        alert('No signature found for this employee. They may need to sign a new document first.')
+        return
+      }
 
       // Generate PDF
       const doc = new jsPDF()
