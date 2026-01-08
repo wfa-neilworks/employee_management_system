@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase, PRODUCT_CATEGORIES } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import Modal from './Modal'
+import SignatureCanvas from 'signature_pad'
 import jsPDF from 'jspdf'
 import styles from './FormModal.module.css'
 
@@ -12,12 +13,43 @@ export default function SellToEmployeeModal({ products, onClose, onSuccess }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [employees, setEmployees] = useState([])
+  const [filteredEmployees, setFilteredEmployees] = useState([])
+  const [employeeSearch, setEmployeeSearch] = useState('')
   const [selectedEmployee, setSelectedEmployee] = useState(null)
-  const [selectedProducts, setSelectedProducts] = useState([]) // {product, quantity}
+  const [selectedProducts, setSelectedProducts] = useState([])
+  const [productSearch, setProductSearch] = useState('')
+  const [showPreview, setShowPreview] = useState(false)
+  const [signatureDataUrl, setSignatureDataUrl] = useState(null)
+
+  const signatureCanvasRef = useRef(null)
+  const signaturePadRef = useRef(null)
 
   useEffect(() => {
     fetchEmployees()
   }, [])
+
+  useEffect(() => {
+    // Filter employees based on search
+    if (employeeSearch) {
+      const filtered = employees.filter(emp =>
+        emp.name.toLowerCase().includes(employeeSearch.toLowerCase()) ||
+        emp.payroll_number?.toLowerCase().includes(employeeSearch.toLowerCase())
+      )
+      setFilteredEmployees(filtered)
+    } else {
+      setFilteredEmployees(employees)
+    }
+  }, [employeeSearch, employees])
+
+  useEffect(() => {
+    // Initialize signature pad when in preview mode
+    if (showPreview && signatureCanvasRef.current && !signaturePadRef.current) {
+      signaturePadRef.current = new SignatureCanvas(signatureCanvasRef.current, {
+        backgroundColor: 'rgb(255, 255, 255)',
+        penColor: 'rgb(0, 0, 0)'
+      })
+    }
+  }, [showPreview])
 
   const fetchEmployees = async () => {
     try {
@@ -29,14 +61,25 @@ export default function SellToEmployeeModal({ products, onClose, onSuccess }) {
 
       if (error) throw error
       setEmployees(data || [])
+      setFilteredEmployees(data || [])
     } catch (error) {
       console.error('Error fetching employees:', error)
     }
   }
 
+  const getFilteredProducts = () => {
+    if (!productSearch) return products
+    return products.filter(p =>
+      p.product_code.toLowerCase().includes(productSearch.toLowerCase()) ||
+      p.product_name.toLowerCase().includes(productSearch.toLowerCase())
+    )
+  }
+
   const handleAddProduct = () => {
-    if (products.length > 0) {
-      setSelectedProducts([...selectedProducts, { product: products[0], quantity: 1 }])
+    const filteredProds = getFilteredProducts()
+    if (filteredProds.length > 0) {
+      setSelectedProducts([...selectedProducts, { product: filteredProds[0], quantity: 1 }])
+      setProductSearch('') // Clear search after adding
     }
   }
 
@@ -68,29 +111,18 @@ export default function SellToEmployeeModal({ products, onClose, onSuccess }) {
 
   const generateInvoiceNumber = async () => {
     try {
-      // Get the next sequence number
-      const { data, error } = await supabase.rpc('nextval', {
-        sequence_name: 'knife_sales_invoice_seq'
-      })
+      const { data: sales } = await supabase
+        .from('knife_sales')
+        .select('invoice_number')
+        .order('invoice_number', { ascending: false })
+        .limit(1)
 
-      if (error) {
-        // Fallback: get max invoice number and increment
-        const { data: sales } = await supabase
-          .from('knife_sales')
-          .select('invoice_number')
-          .order('invoice_number', { ascending: false })
-          .limit(1)
-
-        const lastNumber = sales && sales.length > 0
-          ? parseInt(sales[0].invoice_number.replace('KD', ''))
-          : 0
-        return `KD${String(lastNumber + 1).padStart(6, '0')}`
-      }
-
-      return `KD${String(data).padStart(6, '0')}`
+      const lastNumber = sales && sales.length > 0
+        ? parseInt(sales[0].invoice_number.replace('KD', ''))
+        : 0
+      return `KD${String(lastNumber + 1).padStart(6, '0')}`
     } catch (error) {
       console.error('Error generating invoice number:', error)
-      // Ultimate fallback
       return `KD${String(Date.now()).slice(-6)}`
     }
   }
@@ -100,7 +132,20 @@ export default function SellToEmployeeModal({ products, onClose, onSuccess }) {
     return category ? category.label : value
   }
 
-  const generatePDF = (invoiceNumber, employee, items, totals) => {
+  const clearSignature = () => {
+    if (signaturePadRef.current) {
+      signaturePadRef.current.clear()
+    }
+  }
+
+  const captureSignature = () => {
+    if (signaturePadRef.current && !signaturePadRef.current.isEmpty()) {
+      return signaturePadRef.current.toDataURL()
+    }
+    return null
+  }
+
+  const generatePDF = (invoiceNumber, employee, items, totals, signature) => {
     const doc = new jsPDF()
     const pageWidth = doc.internal.pageSize.width
     const margin = 20
@@ -129,7 +174,7 @@ export default function SellToEmployeeModal({ products, onClose, onSuccess }) {
     // Product List Header
     doc.setFont(undefined, 'bold')
     doc.text('QTY', margin, yPos)
-    doc.text('Product Code / Classification', margin + 20, yPos)
+    doc.text('Product Details', margin + 20, yPos)
     yPos += 7
 
     // Product Items
@@ -142,9 +187,13 @@ export default function SellToEmployeeModal({ products, onClose, onSuccess }) {
       doc.text(`${item.product.product_code} / ${getCategoryLabel(item.product.category)}`, margin + 20, yPos)
       yPos += 5
 
+      // Product Name
+      doc.setFontSize(9)
+      doc.text(item.product.product_name, margin + 20, yPos)
+      yPos += 4
+
       // Price + GST
       const itemTotal = item.product.selling_price * item.quantity
-      doc.setFontSize(9)
       doc.text(`$${itemTotal.toFixed(2)} + GST`, margin + 20, yPos)
       doc.setFontSize(11)
       yPos += 10
@@ -170,6 +219,12 @@ export default function SellToEmployeeModal({ products, onClose, onSuccess }) {
     doc.text(splitText, margin, yPos)
     yPos += splitText.length * 7 + 10
 
+    // Signature
+    if (signature) {
+      doc.addImage(signature, 'PNG', margin, yPos, 60, 20)
+      yPos += 22
+    }
+
     // Signature Line
     doc.line(margin, yPos, pageWidth - margin, yPos)
     yPos += 7
@@ -179,16 +234,23 @@ export default function SellToEmployeeModal({ products, onClose, onSuccess }) {
     return doc
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-
+  const handlePreview = () => {
     if (!selectedEmployee) {
       setError('Please select an employee')
       return
     }
-
     if (selectedProducts.length === 0) {
       setError('Please add at least one product')
+      return
+    }
+    setError('')
+    setShowPreview(true)
+  }
+
+  const handleFinalSubmit = async () => {
+    const signature = captureSignature()
+    if (!signature) {
+      setError('Please provide a signature')
       return
     }
 
@@ -231,7 +293,7 @@ export default function SellToEmployeeModal({ products, onClose, onSuccess }) {
       if (insertError) throw insertError
 
       // Generate and download PDF
-      const pdf = generatePDF(invoiceNumber, selectedEmployee, selectedProducts, totals)
+      const pdf = generatePDF(invoiceNumber, selectedEmployee, selectedProducts, totals, signature)
       pdf.save(`${invoiceNumber}_${selectedEmployee.name.replace(/\s+/g, '_')}.pdf`)
 
       onSuccess()
@@ -247,6 +309,103 @@ export default function SellToEmployeeModal({ products, onClose, onSuccess }) {
   const totals = calculateTotals()
   const formatPrice = (price) => `$${price.toFixed(2)}`
 
+  if (showPreview) {
+    return (
+      <Modal onClose={onClose}>
+        <div className={styles.modal} style={{ maxWidth: '800px', maxHeight: '90vh', overflow: 'auto' }}>
+          <h2 className={styles.modalTitle}>Invoice Preview</h2>
+
+          {error && <div className={styles.error}>{error}</div>}
+
+          {/* Preview Content */}
+          <div style={{ background: 'white', color: 'black', padding: '30px', borderRadius: '8px', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+              <div style={{ fontWeight: 'bold', fontSize: '14px' }}>KD######</div>
+              <div>{new Date().toLocaleDateString('en-AU')}</div>
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <div><strong>To:</strong> {selectedEmployee.payroll_number || 'N/A'} - {selectedEmployee.name}</div>
+              <div><strong>From:</strong> {selectedEmployee.wage_status === 'WFA' ? 'Woodward' : 'Labour Hire'} - {selectedEmployee.departments?.display_name || 'N/A'}</div>
+            </div>
+
+            <table style={{ width: '100%', marginBottom: '20px', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '2px solid #333' }}>
+                  <th style={{ textAlign: 'left', padding: '8px', width: '50px' }}>QTY</th>
+                  <th style={{ textAlign: 'left', padding: '8px' }}>Product Details</th>
+                  <th style={{ textAlign: 'right', padding: '8px' }}>Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                {selectedProducts.map((item, idx) => (
+                  <tr key={idx} style={{ borderBottom: '1px solid #ddd' }}>
+                    <td style={{ padding: '8px' }}>{item.quantity}</td>
+                    <td style={{ padding: '8px' }}>
+                      <div style={{ fontWeight: 'bold' }}>{item.product.product_code} / {getCategoryLabel(item.product.category)}</div>
+                      <div style={{ fontSize: '12px', color: '#666' }}>{item.product.product_name}</div>
+                    </td>
+                    <td style={{ textAlign: 'right', padding: '8px' }}>
+                      {formatPrice(item.product.selling_price * item.quantity)} + GST
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <div style={{ textAlign: 'right', marginBottom: '20px' }}>
+              <div>Subtotal: <strong>{formatPrice(totals.subtotal)}</strong></div>
+              <div>GST (10%): <strong>{formatPrice(totals.gst)}</strong></div>
+              <div style={{ fontSize: '18px', color: '#d4ff00' }}>Total: <strong>{formatPrice(totals.total)}</strong></div>
+            </div>
+
+            <div style={{ marginBottom: '20px', fontSize: '12px' }}>
+              I {selectedEmployee.name}, authorize the company to deduct the following amount {formatPrice(totals.total)} from my salary for buying tools I need for my work.
+            </div>
+
+            {/* Signature Canvas */}
+            <div style={{ marginBottom: '10px' }}>
+              <div style={{ marginBottom: '8px', fontWeight: 'bold' }}>Employee Signature:</div>
+              <canvas
+                ref={signatureCanvasRef}
+                width={500}
+                height={150}
+                style={{ border: '2px solid #333', borderRadius: '4px', touchAction: 'none' }}
+              />
+              <button
+                type="button"
+                onClick={clearSignature}
+                className={styles.cancelButton}
+                style={{ marginTop: '8px', padding: '6px 12px' }}
+              >
+                Clear Signature
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.actions}>
+            <button
+              type="button"
+              onClick={() => setShowPreview(false)}
+              className={styles.cancelButton}
+              disabled={loading}
+            >
+              Back
+            </button>
+            <button
+              type="button"
+              onClick={handleFinalSubmit}
+              className={styles.submitButton}
+              disabled={loading}
+            >
+              {loading ? 'Processing...' : 'Generate Invoice & Print'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+    )
+  }
+
   return (
     <Modal onClose={onClose}>
       <div className={styles.modal} style={{ maxWidth: '800px' }}>
@@ -254,10 +413,18 @@ export default function SellToEmployeeModal({ products, onClose, onSuccess }) {
 
         {error && <div className={styles.error}>{error}</div>}
 
-        <form onSubmit={handleSubmit} className={styles.form}>
-          {/* Employee Selection */}
+        <form onSubmit={(e) => { e.preventDefault(); handlePreview(); }} className={styles.form}>
+          {/* Employee Selection with Search */}
           <div className={styles.formGroup}>
-            <label className={styles.label}>Select Employee *</label>
+            <label className={styles.label}>Search Employee *</label>
+            <input
+              type="text"
+              placeholder="Search by name or payroll number..."
+              value={employeeSearch}
+              onChange={(e) => setEmployeeSearch(e.target.value)}
+              className={styles.input}
+              style={{ marginBottom: '8px' }}
+            />
             <select
               value={selectedEmployee?.id || ''}
               onChange={(e) => {
@@ -268,7 +435,7 @@ export default function SellToEmployeeModal({ products, onClose, onSuccess }) {
               className={styles.select}
             >
               <option value="">-- Select Employee --</option>
-              {employees.map((emp) => (
+              {filteredEmployees.map((emp) => (
                 <option key={emp.id} value={emp.id}>
                   {emp.name} ({emp.payroll_number || 'No Payroll'}) - {emp.departments?.display_name}
                 </option>
@@ -276,47 +443,67 @@ export default function SellToEmployeeModal({ products, onClose, onSuccess }) {
             </select>
           </div>
 
-          {/* Products Selection */}
+          {/* Products Selection with Search */}
           <div className={styles.formGroup}>
             <label className={styles.label}>Products</label>
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={productSearch}
+              onChange={(e) => setProductSearch(e.target.value)}
+              className={styles.input}
+              style={{ marginBottom: '8px' }}
+            />
+
             {selectedProducts.map((item, index) => (
-              <div key={index} style={{ display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
-                <input
-                  type="number"
-                  min="1"
-                  value={item.quantity}
-                  onChange={(e) => handleQuantityChange(index, e.target.value)}
-                  style={{ width: '60px' }}
-                  className={styles.input}
-                  placeholder="Qty"
-                />
-                <select
-                  value={item.product.id}
-                  onChange={(e) => handleProductChange(index, e.target.value)}
-                  className={styles.select}
-                  style={{ flex: 1 }}
-                >
-                  {products.map((product) => (
-                    <option key={product.id} value={product.id}>
-                      {product.product_code} - {product.product_name} ({formatPrice(product.selling_price)})
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={() => handleRemoveProduct(index)}
-                  className={styles.cancelButton}
-                  style={{ padding: '6px 12px' }}
-                >
-                  Remove
-                </button>
+              <div key={index} style={{ marginBottom: '16px', padding: '12px', background: 'var(--bg-tertiary)', borderRadius: '8px' }}>
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'flex-start' }}>
+                  <input
+                    type="number"
+                    min="1"
+                    value={item.quantity}
+                    onChange={(e) => handleQuantityChange(index, e.target.value)}
+                    style={{ width: '60px' }}
+                    className={styles.input}
+                    placeholder="Qty"
+                  />
+                  <select
+                    value={item.product.id}
+                    onChange={(e) => handleProductChange(index, e.target.value)}
+                    className={styles.select}
+                    style={{ flex: 1 }}
+                  >
+                    {products.map((product) => (
+                      <option key={product.id} value={product.id}>
+                        {product.product_code} - {product.product_name}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveProduct(index)}
+                    className={styles.cancelButton}
+                    style={{ padding: '6px 12px' }}
+                  >
+                    Remove
+                  </button>
+                </div>
+                {/* Product Details */}
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginLeft: '68px' }}>
+                  <div><strong>Category:</strong> {getCategoryLabel(item.product.category)}</div>
+                  {item.product.description && <div><strong>Description:</strong> {item.product.description}</div>}
+                  <div><strong>Price:</strong> {formatPrice(item.product.selling_price)} each</div>
+                  <div><strong>Subtotal:</strong> {formatPrice(item.product.selling_price * item.quantity)}</div>
+                </div>
               </div>
             ))}
+
             <button
               type="button"
               onClick={handleAddProduct}
               className={styles.submitButton}
               style={{ marginTop: '8px', padding: '8px 16px' }}
+              disabled={getFilteredProducts().length === 0}
             >
               + Add Product
             </button>
@@ -354,7 +541,7 @@ export default function SellToEmployeeModal({ products, onClose, onSuccess }) {
               className={styles.submitButton}
               disabled={loading}
             >
-              {loading ? 'Processing...' : 'Generate Invoice & Print'}
+              Preview Invoice
             </button>
           </div>
         </form>
