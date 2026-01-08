@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../context/AuthContext'
 import AddLeaveModal from '../components/modals/AddLeaveModal'
 import DayDetailsModal from '../components/modals/DayDetailsModal'
 import styles from './RosterPage.module.css'
 
 export default function RosterPage() {
+  const { canEdit } = useAuth()
   const [leaves, setLeaves] = useState([])
   const [departments, setDepartments] = useState([])
   const [selectedDepartment, setSelectedDepartment] = useState('ALL')
@@ -242,12 +244,14 @@ export default function RosterPage() {
               ))}
             </select>
           </div>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className={styles.addButton}
-          >
-            + Add Leave
-          </button>
+          {canEdit() && (
+            <button
+              onClick={() => setShowAddModal(true)}
+              className={styles.addButton}
+            >
+              + Add Leave
+            </button>
+          )}
         </div>
       </div>
 
