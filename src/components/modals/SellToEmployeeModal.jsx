@@ -211,13 +211,38 @@ export default function SellToEmployeeModal({ products, onClose, onSuccess }) {
     doc.text(`Total Amount: $${totals.total.toFixed(2)}`, pageWidth - margin, yPos, { align: 'right' })
     yPos += 20
 
-    // Authorization Statement
+    // Authorization Statement with underlines
     doc.setFontSize(10)
     doc.setFont(undefined, 'normal')
-    const authText = `I ${employee.name}, authorize the company to deduct the following amount $${totals.total.toFixed(2)} from my salary for buying tools I need for my work.`
-    const splitText = doc.splitTextToSize(authText, pageWidth - (margin * 2))
-    doc.text(splitText, margin, yPos)
-    yPos += splitText.length * 7 + 10
+
+    // Text before name
+    doc.text('I ', margin, yPos)
+    const iWidth = doc.getTextWidth('I ')
+
+    // Employee name with underline
+    const nameText = employee.name
+    doc.text(nameText, margin + iWidth, yPos)
+    const nameWidth = doc.getTextWidth(nameText)
+    doc.line(margin + iWidth, yPos + 1, margin + iWidth + nameWidth, yPos + 1) // Underline name
+
+    // Text between name and amount
+    const middleText = ', authorize the company to deduct the following amount '
+    doc.text(middleText, margin + iWidth + nameWidth, yPos)
+    const middleWidth = doc.getTextWidth(middleText)
+
+    // Amount with underline
+    const amountText = `$${totals.total.toFixed(2)}`
+    const amountX = margin + iWidth + nameWidth + middleWidth
+    doc.text(amountText, amountX, yPos)
+    const amountWidth = doc.getTextWidth(amountText)
+    doc.line(amountX, yPos + 1, amountX + amountWidth, yPos + 1) // Underline amount
+
+    // Remaining text on next line if needed
+    yPos += 7
+    const endText = ' from my salary for buying tools I need for my work.'
+    const splitEndText = doc.splitTextToSize(endText, pageWidth - (margin * 2))
+    doc.text(splitEndText, margin, yPos)
+    yPos += splitEndText.length * 7 + 10
 
     // Signature
     if (signature) {
