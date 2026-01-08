@@ -154,7 +154,8 @@ export default function KnifeDocketsPage() {
                 <th>Name</th>
                 <th>Type</th>
                 <th>Category</th>
-                <th className={styles.priceColumn}>Price</th>
+                <th className={styles.priceColumn}>Buy Price</th>
+                <th className={styles.priceColumn}>Selling Price</th>
                 <th>Description</th>
                 {isProcurement() && <th className={styles.actionsColumn}>Actions</th>}
               </tr>
@@ -166,7 +167,8 @@ export default function KnifeDocketsPage() {
                   <td>{product.product_name}</td>
                   <td>{getTypeLabel(product.product_type)}</td>
                   <td>{getCategoryLabel(product.category)}</td>
-                  <td className={styles.priceColumn}>{formatPrice(product.price)}</td>
+                  <td className={styles.priceColumn}>{formatPrice(product.buy_price)}</td>
+                  <td className={styles.priceColumn}>{formatPrice(product.selling_price)}</td>
                   <td className={styles.descriptionCell}>
                     {product.description || '-'}
                   </td>

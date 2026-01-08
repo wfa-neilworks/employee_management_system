@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { supabase, PRODUCT_TYPES, PRODUCT_CATEGORIES } from '../../lib/supabase'
+import { supabase, PRODUCT_TYPES, PRODUCT_CATEGORIES, calculateSellingPrice } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import Modal from './Modal'
 import styles from './FormModal.module.css'
@@ -13,7 +13,7 @@ export default function AddProductModal({ onClose, onSuccess }) {
     product_name: '',
     product_type: 'KNIFE',
     category: 'CUTTING_TOOLS',
-    price: '',
+    buy_price: '',
     description: '',
     notes: ''
   })
@@ -25,12 +25,17 @@ export default function AddProductModal({ onClose, onSuccess }) {
     })
   }
 
+  const calculatedSellingPrice = formData.buy_price ? calculateSellingPrice(formData.buy_price) : 0
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     setLoading(true)
 
     try {
+      const buyPrice = parseFloat(formData.buy_price)
+      const sellingPrice = calculateSellingPrice(buyPrice)
+
       const { data, error } = await supabase
         .from('knife_dockets')
         .insert([{
@@ -38,7 +43,8 @@ export default function AddProductModal({ onClose, onSuccess }) {
           product_name: formData.product_name,
           product_type: formData.product_type,
           category: formData.category,
-          price: parseFloat(formData.price),
+          buy_price: buyPrice,
+          selling_price: sellingPrice,
           description: formData.description || null,
           notes: formData.notes || null,
           created_by: user.id,
@@ -60,6 +66,13 @@ export default function AddProductModal({ onClose, onSuccess }) {
     } finally {
       setLoading(false)
     }
+  }
+
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(price)
   }
 
   return (
@@ -143,20 +156,25 @@ export default function AddProductModal({ onClose, onSuccess }) {
           </div>
 
           <div className={styles.formGroup}>
-            <label htmlFor="price" className={styles.label}>
-              Price *
+            <label htmlFor="buy_price" className={styles.label}>
+              Buy Price *
             </label>
             <input
               type="number"
-              id="price"
-              name="price"
-              value={formData.price}
+              id="buy_price"
+              name="buy_price"
+              value={formData.buy_price}
               onChange={handleChange}
               required
               min="0"
               step="0.01"
               className={styles.input}
             />
+            {formData.buy_price && (
+              <div style={{ marginTop: '8px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                Calculated Selling Price: <strong style={{ color: 'var(--accent-primary)' }}>{formatPrice(calculatedSellingPrice)}</strong>
+              </div>
+            )}
           </div>
 
           <div className={styles.formGroup}>

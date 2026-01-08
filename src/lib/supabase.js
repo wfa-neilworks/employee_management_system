@@ -86,3 +86,25 @@ export const PRODUCT_CATEGORIES = [
   { value: 'ACCESSORIES', label: 'Accessories' },
   { value: 'SAFETY_EQUIPMENT', label: 'Safety Equipment' }
 ]
+
+// Calculate selling price based on buy price
+// Logic: selling = buy * 1.10, round to nearest 5
+// If difference < 5, add 5 to selling price
+export const calculateSellingPrice = (buyPrice) => {
+  const buy = parseFloat(buyPrice)
+  if (isNaN(buy) || buy < 0) return 0
+
+  // Step 1: Calculate 10% markup
+  let selling = buy * 1.10
+
+  // Step 2: Round to nearest 5
+  selling = Math.round(selling / 5) * 5
+
+  // Step 3: Check if difference is less than 5
+  const difference = selling - buy
+  if (difference < 5) {
+    selling += 5
+  }
+
+  return selling
+}
