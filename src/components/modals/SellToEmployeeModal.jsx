@@ -1,0 +1,364 @@
+import { useState, useEffect } from 'react'
+import { supabase, PRODUCT_CATEGORIES } from '../../lib/supabase'
+import { useAuth } from '../../context/AuthContext'
+import Modal from './Modal'
+import jsPDF from 'jspdf'
+import styles from './FormModal.module.css'
+
+const GST_RATE = 0.10 // 10% GST
+
+export default function SellToEmployeeModal({ products, onClose, onSuccess }) {
+  const { user } = useAuth()
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [employees, setEmployees] = useState([])
+  const [selectedEmployee, setSelectedEmployee] = useState(null)
+  const [selectedProducts, setSelectedProducts] = useState([]) // {product, quantity}
+
+  useEffect(() => {
+    fetchEmployees()
+  }, [])
+
+  const fetchEmployees = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('employees')
+        .select('*, departments(display_name)')
+        .eq('is_active', true)
+        .order('name')
+
+      if (error) throw error
+      setEmployees(data || [])
+    } catch (error) {
+      console.error('Error fetching employees:', error)
+    }
+  }
+
+  const handleAddProduct = () => {
+    if (products.length > 0) {
+      setSelectedProducts([...selectedProducts, { product: products[0], quantity: 1 }])
+    }
+  }
+
+  const handleRemoveProduct = (index) => {
+    setSelectedProducts(selectedProducts.filter((_, i) => i !== index))
+  }
+
+  const handleProductChange = (index, productId) => {
+    const product = products.find(p => p.id === productId)
+    const newSelected = [...selectedProducts]
+    newSelected[index] = { ...newSelected[index], product }
+    setSelectedProducts(newSelected)
+  }
+
+  const handleQuantityChange = (index, quantity) => {
+    const newSelected = [...selectedProducts]
+    newSelected[index] = { ...newSelected[index], quantity: parseInt(quantity) || 1 }
+    setSelectedProducts(newSelected)
+  }
+
+  const calculateTotals = () => {
+    const subtotal = selectedProducts.reduce((sum, item) => {
+      return sum + (item.product.selling_price * item.quantity)
+    }, 0)
+    const gst = subtotal * GST_RATE
+    const total = subtotal + gst
+    return { subtotal, gst, total }
+  }
+
+  const generateInvoiceNumber = async () => {
+    try {
+      // Get the next sequence number
+      const { data, error } = await supabase.rpc('nextval', {
+        sequence_name: 'knife_sales_invoice_seq'
+      })
+
+      if (error) {
+        // Fallback: get max invoice number and increment
+        const { data: sales } = await supabase
+          .from('knife_sales')
+          .select('invoice_number')
+          .order('invoice_number', { ascending: false })
+          .limit(1)
+
+        const lastNumber = sales && sales.length > 0
+          ? parseInt(sales[0].invoice_number.replace('KD', ''))
+          : 0
+        return `KD${String(lastNumber + 1).padStart(6, '0')}`
+      }
+
+      return `KD${String(data).padStart(6, '0')}`
+    } catch (error) {
+      console.error('Error generating invoice number:', error)
+      // Ultimate fallback
+      return `KD${String(Date.now()).slice(-6)}`
+    }
+  }
+
+  const getCategoryLabel = (value) => {
+    const category = PRODUCT_CATEGORIES.find(c => c.value === value)
+    return category ? category.label : value
+  }
+
+  const generatePDF = (invoiceNumber, employee, items, totals) => {
+    const doc = new jsPDF()
+    const pageWidth = doc.internal.pageSize.width
+    const margin = 20
+    let yPos = 20
+
+    // Invoice Number - Top Left
+    doc.setFontSize(12)
+    doc.setFont(undefined, 'bold')
+    doc.text(invoiceNumber, margin, yPos)
+
+    // Date - Top Right
+    const today = new Date().toLocaleDateString('en-AU')
+    doc.text(today, pageWidth - margin, yPos, { align: 'right' })
+    yPos += 15
+
+    // To: Employee
+    doc.setFontSize(11)
+    doc.text(`To: ${employee.payroll_number || 'N/A'} - ${employee.name}`, margin, yPos)
+    yPos += 7
+
+    // From: Wage Status - Department
+    const wageStatus = employee.wage_status === 'WFA' ? 'Woodward' : 'Labour Hire'
+    doc.text(`From: ${wageStatus} - ${employee.departments?.display_name || 'N/A'}`, margin, yPos)
+    yPos += 15
+
+    // Product List Header
+    doc.setFont(undefined, 'bold')
+    doc.text('QTY', margin, yPos)
+    doc.text('Product Code / Classification', margin + 20, yPos)
+    yPos += 7
+
+    // Product Items
+    doc.setFont(undefined, 'normal')
+    items.forEach(item => {
+      // Quantity
+      doc.text(String(item.quantity), margin, yPos)
+
+      // Product Code and Classification
+      doc.text(`${item.product.product_code} / ${getCategoryLabel(item.product.category)}`, margin + 20, yPos)
+      yPos += 5
+
+      // Price + GST
+      const itemTotal = item.product.selling_price * item.quantity
+      doc.setFontSize(9)
+      doc.text(`$${itemTotal.toFixed(2)} + GST`, margin + 20, yPos)
+      doc.setFontSize(11)
+      yPos += 10
+    })
+
+    yPos += 5
+
+    // Totals
+    doc.setFont(undefined, 'bold')
+    doc.text(`Subtotal: $${totals.subtotal.toFixed(2)}`, pageWidth - margin, yPos, { align: 'right' })
+    yPos += 7
+    doc.text(`GST (10%): $${totals.gst.toFixed(2)}`, pageWidth - margin, yPos, { align: 'right' })
+    yPos += 7
+    doc.setFontSize(12)
+    doc.text(`Total Amount: $${totals.total.toFixed(2)}`, pageWidth - margin, yPos, { align: 'right' })
+    yPos += 20
+
+    // Authorization Statement
+    doc.setFontSize(10)
+    doc.setFont(undefined, 'normal')
+    const authText = `I ${employee.name}, authorize the company to deduct the following amount $${totals.total.toFixed(2)} from my salary for buying tools I need for my work.`
+    const splitText = doc.splitTextToSize(authText, pageWidth - (margin * 2))
+    doc.text(splitText, margin, yPos)
+    yPos += splitText.length * 7 + 10
+
+    // Signature Line
+    doc.line(margin, yPos, pageWidth - margin, yPos)
+    yPos += 7
+    doc.setFontSize(9)
+    doc.text('Employee Signature', margin, yPos)
+
+    return doc
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+
+    if (!selectedEmployee) {
+      setError('Please select an employee')
+      return
+    }
+
+    if (selectedProducts.length === 0) {
+      setError('Please add at least one product')
+      return
+    }
+
+    setError('')
+    setLoading(true)
+
+    try {
+      const invoiceNumber = await generateInvoiceNumber()
+      const totals = calculateTotals()
+
+      // Prepare items data
+      const items = selectedProducts.map(item => ({
+        product_id: item.product.id,
+        product_code: item.product.product_code,
+        product_name: item.product.product_name,
+        category: item.product.category,
+        quantity: item.quantity,
+        unit_price: item.product.selling_price,
+        subtotal: item.product.selling_price * item.quantity
+      }))
+
+      // Save to database
+      const { error: insertError } = await supabase
+        .from('knife_sales')
+        .insert([{
+          invoice_number: invoiceNumber,
+          employee_id: selectedEmployee.id,
+          employee_name: selectedEmployee.name,
+          employee_payroll: selectedEmployee.payroll_number,
+          wage_status: selectedEmployee.wage_status,
+          department_name: selectedEmployee.departments?.display_name || 'N/A',
+          sale_date: new Date().toISOString().split('T')[0],
+          items: items,
+          subtotal: totals.subtotal,
+          gst: totals.gst,
+          total_amount: totals.total,
+          created_by: user.id
+        }])
+
+      if (insertError) throw insertError
+
+      // Generate and download PDF
+      const pdf = generatePDF(invoiceNumber, selectedEmployee, selectedProducts, totals)
+      pdf.save(`${invoiceNumber}_${selectedEmployee.name.replace(/\s+/g, '_')}.pdf`)
+
+      onSuccess()
+      onClose()
+    } catch (err) {
+      console.error('Error:', err)
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const totals = calculateTotals()
+  const formatPrice = (price) => `$${price.toFixed(2)}`
+
+  return (
+    <Modal onClose={onClose}>
+      <div className={styles.modal} style={{ maxWidth: '800px' }}>
+        <h2 className={styles.modalTitle}>Sell to Employee</h2>
+
+        {error && <div className={styles.error}>{error}</div>}
+
+        <form onSubmit={handleSubmit} className={styles.form}>
+          {/* Employee Selection */}
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Select Employee *</label>
+            <select
+              value={selectedEmployee?.id || ''}
+              onChange={(e) => {
+                const emp = employees.find(emp => emp.id === e.target.value)
+                setSelectedEmployee(emp)
+              }}
+              required
+              className={styles.select}
+            >
+              <option value="">-- Select Employee --</option>
+              {employees.map((emp) => (
+                <option key={emp.id} value={emp.id}>
+                  {emp.name} ({emp.payroll_number || 'No Payroll'}) - {emp.departments?.display_name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Products Selection */}
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Products</label>
+            {selectedProducts.map((item, index) => (
+              <div key={index} style={{ display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
+                <input
+                  type="number"
+                  min="1"
+                  value={item.quantity}
+                  onChange={(e) => handleQuantityChange(index, e.target.value)}
+                  style={{ width: '60px' }}
+                  className={styles.input}
+                  placeholder="Qty"
+                />
+                <select
+                  value={item.product.id}
+                  onChange={(e) => handleProductChange(index, e.target.value)}
+                  className={styles.select}
+                  style={{ flex: 1 }}
+                >
+                  {products.map((product) => (
+                    <option key={product.id} value={product.id}>
+                      {product.product_code} - {product.product_name} ({formatPrice(product.selling_price)})
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveProduct(index)}
+                  className={styles.cancelButton}
+                  style={{ padding: '6px 12px' }}
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={handleAddProduct}
+              className={styles.submitButton}
+              style={{ marginTop: '8px', padding: '8px 16px' }}
+            >
+              + Add Product
+            </button>
+          </div>
+
+          {/* Totals Display */}
+          {selectedProducts.length > 0 && (
+            <div className={styles.formGroup} style={{ background: 'var(--bg-tertiary)', padding: '16px', borderRadius: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <span>Subtotal:</span>
+                <strong>{formatPrice(totals.subtotal)}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                <span>GST (10%):</span>
+                <strong>{formatPrice(totals.gst)}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '18px', color: 'var(--accent-primary)' }}>
+                <span>Total:</span>
+                <strong>{formatPrice(totals.total)}</strong>
+              </div>
+            </div>
+          )}
+
+          <div className={styles.actions}>
+            <button
+              type="button"
+              onClick={onClose}
+              className={styles.cancelButton}
+              disabled={loading}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className={styles.submitButton}
+              disabled={loading}
+            >
+              {loading ? 'Processing...' : 'Generate Invoice & Print'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </Modal>
+  )
+}

@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import AddProductModal from '../components/modals/AddProductModal'
 import EditProductModal from '../components/modals/EditProductModal'
 import DeleteProductModal from '../components/modals/DeleteProductModal'
+import SellToEmployeeModal from '../components/modals/SellToEmployeeModal'
 import styles from './KnifeDocketsPage.module.css'
 
 export default function KnifeDocketsPage() {
@@ -15,6 +16,7 @@ export default function KnifeDocketsPage() {
   const [loading, setLoading] = useState(true)
 
   const [showAddModal, setShowAddModal] = useState(false)
+  const [showSellModal, setShowSellModal] = useState(false)
   const [editingProduct, setEditingProduct] = useState(null)
   const [deletingProduct, setDeletingProduct] = useState(null)
 
@@ -90,12 +92,21 @@ export default function KnifeDocketsPage() {
           </p>
         </div>
         {isProcurement() && (
-          <button
-            className={styles.addButton}
-            onClick={() => setShowAddModal(true)}
-          >
-            + Add Product
-          </button>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button
+              className={styles.addButton}
+              onClick={() => setShowSellModal(true)}
+              style={{ background: 'var(--success)' }}
+            >
+              Sell to Employee
+            </button>
+            <button
+              className={styles.addButton}
+              onClick={() => setShowAddModal(true)}
+            >
+              + Add Product
+            </button>
+          </div>
         )}
       </div>
 
@@ -201,6 +212,17 @@ export default function KnifeDocketsPage() {
         <AddProductModal
           onClose={() => setShowAddModal(false)}
           onSuccess={fetchProducts}
+        />
+      )}
+
+      {showSellModal && (
+        <SellToEmployeeModal
+          products={products}
+          onClose={() => setShowSellModal(false)}
+          onSuccess={() => {
+            setShowSellModal(false)
+            // Optionally refresh products or show success message
+          }}
         />
       )}
 
