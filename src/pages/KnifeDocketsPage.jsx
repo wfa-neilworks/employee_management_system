@@ -8,7 +8,7 @@ import SellToEmployeeModal from '../components/modals/SellToEmployeeModal'
 import styles from './KnifeDocketsPage.module.css'
 
 export default function KnifeDocketsPage() {
-  const { isProcurement, isViewer } = useAuth()
+  const { isProcurement, isAccounts } = useAuth()
   const [products, setProducts] = useState([])
   const [searchQuery, setSearchQuery] = useState('')
   const [filterType, setFilterType] = useState('')
