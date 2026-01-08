@@ -93,14 +93,30 @@ export default function TransactionHistoryPage() {
       doc.text(transaction.invoice_number, margin, 20)
       doc.text(formatDate(transaction.sale_date), pageWidth - margin, 20, { align: 'right' })
 
-      // To and From
+      // To and From with underlines
       let yPos = 35
       doc.setFontSize(11)
       doc.setFont(undefined, 'normal')
-      doc.text(`To: ${transaction.employee_payroll || 'N/A'} - ${transaction.employee_name}`, margin, yPos)
+
+      // To: line
+      const toLabel = 'To: '
+      doc.text(toLabel, margin, yPos)
+      const toLabelWidth = doc.getTextWidth(toLabel)
+      const toContent = `${transaction.employee_payroll || 'N/A'} - ${transaction.employee_name}`
+      doc.text(toContent, margin + toLabelWidth, yPos)
+      const toContentWidth = doc.getTextWidth(toContent)
+      doc.line(margin + toLabelWidth, yPos + 1, margin + toLabelWidth + toContentWidth, yPos + 1)
       yPos += 7
+
+      // From: line
+      const fromLabel = 'From: '
+      doc.text(fromLabel, margin, yPos)
+      const fromLabelWidth = doc.getTextWidth(fromLabel)
       const wageDisplay = transaction.wage_status === 'WFA' ? 'Woodward' : 'Labour Hire'
-      doc.text(`From: ${wageDisplay} - ${transaction.department_name}`, margin, yPos)
+      const fromContent = `${wageDisplay} - ${transaction.department_name}`
+      doc.text(fromContent, margin + fromLabelWidth, yPos)
+      const fromContentWidth = doc.getTextWidth(fromContent)
+      doc.line(margin + fromLabelWidth, yPos + 1, margin + fromLabelWidth + fromContentWidth, yPos + 1)
       yPos += 15
 
       // Table Header
