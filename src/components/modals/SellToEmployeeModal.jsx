@@ -325,10 +325,7 @@ export default function SellToEmployeeModal({ products, onClose, onSuccess }) {
 
       if (insertError) throw insertError
 
-      // Generate and download PDF
-      const pdf = generatePDF(invoiceNumber, selectedEmployee, selectedProducts, totals, signature)
-      pdf.save(`${invoiceNumber}_${selectedEmployee.name.replace(/\s+/g, '_')}.pdf`)
-
+      // Transaction saved successfully - no PDF generation needed
       onSuccess()
       onClose()
     } catch (err) {

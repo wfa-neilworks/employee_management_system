@@ -185,8 +185,10 @@ export default function TransactionHistoryPage() {
       yPos += 5
       doc.text('Employee Signature', margin, yPos)
 
-      // Download PDF
-      doc.save(`${transaction.invoice_number}_${transaction.employee_name.replace(/\s+/g, '_')}.pdf`)
+      // Open PDF in new tab instead of downloading
+      const pdfBlob = doc.output('blob')
+      const pdfUrl = URL.createObjectURL(pdfBlob)
+      window.open(pdfUrl, '_blank')
     } catch (error) {
       console.error('Error printing invoice:', error)
       alert('Failed to generate invoice PDF')
