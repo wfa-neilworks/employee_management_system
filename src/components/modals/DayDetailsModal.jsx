@@ -4,7 +4,7 @@ import Modal from './Modal'
 import EditLeaveModal from './EditLeaveModal'
 import styles from './DayDetailsModal.module.css'
 
-export default function DayDetailsModal({ date, leaves, onClose, onUpdate }) {
+export default function DayDetailsModal({ date, leaves, onClose, onUpdate, canEdit = true }) {
   const [editingLeave, setEditingLeave] = useState(null)
   const [deleting, setDeleting] = useState(null)
 
@@ -85,22 +85,24 @@ export default function DayDetailsModal({ date, leaves, onClose, onUpdate }) {
                   </div>
                 )}
               </div>
-              <div className={styles.leaveActions}>
-                <button
-                  onClick={() => setEditingLeave(leave)}
-                  className={styles.editButton}
-                  disabled={deleting === leave.id}
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(leave.id)}
-                  className={styles.deleteButton}
-                  disabled={deleting === leave.id}
-                >
-                  {deleting === leave.id ? 'Deleting...' : 'Delete'}
-                </button>
-              </div>
+              {canEdit && (
+                <div className={styles.leaveActions}>
+                  <button
+                    onClick={() => setEditingLeave(leave)}
+                    className={styles.editButton}
+                    disabled={deleting === leave.id}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(leave.id)}
+                    className={styles.deleteButton}
+                    disabled={deleting === leave.id}
+                  >
+                    {deleting === leave.id ? 'Deleting...' : 'Delete'}
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>

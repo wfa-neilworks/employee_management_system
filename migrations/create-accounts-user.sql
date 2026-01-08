@@ -5,7 +5,7 @@
 INSERT INTO accounts (id, email, account_type, created_at)
 VALUES (
   'c4de9061-f309-4815-967a-28606829de71',
-  'accounts@example.com', -- Replace with actual email from auth.users
+  'accounts@wfa.com', -- Replace with actual email from auth.users
   'ACCOUNTS',
   NOW()
 )
