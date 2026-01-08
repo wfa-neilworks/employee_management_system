@@ -106,11 +106,10 @@ export default function TransactionHistoryPage() {
       // Table Header
       doc.setFontSize(10)
       doc.setFont(undefined, 'bold')
-      const colWidths = { qty: 15, code: 40, name: 70, price: 30 }
       doc.text('QTY', margin, yPos)
-      doc.text('Product Code/Classification', margin + colWidths.qty, yPos)
-      doc.text('Product Name', margin + colWidths.qty + colWidths.code, yPos)
-      doc.text('Price + GST', pageWidth - margin - 30, yPos, { align: 'right' })
+      doc.text('Product Code/Classification', margin + 15, yPos)
+      doc.text('Product Name', margin + 80, yPos)
+      doc.text('Price + GST', pageWidth - margin, yPos, { align: 'right' })
       yPos += 5
       doc.line(margin, yPos, pageWidth - margin, yPos)
       yPos += 7
@@ -123,10 +122,15 @@ export default function TransactionHistoryPage() {
           yPos = 20
         }
         doc.text(item.quantity.toString(), margin, yPos)
-        doc.text(item.product_code, margin + colWidths.qty, yPos)
-        doc.text(item.product_name, margin + colWidths.qty + colWidths.code, yPos)
+        doc.text(item.product_code, margin + 15, yPos)
+
+        // Wrap product name if too long
+        const maxNameWidth = pageWidth - margin - 100
+        const nameLines = doc.splitTextToSize(item.product_name, maxNameWidth)
+        doc.text(nameLines, margin + 80, yPos)
+
         doc.text(formatPrice(item.subtotal), pageWidth - margin, yPos, { align: 'right' })
-        yPos += 7
+        yPos += Math.max(7, nameLines.length * 5)
       })
 
       yPos += 5
