@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import styles from './Sidebar.module.css'
 
 export default function Sidebar({ departments, isOpen }) {
+  const { isProcurement } = useAuth()
   const [isDepartmentsOpen, setIsDepartmentsOpen] = useState(true)
 
   return (
@@ -99,6 +101,18 @@ export default function Sidebar({ departments, isOpen }) {
           <span className={styles.navIcon}>✅</span>
           <span className={styles.navLabel}>ATTENDANCE</span>
         </NavLink>
+
+        {isProcurement() && (
+          <NavLink
+            to="/knife-dockets"
+            className={({ isActive }) =>
+              `${styles.navItem} ${isActive ? styles.navItemActive : ''}`
+            }
+          >
+            <span className={styles.navIcon}>🔪</span>
+            <span className={styles.navLabel}>KNIFE DOCKETS</span>
+          </NavLink>
+        )}
       </nav>
     </aside>
   )

@@ -6,6 +6,7 @@ import DepartmentPage from './pages/DepartmentPage'
 import RosterPage from './pages/RosterPage'
 import TimesheetPage from './pages/TimesheetPage'
 import AttendancePage from './pages/AttendancePage'
+import KnifeDocketsPage from './pages/KnifeDocketsPage'
 import Layout from './components/Layout'
 
 function PrivateRoute({ children }) {
@@ -46,6 +47,7 @@ function AppRoutes() {
         <Route path="roster" element={<RosterPage />} />
         <Route path="timesheet" element={<TimesheetPage />} />
         <Route path="attendance" element={<AttendancePage />} />
+        <Route path="knife-dockets" element={<KnifeDocketsPage />} />
       </Route>
     </Routes>
   )

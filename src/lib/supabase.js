@@ -70,3 +70,19 @@ export const GLOVE_SIZES = [
   { value: 'BLUE', label: 'Blue' },
   { value: 'ORANGE', label: 'Orange' }
 ]
+
+export const PRODUCT_TYPES = [
+  { value: 'KNIFE', label: 'Knife' },
+  { value: 'STEEL', label: 'Steel' },
+  { value: 'POUCH', label: 'Pouch' },
+  { value: 'BELT', label: 'Belt' },
+  { value: 'STONE', label: 'Stone' },
+  { value: 'HOOK', label: 'Hook' }
+]
+
+export const PRODUCT_CATEGORIES = [
+  { value: 'CUTTING_TOOLS', label: 'Cutting Tools' },
+  { value: 'SHARPENING', label: 'Sharpening Equipment' },
+  { value: 'ACCESSORIES', label: 'Accessories' },
+  { value: 'SAFETY_EQUIPMENT', label: 'Safety Equipment' }
+]
