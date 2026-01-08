@@ -178,16 +178,22 @@ export default function TransactionHistoryPage() {
       doc.text(splitEndText, margin, yPos)
       yPos += splitEndText.length * 7 + 10
 
-      // Signature
+      // Signature - centered
+      const signatureWidth = 60
+      const signatureHeight = 20
+      const signatureX = (pageWidth - signatureWidth) / 2
+
       if (employee?.signature) {
-        doc.addImage(employee.signature, 'PNG', margin, yPos, 60, 20)
-        yPos += 22
+        doc.addImage(employee.signature, 'PNG', signatureX, yPos, signatureWidth, signatureHeight)
+        yPos += signatureHeight + 2
       }
 
-      // Signature Line
-      doc.line(margin, yPos, pageWidth - margin, yPos)
+      // Signature Line - centered
+      const lineWidth = 100
+      const lineX = (pageWidth - lineWidth) / 2
+      doc.line(lineX, yPos, lineX + lineWidth, yPos)
       yPos += 5
-      doc.text('Employee Signature', margin, yPos)
+      doc.text('Employee Signature', pageWidth / 2, yPos, { align: 'center' })
 
       // Open PDF in new tab instead of downloading
       const pdfBlob = doc.output('blob')
