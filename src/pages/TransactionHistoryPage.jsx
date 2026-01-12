@@ -16,6 +16,7 @@ export default function TransactionHistoryPage() {
 
   useEffect(() => {
     fetchTransactions()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab])
 
   const fetchTransactions = async () => {
@@ -44,7 +45,8 @@ export default function TransactionHistoryPage() {
 
     setProcessing(transactionId)
     try {
-      const { error } = await supabase
+      console.log('Processing transaction:', transactionId)
+      const { data, error } = await supabase
         .from('knife_sales')
         .update({
           processed: true,
@@ -52,11 +54,18 @@ export default function TransactionHistoryPage() {
           processed_by: user.id
         })
         .eq('id', transactionId)
+        .select()
 
-      if (error) throw error
+      if (error) {
+        console.error('Update error:', error)
+        throw error
+      }
+
+      console.log('Transaction processed successfully:', data)
 
       // Refresh the list
       await fetchTransactions()
+      console.log('Transaction list refreshed')
     } catch (error) {
       console.error('Error processing transaction:', error)
       alert('Failed to process transaction: ' + error.message)
