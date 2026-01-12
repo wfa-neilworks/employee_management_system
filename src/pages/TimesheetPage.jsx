@@ -243,13 +243,16 @@ export default function TimesheetPage() {
       return `
         <div id="printable-timesheet">
           <div class="header">
-            <img
-              src="/woodwardlogo.png"
-              alt="Woodward Foods"
-              class="logo"
-              style="height: 30px; width: 30px; max-height: 30px; max-width: 30px;"
-            />
-            <h2 class="companyName">Woodward Foods Australia</h2>
+            <div class="headerLeft">
+              <img
+                src="/woodwardlogo.png"
+                alt="Woodward Foods"
+                class="logo"
+                style="height: 30px; width: 30px; max-height: 30px; max-width: 30px;"
+              />
+              <h2 class="companyName">Woodward Foods Australia</h2>
+            </div>
+            <div class="attribution">Printed from Noel - Employee Management System</div>
           </div>
 
           <div class="timesheetInfo">
@@ -329,10 +332,23 @@ export default function TimesheetPage() {
               #printable-timesheet .header {
                 display: flex;
                 align-items: center;
+                justify-content: space-between;
                 gap: 8px;
                 margin-bottom: 15px;
                 padding-bottom: 0;
                 border-bottom: none;
+              }
+
+              #printable-timesheet .headerLeft {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+              }
+
+              #printable-timesheet .attribution {
+                font-size: 10px;
+                color: #666;
+                font-style: italic;
               }
 
               #printable-timesheet img.logo {
@@ -533,13 +549,18 @@ export default function TimesheetPage() {
 
           <div className={styles.printableArea} id="printable-timesheet">
             <div className={styles.header}>
-              <img
-                src="/woodwardlogo.png"
-                alt="Woodward Foods"
-                className={styles.logo}
-                style={{ height: '30px', width: '30px', maxHeight: '30px', maxWidth: '30px' }}
-              />
-              <h2 className={styles.companyName}>Woodward Foods Australia</h2>
+              <div className={styles.headerLeft}>
+                <img
+                  src="/woodwardlogo.png"
+                  alt="Woodward Foods"
+                  className={styles.logo}
+                  style={{ height: '30px', width: '30px', maxHeight: '30px', maxWidth: '30px' }}
+                />
+                <h2 className={styles.companyName}>Woodward Foods Australia</h2>
+              </div>
+              <div className={styles.attribution}>
+                Printed from Noel - Employee Management System
+              </div>
             </div>
 
             <div className={styles.timesheetInfo}>

@@ -56,7 +56,7 @@
 
 .timeButton {
   padding: 8px 12px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   border: none;
   border-radius: 6px;
   color: white;
@@ -64,13 +64,13 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
   min-width: 100px;
 }
 
 .timeButton:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.4);
 }
 
 .timeButton:active {
@@ -146,7 +146,7 @@
 .timeSelect:focus {
   outline: none;
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
 .timeDropdownActions {
@@ -176,14 +176,14 @@
 }
 
 .timeApplyButton {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: white;
-  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
 }
 
 .timeApplyButton:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.4);
 }
 
 .select:hover,
@@ -274,10 +274,23 @@
 .header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
   margin-bottom: 15px;
   padding-bottom: 0;
   border-bottom: none;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.attribution {
+  font-size: 10px;
+  color: #666;
+  font-style: italic;
 }
 
 .logo {
