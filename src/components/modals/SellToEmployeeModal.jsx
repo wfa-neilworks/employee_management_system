@@ -226,7 +226,7 @@ export default function SellToEmployeeModal({ products, onClose, onSuccess }) {
     doc.line(margin + iWidth, yPos + 1, margin + iWidth + nameWidth, yPos + 1) // Underline name
 
     // Text between name and amount
-    const middleText = ', authorize the company to deduct the following amount '
+    const middleText = ', do hereby give authority for the amount of '
     doc.text(middleText, margin + iWidth + nameWidth, yPos)
     const middleWidth = doc.getTextWidth(middleText)
 
@@ -239,7 +239,7 @@ export default function SellToEmployeeModal({ products, onClose, onSuccess }) {
 
     // Remaining text on next line if needed
     yPos += 7
-    const endText = ' from my salary for buying tools I need for my work.'
+    const endText = ' to be deducted from my next salary/wage'
     const splitEndText = doc.splitTextToSize(endText, pageWidth - (margin * 2))
     doc.text(splitEndText, margin, yPos)
     yPos += splitEndText.length * 7 + 10

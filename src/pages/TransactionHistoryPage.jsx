@@ -280,18 +280,26 @@ export default function TransactionHistoryPage() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', borderBottom: '2px solid var(--border-color)' }}>
+      <div style={{
+        display: 'flex',
+        gap: '4px',
+        marginBottom: '24px',
+        borderBottom: '2px solid var(--border-color)',
+        padding: '0'
+      }}>
         <button
           onClick={() => setActiveTab('docket')}
           style={{
             padding: '12px 24px',
-            background: activeTab === 'docket' ? 'var(--accent-primary)' : 'transparent',
-            color: activeTab === 'docket' ? 'white' : 'var(--text-primary)',
+            background: activeTab === 'docket' ? '#ff8800' : 'var(--bg-secondary)',
+            color: activeTab === 'docket' ? 'white' : 'var(--text-secondary)',
             border: 'none',
-            borderBottom: activeTab === 'docket' ? '3px solid var(--accent-primary)' : '3px solid transparent',
+            borderBottom: activeTab === 'docket' ? '3px solid #ff8800' : '3px solid transparent',
             cursor: 'pointer',
-            fontWeight: activeTab === 'docket' ? '600' : '400',
-            fontSize: '14px'
+            fontWeight: '600',
+            fontSize: '14px',
+            borderRadius: '8px 8px 0 0',
+            transition: 'all 0.2s ease'
           }}
         >
           Docket
@@ -300,13 +308,15 @@ export default function TransactionHistoryPage() {
           onClick={() => setActiveTab('processed')}
           style={{
             padding: '12px 24px',
-            background: activeTab === 'processed' ? 'var(--accent-primary)' : 'transparent',
-            color: activeTab === 'processed' ? 'white' : 'var(--text-primary)',
+            background: activeTab === 'processed' ? '#00cc66' : 'var(--bg-secondary)',
+            color: activeTab === 'processed' ? 'white' : 'var(--text-secondary)',
             border: 'none',
-            borderBottom: activeTab === 'processed' ? '3px solid var(--accent-primary)' : '3px solid transparent',
+            borderBottom: activeTab === 'processed' ? '3px solid #00cc66' : '3px solid transparent',
             cursor: 'pointer',
-            fontWeight: activeTab === 'processed' ? '600' : '400',
-            fontSize: '14px'
+            fontWeight: '600',
+            fontSize: '14px',
+            borderRadius: '8px 8px 0 0',
+            transition: 'all 0.2s ease'
           }}
         >
           Processed Docket
@@ -397,16 +407,21 @@ export default function TransactionHistoryPage() {
                         onClick={() => handlePrintInvoice(transaction)}
                         className={styles.actionButton}
                         style={{
-                          padding: '6px 12px',
-                          fontSize: '12px',
-                          background: 'var(--accent-primary)',
+                          padding: '8px 16px',
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          background: '#0066cc',
                           color: 'white',
                           border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer'
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                         }}
+                        onMouseEnter={(e) => e.target.style.background = '#0052a3'}
+                        onMouseLeave={(e) => e.target.style.background = '#0066cc'}
                       >
-                        Print Invoice
+                        🖨️ Print Invoice
                       </button>
                       {isAccounts() && activeTab === 'docket' && (
                         <button
@@ -414,17 +429,21 @@ export default function TransactionHistoryPage() {
                           className={styles.actionButton}
                           disabled={processing === transaction.id}
                           style={{
-                            padding: '6px 12px',
-                            fontSize: '12px',
-                            background: 'var(--success)',
+                            padding: '8px 16px',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            background: processing === transaction.id ? '#cccccc' : '#00cc66',
                             color: 'white',
                             border: 'none',
-                            borderRadius: '4px',
+                            borderRadius: '6px',
                             cursor: processing === transaction.id ? 'not-allowed' : 'pointer',
-                            opacity: processing === transaction.id ? 0.6 : 1
+                            transition: 'all 0.2s ease',
+                            boxShadow: processing === transaction.id ? 'none' : '0 2px 4px rgba(0,0,0,0.1)'
                           }}
+                          onMouseEnter={(e) => !processing && (e.target.style.background = '#00a352')}
+                          onMouseLeave={(e) => !processing && (e.target.style.background = '#00cc66')}
                         >
-                          {processing === transaction.id ? 'Processing...' : 'Process'}
+                          {processing === transaction.id ? '⏳ Processing...' : '✓ Process'}
                         </button>
                       )}
                     </div>
