@@ -9,6 +9,7 @@ export default function ResignEmployeeModal({ employee, onClose, onSuccess }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [employeeGears, setEmployeeGears] = useState([])
+  const [unprocessedTransactions, setUnprocessedTransactions] = useState([])
   const [formData, setFormData] = useState({
     resignation_reason: 'RESIGNED',
     end_date: new Date().toISOString().split('T')[0],
@@ -17,6 +18,8 @@ export default function ResignEmployeeModal({ employee, onClose, onSuccess }) {
 
   useEffect(() => {
     fetchEmployeeGears()
+    fetchUnprocessedTransactions()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [employee.id])
 
   const fetchEmployeeGears = async () => {
@@ -32,12 +35,30 @@ export default function ResignEmployeeModal({ employee, onClose, onSuccess }) {
     }
   }
 
-  const hasMeshItems = () => {
-    return employeeGears.some(g =>
-      g.gear_type === 'MESH_GLOVES' ||
-      g.gear_type === 'LONG_MESH_GLOVES' ||
-      g.gear_type === 'MESH_APRON'
-    )
+  const fetchUnprocessedTransactions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('knife_sales')
+        .select('invoice_number, total_amount')
+        .eq('employee_id', employee.id)
+        .eq('processed', false)
+      if (error) throw error
+      setUnprocessedTransactions(data || [])
+    } catch (error) {
+      console.error('Error fetching unprocessed transactions:', error)
+    }
+  }
+
+  const hasActiveGears = () => {
+    return employeeGears.length > 0
+  }
+
+  const hasUnprocessedDockets = () => {
+    return unprocessedTransactions.length > 0
+  }
+
+  const canResign = () => {
+    return !hasActiveGears() && !hasUnprocessedDockets()
   }
 
   const handleChange = (e) => {
@@ -50,6 +71,20 @@ export default function ResignEmployeeModal({ employee, onClose, onSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+
+    // Validate conditions before proceeding
+    if (!canResign()) {
+      const errors = []
+      if (hasActiveGears()) {
+        errors.push('Employee still has active gears that must be returned')
+      }
+      if (hasUnprocessedDockets()) {
+        errors.push('Employee has unprocessed knife dockets that must be processed first')
+      }
+      setError(errors.join('. '))
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -88,9 +123,16 @@ export default function ResignEmployeeModal({ employee, onClose, onSuccess }) {
       <form onSubmit={handleSubmit} className={styles.form}>
         <div className={styles.warningBox}>
           <p>This action will terminate the employee and mark them as inactive. Please provide the necessary details below.</p>
-          {hasMeshItems() && (
+
+          {hasActiveGears() && (
             <p style={{marginTop: '10px', fontWeight: 'bold', color: '#ff0000'}}>
-              ⚠ This employee has mesh gloves/apron assigned that must be returned!
+              ⚠ This employee has {employeeGears.length} active gear(s) that must be returned before resignation!
+            </p>
+          )}
+
+          {hasUnprocessedDockets() && (
+            <p style={{marginTop: '10px', fontWeight: 'bold', color: '#ff0000'}}>
+              ⚠ This employee has {unprocessedTransactions.length} unprocessed knife docket(s) that must be processed before resignation!
             </p>
           )}
         </div>
@@ -156,7 +198,8 @@ export default function ResignEmployeeModal({ employee, onClose, onSuccess }) {
           <button
             type="submit"
             className={`${styles.submitButton} ${styles.dangerButton}`}
-            disabled={loading}
+            disabled={loading || !canResign()}
+            title={!canResign() ? 'Cannot resign: Employee has active gears or unprocessed dockets' : ''}
           >
             {loading ? 'Processing...' : 'Confirm Resignation'}
           </button>
