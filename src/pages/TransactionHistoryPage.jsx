@@ -206,36 +206,58 @@ export default function TransactionHistoryPage() {
       doc.text(`Total Amount: ${formatPrice(transaction.total_amount)}`, pageWidth - margin, yPos, { align: 'right' })
       yPos += 20
 
-      // Authorization Statement with underlines
+      // Title - PAYMENT DEDUCTION AUTHORITY (centered with underline)
+      doc.setFontSize(12)
+      doc.setFont(undefined, 'bold')
+      const titleText = 'PAYMENT DEDUCTION AUTHORITY'
+      const titleWidth = doc.getTextWidth(titleText)
+      const titleX = (pageWidth - titleWidth) / 2
+      doc.text(titleText, titleX, yPos)
+      doc.line(titleX, yPos + 1, titleX + titleWidth, yPos + 1)
+      yPos += 15
+
+      // Authorization Statement with underlines (centered)
       doc.setFontSize(10)
       doc.setFont(undefined, 'normal')
-      doc.text('I ', margin, yPos)
-      const iWidth = doc.getTextWidth('I ')
+
+      // Calculate total width for centering the first line
+      const iText = 'I '
+      const nameText = transaction.employee_name
+      const middleText = ', do hereby give authority for the amount of '
+      const amountText = `${formatPrice(transaction.total_amount)}`
+
+      const iWidth = doc.getTextWidth(iText)
+      const nameWidth = doc.getTextWidth(nameText)
+      const middleWidth = doc.getTextWidth(middleText)
+      const amountWidth = doc.getTextWidth(amountText)
+      const firstLineWidth = iWidth + nameWidth + middleWidth + amountWidth
+      const startX = (pageWidth - firstLineWidth) / 2
+
+      // First line centered
+      let currentX = startX
+      doc.text(iText, currentX, yPos)
+      currentX += iWidth
 
       // Employee name with underline
-      const nameText = transaction.employee_name
-      doc.text(nameText, margin + iWidth, yPos)
-      const nameWidth = doc.getTextWidth(nameText)
-      doc.line(margin + iWidth, yPos + 1, margin + iWidth + nameWidth, yPos + 1)
+      doc.text(nameText, currentX, yPos)
+      doc.line(currentX, yPos + 1, currentX + nameWidth, yPos + 1)
+      currentX += nameWidth
 
       // Text between name and amount
-      const middleText = ', authorize the company to deduct the following amount '
-      doc.text(middleText, margin + iWidth + nameWidth, yPos)
-      const middleWidth = doc.getTextWidth(middleText)
+      doc.text(middleText, currentX, yPos)
+      currentX += middleWidth
 
       // Amount with underline
-      const amountText = `${formatPrice(transaction.total_amount)}`
-      const amountX = margin + iWidth + nameWidth + middleWidth
-      doc.text(amountText, amountX, yPos)
-      const amountWidth = doc.getTextWidth(amountText)
-      doc.line(amountX, yPos + 1, amountX + amountWidth, yPos + 1)
-
-      // Remaining text on next line
+      doc.text(amountText, currentX, yPos)
+      doc.line(currentX, yPos + 1, currentX + amountWidth, yPos + 1)
       yPos += 7
-      const endText = ' from my salary for buying tools I need for my work.'
-      const splitEndText = doc.splitTextToSize(endText, pageWidth - (margin * 2))
-      doc.text(splitEndText, margin, yPos)
-      yPos += splitEndText.length * 7 + 10
+
+      // Remaining text on next line (centered)
+      const endText = 'to be deducted from my next salary/wage'
+      const endTextWidth = doc.getTextWidth(endText)
+      const endTextX = (pageWidth - endTextWidth) / 2
+      doc.text(endText, endTextX, yPos)
+      yPos += 15
 
       // Signature - centered
       const signatureWidth = 60
