@@ -2,6 +2,121 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import styles from './TimesheetPage.module.css'
 
+// Time Selector Component with Dropdowns
+function TimeSelector({ value, onChange }) {
+  const [isOpen, setIsOpen] = useState(false)
+
+  // Parse the 24-hour time to 12-hour format
+  const parseTime = (timeStr) => {
+    if (!timeStr) return { hour: '06', minute: '00', period: 'AM' }
+    const [hours, minutes] = timeStr.split(':')
+    const hour24 = parseInt(hours)
+    const period = hour24 >= 12 ? 'PM' : 'AM'
+    const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24
+    return {
+      hour: String(hour12).padStart(2, '0'),
+      minute: minutes,
+      period
+    }
+  }
+
+  // Convert 12-hour format to 24-hour format
+  const formatTo24Hour = (hour, minute, period) => {
+    let hour24 = parseInt(hour)
+    if (period === 'AM' && hour24 === 12) hour24 = 0
+    if (period === 'PM' && hour24 !== 12) hour24 += 12
+    return `${String(hour24).padStart(2, '0')}:${minute}`
+  }
+
+  const { hour, minute, period } = parseTime(value)
+  const [selectedHour, setSelectedHour] = useState(hour)
+  const [selectedMinute, setSelectedMinute] = useState(minute)
+  const [selectedPeriod, setSelectedPeriod] = useState(period)
+
+  const hours = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'))
+  const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'))
+
+  const handleApply = () => {
+    const newTime = formatTo24Hour(selectedHour, selectedMinute, selectedPeriod)
+    onChange(newTime)
+    setIsOpen(false)
+  }
+
+  return (
+    <div className={styles.timeSelectorContainer}>
+      <button
+        type="button"
+        className={styles.timeButton}
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        {hour}:{minute} {period}
+      </button>
+
+      {isOpen && (
+        <>
+          <div className={styles.timeDropdownOverlay} onClick={() => setIsOpen(false)} />
+          <div className={styles.timeDropdown}>
+            <div className={styles.timeDropdownHeader}>Select Time</div>
+            <div className={styles.timeSelectors}>
+              <div className={styles.timeColumn}>
+                <label>Hour</label>
+                <select
+                  value={selectedHour}
+                  onChange={(e) => setSelectedHour(e.target.value)}
+                  className={styles.timeSelect}
+                >
+                  {hours.map(h => (
+                    <option key={h} value={h}>{h}</option>
+                  ))}
+                </select>
+              </div>
+              <div className={styles.timeColumn}>
+                <label>Minute</label>
+                <select
+                  value={selectedMinute}
+                  onChange={(e) => setSelectedMinute(e.target.value)}
+                  className={styles.timeSelect}
+                >
+                  {minutes.map(m => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+              </div>
+              <div className={styles.timeColumn}>
+                <label>Period</label>
+                <select
+                  value={selectedPeriod}
+                  onChange={(e) => setSelectedPeriod(e.target.value)}
+                  className={styles.timeSelect}
+                >
+                  <option value="AM">AM</option>
+                  <option value="PM">PM</option>
+                </select>
+              </div>
+            </div>
+            <div className={styles.timeDropdownActions}>
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className={styles.timeCancelButton}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleApply}
+                className={styles.timeApplyButton}
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 export default function TimesheetPage() {
   const [departments, setDepartments] = useState([])
   const [selectedDepartment, setSelectedDepartment] = useState('')
@@ -464,11 +579,9 @@ export default function TimesheetPage() {
                         {isOnLeave ? (
                           leaveCode
                         ) : (
-                          <input
-                            type="time"
+                          <TimeSelector
                             value={employee.customStartTime || timesheetData.startTime}
-                            onChange={(e) => handleTimeChange(employee.id, e.target.value)}
-                            className={styles.timeInput}
+                            onChange={(newTime) => handleTimeChange(employee.id, newTime)}
                           />
                         )}
                       </td>
