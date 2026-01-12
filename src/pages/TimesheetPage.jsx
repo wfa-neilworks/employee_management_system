@@ -78,7 +78,8 @@ export default function TimesheetPage() {
         startTime: startTime,
         employees: employees.map(emp => ({
           ...emp,
-          leaveType: leaveMap[emp.id] || null
+          leaveType: leaveMap[emp.id] || null,
+          customStartTime: startTime // Initialize with default start time
         }))
       }
 
@@ -107,12 +108,80 @@ export default function TimesheetPage() {
     }
   }
 
+  const handleTimeChange = (employeeId, newTime) => {
+    setTimesheetData(prev => ({
+      ...prev,
+      employees: prev.employees.map(emp =>
+        emp.id === employeeId
+          ? { ...emp, customStartTime: newTime }
+          : emp
+      )
+    }))
+  }
+
   const handlePrint = () => {
     // Create a new window for printing only the timesheet
     const printWindow = window.open('', '_blank')
-    const printContent = document.getElementById('printable-timesheet')
 
-    if (printWindow && printContent) {
+    // Generate printable HTML with customStartTime values
+    const generatePrintableHTML = () => {
+      return `
+        <div id="printable-timesheet">
+          <div class="header">
+            <img
+              src="/woodwardlogo.png"
+              alt="Woodward Foods"
+              class="logo"
+              style="height: 30px; width: 30px; max-height: 30px; max-width: 30px;"
+            />
+            <h2 class="companyName">Woodward Foods Australia</h2>
+          </div>
+
+          <div class="timesheetInfo">
+            <h3>Department: ${timesheetData.departmentName}</h3>
+            <p>Date: ${new Date(timesheetData.date).toLocaleDateString('en-US', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            })}</p>
+          </div>
+
+          <table class="timesheetTable">
+            <thead>
+              <tr>
+                <th>Payroll Number</th>
+                <th>Name</th>
+                <th>Start Time</th>
+                <th>Break</th>
+                <th>Time Finish</th>
+                <th>Remarks</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${timesheetData.employees.map((employee) => {
+                const leaveCode = getLeaveCode(employee.leaveType)
+                const isOnLeave = !!leaveCode
+                const displayTime = employee.customStartTime || timesheetData.startTime
+
+                return `
+                  <tr class="${isOnLeave ? 'onLeave' : ''}">
+                    <td>${employee.payroll_number || '-'}</td>
+                    <td>${employee.name}${employee.english_name ? ` (${employee.english_name})` : ''}</td>
+                    <td>${isOnLeave ? leaveCode : displayTime}</td>
+                    <td>${isOnLeave ? leaveCode : ''}</td>
+                    <td>${isOnLeave ? leaveCode : ''}</td>
+                    <td>${isOnLeave ? leaveCode : ''}</td>
+                  </tr>
+                `
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `
+    }
+
+    if (printWindow) {
       printWindow.document.write(`
         <!DOCTYPE html>
         <html>
@@ -268,7 +337,7 @@ export default function TimesheetPage() {
             </style>
           </head>
           <body>
-            ${printContent.outerHTML}
+            ${generatePrintableHTML()}
           </body>
         </html>
       `)
@@ -391,7 +460,18 @@ export default function TimesheetPage() {
                         {employee.name}
                         {employee.english_name && ` (${employee.english_name})`}
                       </td>
-                      <td>{isOnLeave ? leaveCode : timesheetData.startTime}</td>
+                      <td className="editable-time">
+                        {isOnLeave ? (
+                          leaveCode
+                        ) : (
+                          <input
+                            type="time"
+                            value={employee.customStartTime || timesheetData.startTime}
+                            onChange={(e) => handleTimeChange(employee.id, e.target.value)}
+                            className={styles.timeInput}
+                          />
+                        )}
+                      </td>
                       <td>{isOnLeave ? leaveCode : ''}</td>
                       <td>{isOnLeave ? leaveCode : ''}</td>
                       <td>{isOnLeave ? leaveCode : ''}</td>
