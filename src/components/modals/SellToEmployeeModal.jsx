@@ -211,50 +211,76 @@ export default function SellToEmployeeModal({ products, onClose, onSuccess }) {
     doc.text(`Total Amount: $${totals.total.toFixed(2)}`, pageWidth - margin, yPos, { align: 'right' })
     yPos += 20
 
-    // Authorization Statement with underlines
+    // Title - PAYMENT DEDUCTION AUTHORITY (centered with underline)
+    doc.setFontSize(12)
+    doc.setFont(undefined, 'bold')
+    const titleText = 'PAYMENT DEDUCTION AUTHORITY'
+    const titleWidth = doc.getTextWidth(titleText)
+    const titleX = (pageWidth - titleWidth) / 2
+    doc.text(titleText, titleX, yPos)
+    doc.line(titleX, yPos + 1, titleX + titleWidth, yPos + 1)
+    yPos += 15
+
+    // Authorization Statement with underlines (centered)
     doc.setFontSize(10)
     doc.setFont(undefined, 'normal')
 
-    // Text before name
-    doc.text('I ', margin, yPos)
-    const iWidth = doc.getTextWidth('I ')
+    // Calculate total width for centering the first line
+    const iText = 'I '
+    const nameText = employee.name
+    const middleText = ', do hereby give authority for the amount of '
+    const amountText = `$${totals.total.toFixed(2)}`
+
+    const iWidth = doc.getTextWidth(iText)
+    const nameWidth = doc.getTextWidth(nameText)
+    const middleWidth = doc.getTextWidth(middleText)
+    const amountWidth = doc.getTextWidth(amountText)
+    const firstLineWidth = iWidth + nameWidth + middleWidth + amountWidth
+    const startX = (pageWidth - firstLineWidth) / 2
+
+    // First line centered
+    let currentX = startX
+    doc.text(iText, currentX, yPos)
+    currentX += iWidth
 
     // Employee name with underline
-    const nameText = employee.name
-    doc.text(nameText, margin + iWidth, yPos)
-    const nameWidth = doc.getTextWidth(nameText)
-    doc.line(margin + iWidth, yPos + 1, margin + iWidth + nameWidth, yPos + 1) // Underline name
+    doc.text(nameText, currentX, yPos)
+    doc.line(currentX, yPos + 1, currentX + nameWidth, yPos + 1)
+    currentX += nameWidth
 
     // Text between name and amount
-    const middleText = ', do hereby give authority for the amount of '
-    doc.text(middleText, margin + iWidth + nameWidth, yPos)
-    const middleWidth = doc.getTextWidth(middleText)
+    doc.text(middleText, currentX, yPos)
+    currentX += middleWidth
 
     // Amount with underline
-    const amountText = `$${totals.total.toFixed(2)}`
-    const amountX = margin + iWidth + nameWidth + middleWidth
-    doc.text(amountText, amountX, yPos)
-    const amountWidth = doc.getTextWidth(amountText)
-    doc.line(amountX, yPos + 1, amountX + amountWidth, yPos + 1) // Underline amount
-
-    // Remaining text on next line if needed
+    doc.text(amountText, currentX, yPos)
+    doc.line(currentX, yPos + 1, currentX + amountWidth, yPos + 1)
     yPos += 7
-    const endText = ' to be deducted from my next salary/wage'
-    const splitEndText = doc.splitTextToSize(endText, pageWidth - (margin * 2))
-    doc.text(splitEndText, margin, yPos)
-    yPos += splitEndText.length * 7 + 10
 
-    // Signature
+    // Remaining text on next line (centered)
+    const endText = 'to be deducted from my next salary/wage'
+    const endTextWidth = doc.getTextWidth(endText)
+    const endTextX = (pageWidth - endTextWidth) / 2
+    doc.text(endText, endTextX, yPos)
+    yPos += 15
+
+    // Signature - centered
+    const signatureWidth = 60
+    const signatureHeight = 20
+    const signatureX = (pageWidth - signatureWidth) / 2
+
     if (signature) {
-      doc.addImage(signature, 'PNG', margin, yPos, 60, 20)
-      yPos += 22
+      doc.addImage(signature, 'PNG', signatureX, yPos, signatureWidth, signatureHeight)
+      yPos += signatureHeight + 2
     }
 
-    // Signature Line
-    doc.line(margin, yPos, pageWidth - margin, yPos)
-    yPos += 7
+    // Signature Line - centered
+    const lineWidth = 100
+    const lineX = (pageWidth - lineWidth) / 2
+    doc.line(lineX, yPos, lineX + lineWidth, yPos)
+    yPos += 5
     doc.setFontSize(9)
-    doc.text('Employee Signature', margin, yPos)
+    doc.text('Employee Signature', pageWidth / 2, yPos, { align: 'center' })
 
     return doc
   }
@@ -389,27 +415,37 @@ export default function SellToEmployeeModal({ products, onClose, onSuccess }) {
               <div style={{ fontSize: '18px', color: '#d4ff00' }}>Total: <strong>{formatPrice(totals.total)}</strong></div>
             </div>
 
-            <div style={{ marginBottom: '20px', fontSize: '12px' }}>
-              I {selectedEmployee.name}, authorize the company to deduct the following amount {formatPrice(totals.total)} from my salary for buying tools I need for my work.
+            {/* Title - PAYMENT DEDUCTION AUTHORITY */}
+            <div style={{ textAlign: 'center', marginBottom: '15px', marginTop: '30px' }}>
+              <div style={{ fontWeight: 'bold', fontSize: '14px', borderBottom: '1px solid #333', display: 'inline-block', paddingBottom: '2px' }}>
+                PAYMENT DEDUCTION AUTHORITY
+              </div>
+            </div>
+
+            {/* Authorization Statement */}
+            <div style={{ marginBottom: '20px', fontSize: '12px', textAlign: 'center' }}>
+              I <span style={{ borderBottom: '1px solid #333' }}>{selectedEmployee.name}</span>, do hereby give authority for the amount of <span style={{ borderBottom: '1px solid #333' }}>{formatPrice(totals.total)}</span> to be deducted from my next salary/wage
             </div>
 
             {/* Signature Canvas */}
-            <div style={{ marginBottom: '10px' }}>
+            <div style={{ marginBottom: '10px', textAlign: 'center' }}>
               <div style={{ marginBottom: '8px', fontWeight: 'bold' }}>Employee Signature:</div>
               <canvas
                 ref={signatureCanvasRef}
                 width={500}
                 height={150}
-                style={{ border: '2px solid #333', borderRadius: '4px', touchAction: 'none' }}
+                style={{ border: '2px solid #333', borderRadius: '4px', touchAction: 'none', display: 'inline-block' }}
               />
-              <button
-                type="button"
-                onClick={clearSignature}
-                className={styles.cancelButton}
-                style={{ marginTop: '8px', padding: '6px 12px' }}
-              >
-                Clear Signature
-              </button>
+              <div>
+                <button
+                  type="button"
+                  onClick={clearSignature}
+                  className={styles.cancelButton}
+                  style={{ marginTop: '8px', padding: '6px 12px' }}
+                >
+                  Clear Signature
+                </button>
+              </div>
             </div>
           </div>
 
