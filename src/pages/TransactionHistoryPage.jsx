@@ -1,25 +1,31 @@
 import { useState, useEffect } from 'react'
 import { supabase, PRODUCT_CATEGORIES } from '../lib/supabase'
+import { useAuth } from '../context/AuthContext'
 import jsPDF from 'jspdf'
 import styles from './KnifeDocketsPage.module.css'
 
 export default function TransactionHistoryPage() {
+  const { isAccounts, user } = useAuth()
   const [transactions, setTransactions] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterDateFrom, setFilterDateFrom] = useState('')
   const [filterDateTo, setFilterDateTo] = useState('')
+  const [activeTab, setActiveTab] = useState('docket') // 'docket' or 'processed'
+  const [processing, setProcessing] = useState(null)
 
   useEffect(() => {
     fetchTransactions()
-  }, [])
+  }, [activeTab])
 
   const fetchTransactions = async () => {
     try {
       setLoading(true)
+      const isProcessed = activeTab === 'processed'
       const { data, error} = await supabase
         .from('knife_sales')
         .select('*')
+        .eq('processed', isProcessed)
         .order('sale_date', { ascending: false })
 
       if (error) throw error
@@ -28,6 +34,34 @@ export default function TransactionHistoryPage() {
       console.error('Error fetching transactions:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleProcessTransaction = async (transactionId) => {
+    if (!confirm('Are you sure this has been processed?')) {
+      return
+    }
+
+    setProcessing(transactionId)
+    try {
+      const { error } = await supabase
+        .from('knife_sales')
+        .update({
+          processed: true,
+          processed_at: new Date().toISOString(),
+          processed_by: user.id
+        })
+        .eq('id', transactionId)
+
+      if (error) throw error
+
+      // Refresh the list
+      await fetchTransactions()
+    } catch (error) {
+      console.error('Error processing transaction:', error)
+      alert('Failed to process transaction: ' + error.message)
+    } finally {
+      setProcessing(null)
     }
   }
 
@@ -236,6 +270,40 @@ export default function TransactionHistoryPage() {
         </div>
       </div>
 
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', borderBottom: '2px solid var(--border-color)' }}>
+        <button
+          onClick={() => setActiveTab('docket')}
+          style={{
+            padding: '12px 24px',
+            background: activeTab === 'docket' ? 'var(--accent-primary)' : 'transparent',
+            color: activeTab === 'docket' ? 'white' : 'var(--text-primary)',
+            border: 'none',
+            borderBottom: activeTab === 'docket' ? '3px solid var(--accent-primary)' : '3px solid transparent',
+            cursor: 'pointer',
+            fontWeight: activeTab === 'docket' ? '600' : '400',
+            fontSize: '14px'
+          }}
+        >
+          Docket
+        </button>
+        <button
+          onClick={() => setActiveTab('processed')}
+          style={{
+            padding: '12px 24px',
+            background: activeTab === 'processed' ? 'var(--accent-primary)' : 'transparent',
+            color: activeTab === 'processed' ? 'white' : 'var(--text-primary)',
+            border: 'none',
+            borderBottom: activeTab === 'processed' ? '3px solid var(--accent-primary)' : '3px solid transparent',
+            cursor: 'pointer',
+            fontWeight: activeTab === 'processed' ? '600' : '400',
+            fontSize: '14px'
+          }}
+        >
+          Processed Docket
+        </button>
+      </div>
+
       <div className={styles.filterSection}>
         <input
           type="text"
@@ -315,21 +383,42 @@ export default function TransactionHistoryPage() {
                     {formatPrice(transaction.total_amount)}
                   </td>
                   <td>
-                    <button
-                      onClick={() => handlePrintInvoice(transaction)}
-                      className={styles.actionButton}
-                      style={{
-                        padding: '6px 12px',
-                        fontSize: '12px',
-                        background: 'var(--accent-primary)',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Print Invoice
-                    </button>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      <button
+                        onClick={() => handlePrintInvoice(transaction)}
+                        className={styles.actionButton}
+                        style={{
+                          padding: '6px 12px',
+                          fontSize: '12px',
+                          background: 'var(--accent-primary)',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Print Invoice
+                      </button>
+                      {isAccounts() && activeTab === 'docket' && (
+                        <button
+                          onClick={() => handleProcessTransaction(transaction.id)}
+                          className={styles.actionButton}
+                          disabled={processing === transaction.id}
+                          style={{
+                            padding: '6px 12px',
+                            fontSize: '12px',
+                            background: 'var(--success)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: processing === transaction.id ? 'not-allowed' : 'pointer',
+                            opacity: processing === transaction.id ? 0.6 : 1
+                          }}
+                        >
+                          {processing === transaction.id ? 'Processing...' : 'Process'}
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
