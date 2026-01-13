@@ -59,24 +59,36 @@ export default function SignupPage() {
         password: password
       })
 
-      if (updateError) throw updateError
+      if (updateError) {
+        console.error('Password update error:', updateError)
+        throw updateError
+      }
+
+      console.log('Password updated successfully, now updating account...')
 
       // Update the existing account record with names
       // The account record should already exist (created by admin after invite)
       // with the same user ID, so we just add first_name and last_name
-      const { error: accountError } = await supabase
+      const { data: updateData, error: accountError } = await supabase
         .from('accounts')
         .update({
           first_name: firstName.trim(),
           last_name: lastName.trim()
         })
         .eq('id', userId)
+        .select()
 
-      if (accountError) throw accountError
+      console.log('Account update result:', { updateData, accountError })
+
+      if (accountError) {
+        console.error('Account update error:', accountError)
+        throw accountError
+      }
 
       // Success - redirect to dashboard
       navigate('/')
     } catch (err) {
+      console.error('Signup error:', err)
       setError(err.message || 'Failed to complete signup')
     } finally {
       setLoading(false)
