@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import styles from './LoginPage.module.css'
 
@@ -7,13 +7,25 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
   const { signIn } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+
+  useEffect(() => {
+    // Check if redirected from signup with success message
+    if (location.state?.signupSuccess) {
+      setSuccess('Account created successfully! Please log in with your credentials.')
+      // Clear the state to prevent showing the message again on refresh
+      window.history.replaceState({}, document.title)
+    }
+  }, [location])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+    setSuccess('')
     setLoading(true)
 
     const result = await signIn(email, password)
@@ -66,6 +78,12 @@ export default function LoginPage() {
           {error && (
             <div className={styles.error}>
               {error}
+            </div>
+          )}
+
+          {success && (
+            <div className={styles.success}>
+              {success}
             </div>
           )}
 
