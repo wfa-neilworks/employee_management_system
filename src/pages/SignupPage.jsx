@@ -61,16 +61,16 @@ export default function SignupPage() {
 
       if (updateError) throw updateError
 
-      // Update the existing account record with user ID and names
-      // The account record should already exist (created by admin before invite)
+      // Update the existing account record with names
+      // The account record should already exist (created by admin after invite)
+      // with the same user ID, so we just add first_name and last_name
       const { error: accountError } = await supabase
         .from('accounts')
         .update({
-          id: userId,
           first_name: firstName.trim(),
           last_name: lastName.trim()
         })
-        .eq('email', email)
+        .eq('id', userId)
 
       if (accountError) throw accountError
 
