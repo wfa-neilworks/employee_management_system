@@ -54,56 +54,10 @@ export default function SignupPage() {
     setLoading(true)
 
     try {
-      // For invited users, we need to verify the OTP and set password in one step
-      // Get the token from the URL
-      const hashParams = new URLSearchParams(window.location.hash.substring(1))
-      const accessToken = hashParams.get('access_token')
-      const type = hashParams.get('type')
+      console.log('Starting signup process for user:', userId)
 
-      console.log('Token type:', type, 'Has access token:', !!accessToken)
-
-      if (type === 'invite' && accessToken) {
-        // Verify the invite and set password
-        const { data: signInData, error: signInError } = await supabase.auth.verifyOtp({
-          token_hash: accessToken,
-          type: 'invite'
-        })
-
-        console.log('Verify OTP result:', { signInData, signInError })
-
-        if (signInError) {
-          console.error('Verify OTP error:', signInError)
-          throw signInError
-        }
-
-        // Now update the password
-        const { error: updateError } = await supabase.auth.updateUser({
-          password: password
-        })
-
-        if (updateError) {
-          console.error('Password update error:', updateError)
-          throw updateError
-        }
-
-        console.log('Password updated successfully, now updating account...')
-      } else {
-        // Already authenticated, just update password
-        const { error: updateError } = await supabase.auth.updateUser({
-          password: password
-        })
-
-        if (updateError) {
-          console.error('Password update error:', updateError)
-          throw updateError
-        }
-
-        console.log('Password updated successfully, now updating account...')
-      }
-
-      // Update the existing account record with names
-      // The account record should already exist (created by admin after invite)
-      // with the same user ID, so we just add first_name and last_name
+      // First, update the account record with names (before password update)
+      // This creates the full user record in the accounts table
       const { data: updateData, error: accountError } = await supabase
         .from('accounts')
         .update({
@@ -119,6 +73,20 @@ export default function SignupPage() {
         console.error('Account update error:', accountError)
         throw accountError
       }
+
+      console.log('Account updated successfully, now updating password...')
+
+      // Now update the password - this completes the invite acceptance
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: password
+      })
+
+      if (updateError) {
+        console.error('Password update error:', updateError)
+        throw updateError
+      }
+
+      console.log('Password updated successfully!')
 
       // Success - redirect to dashboard
       navigate('/')
