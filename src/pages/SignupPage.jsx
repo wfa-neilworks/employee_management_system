@@ -18,9 +18,13 @@ export default function SignupPage() {
     // Get the user's email from the session (they clicked the invite link)
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
+      console.log('Session data:', session)
       if (session?.user) {
         setEmail(session.user.email)
         setUserId(session.user.id)
+        console.log('User ID from session:', session.user.id)
+      } else {
+        console.error('No session found - user may need to click invite link again')
       }
     }
     checkSession()
@@ -55,6 +59,11 @@ export default function SignupPage() {
 
     try {
       console.log('Starting signup process for user:', userId)
+
+      // Check if userId is valid
+      if (!userId || userId === '') {
+        throw new Error('No user session found. Please click the invite link again.')
+      }
 
       // First, update the account record with names (before password update)
       // This creates the full user record in the accounts table

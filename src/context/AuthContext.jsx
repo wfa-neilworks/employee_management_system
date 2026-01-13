@@ -45,8 +45,17 @@ export const AuthProvider = ({ children }) => {
 
       if (error) throw error
       setAccount(data)
+
+      // If user doesn't have first_name and last_name, they need to complete signup
+      if (!data.first_name || !data.last_name) {
+        console.log('User needs to complete signup - redirecting to /signup')
+        return { needsSignup: true }
+      }
+
+      return { needsSignup: false }
     } catch (error) {
       console.error('Error fetching account:', error)
+      return { needsSignup: false }
     }
   }
 

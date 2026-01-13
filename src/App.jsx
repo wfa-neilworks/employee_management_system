@@ -12,7 +12,7 @@ import TransactionHistoryPage from './pages/TransactionHistoryPage'
 import Layout from './components/Layout'
 
 function PrivateRoute({ children }) {
-  const { user, loading } = useAuth()
+  const { user, account, loading } = useAuth()
 
   if (loading) {
     return (
@@ -28,7 +28,16 @@ function PrivateRoute({ children }) {
     )
   }
 
-  return user ? children : <Navigate to="/login" />
+  if (!user) {
+    return <Navigate to="/login" />
+  }
+
+  // If user is authenticated but hasn't completed signup, redirect to signup
+  if (account && (!account.first_name || !account.last_name)) {
+    return <Navigate to="/signup" />
+  }
+
+  return children
 }
 
 function AppRoutes() {
