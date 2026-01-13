@@ -54,17 +54,52 @@ export default function SignupPage() {
     setLoading(true)
 
     try {
-      // Update the user's password
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: password
-      })
+      // For invited users, we need to verify the OTP and set password in one step
+      // Get the token from the URL
+      const hashParams = new URLSearchParams(window.location.hash.substring(1))
+      const accessToken = hashParams.get('access_token')
+      const type = hashParams.get('type')
 
-      if (updateError) {
-        console.error('Password update error:', updateError)
-        throw updateError
+      console.log('Token type:', type, 'Has access token:', !!accessToken)
+
+      if (type === 'invite' && accessToken) {
+        // Verify the invite and set password
+        const { data: signInData, error: signInError } = await supabase.auth.verifyOtp({
+          token_hash: accessToken,
+          type: 'invite'
+        })
+
+        console.log('Verify OTP result:', { signInData, signInError })
+
+        if (signInError) {
+          console.error('Verify OTP error:', signInError)
+          throw signInError
+        }
+
+        // Now update the password
+        const { error: updateError } = await supabase.auth.updateUser({
+          password: password
+        })
+
+        if (updateError) {
+          console.error('Password update error:', updateError)
+          throw updateError
+        }
+
+        console.log('Password updated successfully, now updating account...')
+      } else {
+        // Already authenticated, just update password
+        const { error: updateError } = await supabase.auth.updateUser({
+          password: password
+        })
+
+        if (updateError) {
+          console.error('Password update error:', updateError)
+          throw updateError
+        }
+
+        console.log('Password updated successfully, now updating account...')
       }
-
-      console.log('Password updated successfully, now updating account...')
 
       // Update the existing account record with names
       // The account record should already exist (created by admin after invite)
