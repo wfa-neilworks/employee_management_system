@@ -9,9 +9,9 @@
 --
 -- 📋 QUICK START:
 --    1. Invite user via Supabase Dashboard (Authentication > Users > Invite User)
---    2. User clicks email link and sets password on /signup page
---    3. Run one of the queries below (METHOD 1) with the user's email
---    4. User can now log in with assigned role
+--    2. User clicks email link, enters name and sets password on /signup page
+--    3. Run one of the queries below (METHOD 1) with the user's email to assign their role
+--    4. User can now log in with assigned role and personalized greeting
 -- ====================================================================================
 
 
@@ -19,58 +19,35 @@
 -- METHOD 1: Assign role using user's email (✅ RECOMMENDED - Use this!)
 -- ====================================================================================
 -- Simply replace the email address and role type, then run the query.
--- No need to find UUIDs or copy-paste complex IDs.
+-- Note: The account record is created during signup with first_name and last_name.
+-- This query only updates the account_type field.
 
 -- ========================================
 -- Example 1: Assign HR role
 -- ========================================
 -- Replace 'hr@wfa.com' with the actual email address
 
-INSERT INTO accounts (id, email, account_type, created_at)
-SELECT
-  id,
-  email,
-  'HR',
-  NOW()
-FROM auth.users
-WHERE email = 'hr@wfa.com'  -- ⚠️ CHANGE THIS to the actual user's email
-ON CONFLICT (id) DO UPDATE
-SET account_type = 'HR',
-    email = EXCLUDED.email;
+UPDATE accounts
+SET account_type = 'HR'
+WHERE email = 'hr@wfa.com';  -- ⚠️ CHANGE THIS to the actual user's email
 
 -- ========================================
 -- Example 2: Assign PROCUREMENT role
 -- ========================================
 -- Replace 'procurement@wfa.com' with the actual email address
 
-INSERT INTO accounts (id, email, account_type, created_at)
-SELECT
-  id,
-  email,
-  'PROCUREMENT',
-  NOW()
-FROM auth.users
-WHERE email = 'procurement@wfa.com'  -- ⚠️ CHANGE THIS to the actual user's email
-ON CONFLICT (id) DO UPDATE
-SET account_type = 'PROCUREMENT',
-    email = EXCLUDED.email;
+UPDATE accounts
+SET account_type = 'PROCUREMENT'
+WHERE email = 'procurement@wfa.com';  -- ⚠️ CHANGE THIS to the actual user's email
 
 -- ========================================
 -- Example 3: Assign ACCOUNTS role
 -- ========================================
 -- Replace 'accounts@wfa.com' with the actual email address
 
-INSERT INTO accounts (id, email, account_type, created_at)
-SELECT
-  id,
-  email,
-  'ACCOUNTS',
-  NOW()
-FROM auth.users
-WHERE email = 'accounts@wfa.com'  -- ⚠️ CHANGE THIS to the actual user's email
-ON CONFLICT (id) DO UPDATE
-SET account_type = 'ACCOUNTS',
-    email = EXCLUDED.email;
+UPDATE accounts
+SET account_type = 'ACCOUNTS'
+WHERE email = 'accounts@wfa.com';  -- ⚠️ CHANGE THIS to the actual user's email
 
 
 -- ====================================================================================
