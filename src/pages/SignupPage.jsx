@@ -61,19 +61,16 @@ export default function SignupPage() {
 
       if (updateError) throw updateError
 
-      // Save first name and last name to accounts table
-      // Use upsert (insert or update) in case the account doesn't exist yet
+      // Update the existing account record with user ID and names
+      // The account record should already exist (created by admin before invite)
       const { error: accountError } = await supabase
         .from('accounts')
-        .upsert({
+        .update({
           id: userId,
-          email: email,
           first_name: firstName.trim(),
-          last_name: lastName.trim(),
-          created_at: new Date().toISOString()
-        }, {
-          onConflict: 'id'
+          last_name: lastName.trim()
         })
+        .eq('email', email)
 
       if (accountError) throw accountError
 
