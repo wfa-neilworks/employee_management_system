@@ -97,8 +97,9 @@ export default function SignupPage() {
 
       console.log('Password updated successfully!')
 
-      // Success - redirect to dashboard
-      navigate('/')
+      // Success - sign out and redirect to login page
+      await supabase.auth.signOut()
+      navigate('/login')
     } catch (err) {
       console.error('Signup error:', err)
       setError(err.message || 'Failed to complete signup')
