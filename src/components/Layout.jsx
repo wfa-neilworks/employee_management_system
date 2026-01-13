@@ -66,7 +66,9 @@ export default function Layout() {
           </div>
           <div className={styles.headerRight}>
             <div className={styles.accountInfo}>
-              <span className={styles.accountType}>{greeting}, {account?.account_type}!</span>
+              <span className={styles.accountType}>
+                {greeting}, {account?.first_name || account?.account_type}!
+              </span>
               <button className={styles.signOutButton} onClick={handleSignOut}>
                 Sign Out
               </button>

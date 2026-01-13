@@ -4,11 +4,14 @@ import { supabase } from '../lib/supabase'
 import styles from './SignupPage.module.css'
 
 export default function SignupPage() {
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [email, setEmail] = useState('')
+  const [userId, setUserId] = useState('')
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -17,6 +20,7 @@ export default function SignupPage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (session?.user) {
         setEmail(session.user.email)
+        setUserId(session.user.id)
       }
     }
     checkSession()
@@ -27,6 +31,16 @@ export default function SignupPage() {
     setError('')
 
     // Validation
+    if (!firstName.trim()) {
+      setError('First name is required')
+      return
+    }
+
+    if (!lastName.trim()) {
+      setError('Last name is required')
+      return
+    }
+
     if (password.length < 6) {
       setError('Password must be at least 6 characters long')
       return
@@ -47,10 +61,21 @@ export default function SignupPage() {
 
       if (updateError) throw updateError
 
+      // Save first name and last name to accounts table
+      const { error: accountError } = await supabase
+        .from('accounts')
+        .update({
+          first_name: firstName.trim(),
+          last_name: lastName.trim()
+        })
+        .eq('id', userId)
+
+      if (accountError) throw accountError
+
       // Success - redirect to dashboard
       navigate('/')
     } catch (err) {
-      setError(err.message || 'Failed to set password')
+      setError(err.message || 'Failed to complete signup')
     } finally {
       setLoading(false)
     }
@@ -70,6 +95,34 @@ export default function SignupPage() {
         </div>
 
         <form onSubmit={handleSubmit} className={styles.form}>
+          <div className={styles.inputGroup}>
+            <label htmlFor="firstName" className={styles.label}>First Name</label>
+            <input
+              id="firstName"
+              type="text"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              className={styles.input}
+              required
+              disabled={loading}
+              placeholder="Enter your first name"
+            />
+          </div>
+
+          <div className={styles.inputGroup}>
+            <label htmlFor="lastName" className={styles.label}>Last Name</label>
+            <input
+              id="lastName"
+              type="text"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              className={styles.input}
+              required
+              disabled={loading}
+              placeholder="Enter your last name"
+            />
+          </div>
+
           <div className={styles.inputGroup}>
             <label htmlFor="password" className={styles.label}>Password</label>
             <input
