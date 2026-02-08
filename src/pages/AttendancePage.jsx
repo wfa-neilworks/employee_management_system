@@ -22,7 +22,7 @@ const isWeekend = (dateStr) => {
 }
 
 export default function AttendancePage() {
-  const { isHR } = useAuth()
+  const { hasPermission } = useAuth()
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7))
   const [selectedDepartment, setSelectedDepartment] = useState('')
@@ -455,7 +455,7 @@ export default function AttendancePage() {
   }
 
   const handleStatusChange = async (employeeId, status) => {
-    if (!isHR()) return
+    if (!hasPermission('manage_attendance')) return
 
     try {
       const { data: { user } } = await supabase.auth.getUser()
@@ -509,7 +509,7 @@ export default function AttendancePage() {
   }
 
   const markAllPresent = async () => {
-    if (!isHR()) return
+    if (!hasPermission('manage_attendance')) return
     if (!confirm('Mark all employees as present for this date?')) return
 
     try {

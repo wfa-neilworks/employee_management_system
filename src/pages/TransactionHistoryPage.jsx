@@ -5,7 +5,7 @@ import jsPDF from 'jspdf'
 import styles from './KnifeDocketsPage.module.css'
 
 export default function TransactionHistoryPage() {
-  const { isAccounts, user } = useAuth()
+  const { hasPermission, user } = useAuth()
   const [transactions, setTransactions] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -445,7 +445,7 @@ export default function TransactionHistoryPage() {
                       >
                         🖨️ Print Invoice
                       </button>
-                      {isAccounts() && activeTab === 'docket' && (
+                      {hasPermission('process_transactions') && activeTab === 'docket' && (
                         <button
                           onClick={() => handleProcessTransaction(transaction.id)}
                           className={styles.actionButton}

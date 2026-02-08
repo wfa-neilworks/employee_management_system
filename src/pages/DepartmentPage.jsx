@@ -11,7 +11,7 @@ import styles from './DepartmentPage.module.css'
 export default function DepartmentPage() {
   const { departmentId } = useParams()
   const location = useLocation()
-  const { isHR, isProcurement } = useAuth()
+  const { hasPermission } = useAuth()
   const [department, setDepartment] = useState(null)
   const [employees, setEmployees] = useState([])
   const [searchQuery, setSearchQuery] = useState('')
@@ -100,7 +100,7 @@ export default function DepartmentPage() {
           <h1 className={styles.title}>{department?.display_name}</h1>
           <p className={styles.subtitle}>{employees.length} employees</p>
         </div>
-        {isHR() && !isResignedView && (
+        {hasPermission('crud_employee') && !isResignedView && (
           <button
             className={styles.addButton}
             onClick={() => setShowAddModal(true)}
@@ -183,7 +183,7 @@ export default function DepartmentPage() {
                   {!isResignedView && (
                     <td>
                       <div className={styles.actions}>
-                        {isHR() && (
+                        {hasPermission('crud_employee') && (
                           <>
                             <button
                               className={styles.actionButton}
@@ -199,7 +199,7 @@ export default function DepartmentPage() {
                             </button>
                           </>
                         )}
-                        {isProcurement() && (
+                        {hasPermission('manage_employee_gear') && (
                           <button
                             className={styles.actionButton}
                             onClick={() => setManagingGearsEmployee(employee)}

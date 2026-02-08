@@ -6,7 +6,7 @@ import DayDetailsModal from '../components/modals/DayDetailsModal'
 import styles from './RosterPage.module.css'
 
 export default function RosterPage() {
-  const { canEdit } = useAuth()
+  const { hasPermission } = useAuth()
   const [leaves, setLeaves] = useState([])
   const [departments, setDepartments] = useState([])
   const [selectedDepartment, setSelectedDepartment] = useState('ALL')
@@ -244,7 +244,7 @@ export default function RosterPage() {
               ))}
             </select>
           </div>
-          {canEdit() && (
+          {hasPermission('add_leave') && (
             <button
               onClick={() => setShowAddModal(true)}
               className={styles.addButton}
@@ -379,7 +379,7 @@ export default function RosterPage() {
           leaves={selectedDayLeaves}
           onClose={() => setShowDayDetailsModal(false)}
           onUpdate={fetchLeaves}
-          canEdit={canEdit()}
+          canEdit={hasPermission('add_leave')}
         />
       )}
     </div>

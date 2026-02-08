@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import styles from './Sidebar.module.css'
 
 export default function Sidebar({ departments, isOpen }) {
-  const { isProcurement, isAccounts } = useAuth()
+  const { hasPermission } = useAuth()
   const [isDepartmentsOpen, setIsDepartmentsOpen] = useState(true)
   const [isKnifeDocketsOpen, setIsKnifeDocketsOpen] = useState(true)
 
@@ -103,7 +103,7 @@ export default function Sidebar({ departments, isOpen }) {
           <span className={styles.navLabel}>ATTENDANCE</span>
         </NavLink>
 
-        {(isProcurement() || isAccounts()) && (
+        {(hasPermission('view_knife_dockets') || hasPermission('view_transaction_history')) && (
           <div className={styles.section}>
             <button
               className={styles.sectionHeader}
@@ -137,6 +137,18 @@ export default function Sidebar({ departments, isOpen }) {
               </div>
             )}
           </div>
+        )}
+
+        {hasPermission('manage_users') && (
+          <NavLink
+            to="/admin"
+            className={({ isActive }) =>
+              `${styles.navItem} ${isActive ? styles.navItemActive : ''}`
+            }
+          >
+            <span className={styles.navIcon}>&#9881;</span>
+            <span className={styles.navLabel}>ADMIN</span>
+          </NavLink>
         )}
       </nav>
     </aside>

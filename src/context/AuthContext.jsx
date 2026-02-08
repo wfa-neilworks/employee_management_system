@@ -90,7 +90,14 @@ export const AuthProvider = ({ children }) => {
   const isHR = () => account?.account_type === 'HR'
   const isProcurement = () => account?.account_type === 'PROCUREMENT'
   const isAccounts = () => account?.account_type === 'ACCOUNTS'
-  const canEdit = () => isHR() || isProcurement() // ACCOUNTS cannot edit
+  const isAdmin = () => account?.account_type === 'ADMIN'
+  const canEdit = () => isHR() || isProcurement()
+
+  const hasPermission = (permission) => {
+    if (!account) return false
+    if (account.account_type === 'ADMIN') return true
+    return account.permissions?.[permission] === true
+  }
 
   const value = {
     user,
@@ -101,7 +108,9 @@ export const AuthProvider = ({ children }) => {
     isHR,
     isProcurement,
     isAccounts,
-    canEdit
+    isAdmin,
+    canEdit,
+    hasPermission
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

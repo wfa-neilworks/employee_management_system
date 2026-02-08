@@ -8,7 +8,7 @@ import SellToEmployeeModal from '../components/modals/SellToEmployeeModal'
 import styles from './KnifeDocketsPage.module.css'
 
 export default function KnifeDocketsPage() {
-  const { isProcurement, isAccounts } = useAuth()
+  const { hasPermission } = useAuth()
   const [products, setProducts] = useState([])
   const [searchQuery, setSearchQuery] = useState('')
   const [filterType, setFilterType] = useState('')
@@ -91,7 +91,7 @@ export default function KnifeDocketsPage() {
             {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}
           </p>
         </div>
-        {isProcurement() && (
+        {hasPermission('crud_products') && (
           <div style={{ display: 'flex', gap: '12px' }}>
             <button
               className={styles.addButton}
@@ -152,7 +152,7 @@ export default function KnifeDocketsPage() {
       {filteredProducts.length === 0 ? (
         <div className={styles.empty}>
           <p>No products found.</p>
-          {isProcurement() && !searchQuery && !filterType && !filterCategory && (
+          {hasPermission('crud_products') && !searchQuery && !filterType && !filterCategory && (
             <p>Click "Add Product" to create one.</p>
           )}
         </div>
@@ -168,7 +168,7 @@ export default function KnifeDocketsPage() {
                 <th className={styles.priceColumn}>Buy Price</th>
                 <th className={styles.priceColumn}>Selling Price</th>
                 <th>Description</th>
-                {isProcurement() && <th className={styles.actionsColumn}>Actions</th>}
+                {hasPermission('crud_products') && <th className={styles.actionsColumn}>Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -183,7 +183,7 @@ export default function KnifeDocketsPage() {
                   <td className={styles.descriptionCell}>
                     {product.description || '-'}
                   </td>
-                  {isProcurement() && (
+                  {hasPermission('crud_products') && (
                     <td className={styles.actionsColumn}>
                       <div className={styles.actions}>
                         <button
