@@ -123,15 +123,17 @@ export default function ManageGearsModal({ employee, onClose, onSuccess }) {
 
                   {selectedGears.includes(gear.value) && gear.has_sizes && (
                     <div style={{ marginLeft: '30px', marginTop: '8px' }}>
-                      <input
-                        type="text"
-                        placeholder="Enter size (e.g. Brown, Medium, L)..."
+                      <select
                         value={sizes[gear.value] || ''}
                         onChange={(e) => handleSizeChange(gear.value, e.target.value)}
-                        className={styles.input}
+                        className={styles.select}
                         disabled={loading}
-                        style={{ marginTop: '4px' }}
-                      />
+                      >
+                        <option value="">Select size...</option>
+                        {(gear.sizes || []).map(size => (
+                          <option key={size} value={size}>{size}</option>
+                        ))}
+                      </select>
                     </div>
                   )}
                 </div>

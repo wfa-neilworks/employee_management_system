@@ -409,6 +409,74 @@
   color: var(--text-primary);
 }
 
+/* Size tag input */
+.sizeInputRow {
+  display: flex;
+  gap: 8px;
+}
+
+.sizeInputRow .input {
+  flex: 1;
+}
+
+.addSizeBtn {
+  padding: 0 20px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.addSizeBtn:hover:not(:disabled) {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.addSizeBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.sizeTagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.sizeTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(212, 255, 0, 0.1);
+  border: 1px solid rgba(212, 255, 0, 0.3);
+  border-radius: 20px;
+  font-size: 13px;
+  color: var(--accent-primary);
+}
+
+.sizeTagRemove {
+  background: none;
+  border: none;
+  color: var(--accent-primary);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.sizeTagRemove:hover {
+  opacity: 1;
+}
+
 @media (max-width: 768px) {
   .formActions {
     flex-direction: column-reverse;

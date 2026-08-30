@@ -322,12 +322,13 @@ function GearTypesTab() {
                 <th>Label</th>
                 <th>Internal Key</th>
                 <th>Requires Size?</th>
+                <th>Size Options</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {items.length === 0 ? (
-                <tr><td colSpan={4} className={styles.noResults}>No gear types found</td></tr>
+                <tr><td colSpan={5} className={styles.noResults}>No gear types found</td></tr>
               ) : items.map(item => (
                 <tr key={item.id}>
                   <td className={styles.primary}>{item.label}</td>
@@ -336,6 +337,12 @@ function GearTypesTab() {
                     <span className={item.has_sizes ? styles.badgeYes : styles.badgeNo}>
                       {item.has_sizes ? 'Yes' : 'No'}
                     </span>
+                  </td>
+                  <td>
+                    {item.has_sizes && item.sizes?.length > 0
+                      ? <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{item.sizes.join(', ')}</span>
+                      : <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>—</span>
+                    }
                   </td>
                   <td>
                     <div className={styles.actions}>
@@ -376,6 +383,8 @@ function GearTypeForm({ item, onClose, onSuccess }) {
   const [label, setLabel] = useState(item?.label || '')
   const [internalKey, setInternalKey] = useState(item?.value || '')
   const [hasSizes, setHasSizes] = useState(item?.has_sizes ?? false)
+  const [sizes, setSizes] = useState(item?.sizes || [])
+  const [sizeInput, setSizeInput] = useState('')
 
   const handleLabelChange = (e) => {
     const val = e.target.value
@@ -385,16 +394,47 @@ function GearTypeForm({ item, onClose, onSuccess }) {
     }
   }
 
+  const handleToggleHasSizes = (val) => {
+    setHasSizes(val)
+    if (!val) setSizes([])
+  }
+
+  const handleAddSize = () => {
+    const trimmed = sizeInput.trim()
+    if (!trimmed) return
+    if (sizes.includes(trimmed)) {
+      setSizeInput('')
+      return
+    }
+    setSizes([...sizes, trimmed])
+    setSizeInput('')
+  }
+
+  const handleSizeInputKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleAddSize()
+    }
+  }
+
+  const handleRemoveSize = (size) => {
+    setSizes(sizes.filter(s => s !== size))
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!label.trim() || !internalKey.trim()) return
+    if (hasSizes && sizes.length === 0) {
+      setError('Please add at least one size option.')
+      return
+    }
     setLoading(true)
     setError('')
     try {
       if (isEdit) {
         const { error } = await supabase
           .from('gear_types')
-          .update({ label: label.trim(), has_sizes: hasSizes })
+          .update({ label: label.trim(), has_sizes: hasSizes, sizes: hasSizes ? sizes : [] })
           .eq('id', item.id)
         if (error) throw error
       } else {
@@ -416,7 +456,13 @@ function GearTypeForm({ item, onClose, onSuccess }) {
           .maybeSingle()
         const { error } = await supabase
           .from('gear_types')
-          .insert({ value: internalKey.trim(), label: label.trim(), has_sizes: hasSizes, sort_order: (maxOrder?.sort_order || 0) + 1 })
+          .insert({
+            value: internalKey.trim(),
+            label: label.trim(),
+            has_sizes: hasSizes,
+            sizes: hasSizes ? sizes : [],
+            sort_order: (maxOrder?.sort_order || 0) + 1
+          })
         if (error) throw error
       }
       onSuccess()
@@ -462,7 +508,7 @@ function GearTypeForm({ item, onClose, onSuccess }) {
               <button
                 type="button"
                 className={`${styles.toggleOption} ${!hasSizes ? styles.toggleOptionActive : ''}`}
-                onClick={() => setHasSizes(false)}
+                onClick={() => handleToggleHasSizes(false)}
                 disabled={loading}
               >
                 No
@@ -470,18 +516,56 @@ function GearTypeForm({ item, onClose, onSuccess }) {
               <button
                 type="button"
                 className={`${styles.toggleOption} ${hasSizes ? styles.toggleOptionActive : ''}`}
-                onClick={() => setHasSizes(true)}
+                onClick={() => handleToggleHasSizes(true)}
                 disabled={loading}
               >
                 Yes
               </button>
             </div>
-            <span className={styles.hint}>
-              {hasSizes
-                ? 'A size text field will appear when assigning this gear to an employee.'
-                : 'No size will be required when assigning this gear.'}
-            </span>
           </div>
+
+          {hasSizes && (
+            <div className={styles.formGroup}>
+              <label className={styles.label}>Size Options *</label>
+              <div className={styles.sizeInputRow}>
+                <input
+                  className={styles.input}
+                  value={sizeInput}
+                  onChange={e => setSizeInput(e.target.value)}
+                  onKeyDown={handleSizeInputKeyDown}
+                  placeholder="e.g. Brown, Small, XL..."
+                  disabled={loading}
+                />
+                <button
+                  type="button"
+                  className={styles.addSizeBtn}
+                  onClick={handleAddSize}
+                  disabled={loading || !sizeInput.trim()}
+                >
+                  Add
+                </button>
+              </div>
+              {sizes.length > 0 && (
+                <div className={styles.sizeTagList}>
+                  {sizes.map(size => (
+                    <span key={size} className={styles.sizeTag}>
+                      {size}
+                      <button
+                        type="button"
+                        className={styles.sizeTagRemove}
+                        onClick={() => handleRemoveSize(size)}
+                        disabled={loading}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <span className={styles.hint}>Press Enter or click Add. These will appear as dropdown options when assigning this gear.</span>
+            </div>
+          )}
+
           {error && <div className={styles.error}>{error}</div>}
           <div className={styles.formActions}>
             <button type="button" className={styles.cancelButton} onClick={onClose} disabled={loading}>Cancel</button>
