@@ -143,16 +143,6 @@ export default function Sidebar({ departments, isOpen }) {
           )}
         </div>
 
-        <div className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <span className={styles.navIcon}><IconLockers /></span>
-            <span className={styles.navLabel}>LOCKERS</span>
-          </div>
-          <div className={styles.sectionContent}>
-            <div className={styles.comingSoon}>Coming Soon</div>
-          </div>
-        </div>
-
         <NavLink
           to="/roster"
           className={({ isActive }) =>
