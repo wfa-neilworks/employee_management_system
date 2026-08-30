@@ -272,20 +272,28 @@ export default function ReportPage() {
       doc.line(margin, footerY - 3, pageW - margin, footerY - 3)
     }
 
-    // Page 1 has logo+title so less space; use page 1 tableStartY for conservative fit
-    const tableStartY = 4 + 35 + 14
     const headerH = 9
     const rowH = 8
-    const availableH = footerY - 6 - (tableStartY + headerH)
-    const rowsPerPage = Math.floor(availableH / rowH)
-    const totalPages = Math.ceil(employees.length / rowsPerPage)
+    const tableStartY_page1 = 4 + 35 + 14
+    const tableStartY_rest = 10
+    const rowsPerPage1 = Math.floor((footerY - 6 - (tableStartY_page1 + headerH)) / rowH)
+    const rowsPerPageRest = Math.floor((footerY - 6 - (tableStartY_rest + headerH)) / rowH)
+
+    // Build page slices accounting for different capacities
+    const pageSlices = []
+    let remaining = [...employees]
+    let isFirst = true
+    while (remaining.length > 0) {
+      const capacity = isFirst ? rowsPerPage1 : rowsPerPageRest
+      pageSlices.push(remaining.splice(0, capacity))
+      isFirst = false
+    }
+    const totalPages = pageSlices.length
 
     for (let page = 1; page <= totalPages; page++) {
       if (page > 1) doc.addPage()
-      const pageEmployees = employees.slice((page - 1) * rowsPerPage, page * rowsPerPage)
-      // Temporarily override employees for this page
       const origEmployees = employees.splice(0)
-      employees.push(...pageEmployees)
+      employees.push(...pageSlices[page - 1])
       drawPage(page, totalPages)
       employees.splice(0)
       employees.push(...origEmployees)
