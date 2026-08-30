@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { supabase, EMPLOYMENT_STATUS, WAGE_STATUS } from '../../lib/supabase'
+import { supabase, WAGE_STATUS } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import Modal from './Modal'
 import styles from './FormModal.module.css'
@@ -9,12 +9,13 @@ export default function EditEmployeeModal({ employee, onClose, onSuccess }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [departments, setDepartments] = useState([])
+  const [employmentStatuses, setEmploymentStatuses] = useState([])
   const [formData, setFormData] = useState({
     name: employee.name || '',
     english_name: employee.english_name || '',
     payroll_number: employee.payroll_number || '',
     department_id: employee.department_id || '',
-    employment_status: employee.employment_status || 'CASUAL',
+    employment_status: employee.employment_status || '',
     wage_status: employee.wage_status || 'WFA',
     locker_number: employee.locker_number || '',
     start_date: employee.start_date || ''
@@ -22,6 +23,7 @@ export default function EditEmployeeModal({ employee, onClose, onSuccess }) {
 
   useEffect(() => {
     fetchDepartments()
+    fetchEmploymentStatuses()
   }, [])
 
   const fetchDepartments = async () => {
@@ -35,6 +37,20 @@ export default function EditEmployeeModal({ employee, onClose, onSuccess }) {
       setDepartments(data)
     } catch (error) {
       console.error('Error fetching departments:', error)
+    }
+  }
+
+  const fetchEmploymentStatuses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('employment_statuses')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order')
+      if (error) throw error
+      setEmploymentStatuses(data || [])
+    } catch (err) {
+      console.error('Error fetching employment statuses:', err)
     }
   }
 
@@ -158,7 +174,7 @@ export default function EditEmployeeModal({ employee, onClose, onSuccess }) {
             required
             disabled={loading}
           >
-            {EMPLOYMENT_STATUS.map((status) => (
+            {employmentStatuses.map((status) => (
               <option key={status.value} value={status.value}>
                 {status.label}
               </option>

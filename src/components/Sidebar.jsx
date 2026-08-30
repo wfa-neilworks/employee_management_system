@@ -139,6 +139,18 @@ export default function Sidebar({ departments, isOpen }) {
           </div>
         )}
 
+        {hasPermission('manage_preset_data') && (
+          <NavLink
+            to="/preset-data"
+            className={({ isActive }) =>
+              `${styles.navItem} ${isActive ? styles.navItemActive : ''}`
+            }
+          >
+            <span className={styles.navIcon}>🗂️</span>
+            <span className={styles.navLabel}>PRESET DATA</span>
+          </NavLink>
+        )}
+
         {hasPermission('manage_users') && (
           <NavLink
             to="/admin"

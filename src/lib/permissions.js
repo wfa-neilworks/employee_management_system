@@ -7,6 +7,7 @@ export const PERMISSIONS = [
   { key: 'process_transactions', label: 'Process Transactions', description: 'Mark transactions as processed' },
   { key: 'view_knife_dockets', label: 'View Knife Dockets', description: 'See knife dockets section' },
   { key: 'view_transaction_history', label: 'View Transaction History', description: 'See transaction history section' },
+  { key: 'manage_preset_data', label: 'Manage Preset Data', description: 'Add, edit, delete departments, gear types, and employment statuses' },
   { key: 'manage_users', label: 'Manage Users', description: 'Access admin panel and manage user permissions' }
 ]
 

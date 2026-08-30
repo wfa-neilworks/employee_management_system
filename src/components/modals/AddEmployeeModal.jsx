@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { supabase, EMPLOYMENT_STATUS, WAGE_STATUS } from '../../lib/supabase'
+import { supabase, WAGE_STATUS } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import Modal from './Modal'
 import styles from './FormModal.module.css'
@@ -9,12 +9,13 @@ export default function AddEmployeeModal({ departmentId, onClose, onSuccess }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [departments, setDepartments] = useState([])
+  const [employmentStatuses, setEmploymentStatuses] = useState([])
   const [formData, setFormData] = useState({
     name: '',
     english_name: '',
     payroll_number: '',
     department_id: departmentId || '',
-    employment_status: 'CASUAL',
+    employment_status: '',
     wage_status: 'WFA',
     locker_number: '',
     start_date: new Date().toISOString().split('T')[0]
@@ -22,6 +23,7 @@ export default function AddEmployeeModal({ departmentId, onClose, onSuccess }) {
 
   useEffect(() => {
     fetchDepartments()
+    fetchEmploymentStatuses()
   }, [])
 
   const fetchDepartments = async () => {
@@ -35,6 +37,25 @@ export default function AddEmployeeModal({ departmentId, onClose, onSuccess }) {
       setDepartments(data || [])
     } catch (err) {
       console.error('Error fetching departments:', err)
+    }
+  }
+
+  const fetchEmploymentStatuses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('employment_statuses')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order')
+      if (error) throw error
+      const statuses = data || []
+      setEmploymentStatuses(statuses)
+      // Default to first status
+      if (statuses.length > 0) {
+        setFormData(prev => ({ ...prev, employment_status: statuses[0].value }))
+      }
+    } catch (err) {
+      console.error('Error fetching employment statuses:', err)
     }
   }
 
@@ -148,7 +169,7 @@ export default function AddEmployeeModal({ departmentId, onClose, onSuccess }) {
             required
             disabled={loading}
           >
-            {EMPLOYMENT_STATUS.map((status) => (
+            {employmentStatuses.map((status) => (
               <option key={status.value} value={status.value}>
                 {status.label}
               </option>

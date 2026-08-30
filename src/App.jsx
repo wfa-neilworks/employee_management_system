@@ -10,6 +10,7 @@ import AttendancePage from './pages/AttendancePage'
 import KnifeDocketsPage from './pages/KnifeDocketsPage'
 import TransactionHistoryPage from './pages/TransactionHistoryPage'
 import AdminPage from './pages/AdminPage'
+import PresetDataPage from './pages/PresetDataPage'
 import Layout from './components/Layout'
 
 function PrivateRoute({ children }) {
@@ -63,6 +64,7 @@ function AppRoutes() {
         <Route path="knife-dockets" element={<KnifeDocketsPage />} />
         <Route path="transaction-history" element={<TransactionHistoryPage />} />
         <Route path="admin" element={<AdminPage />} />
+        <Route path="preset-data" element={<PresetDataPage />} />
       </Route>
     </Routes>
   )
