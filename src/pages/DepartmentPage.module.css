@@ -135,6 +135,16 @@
   color: var(--success);
 }
 
+.qfeverYes {
+  background: rgba(0, 255, 136, 0.15);
+  color: var(--success);
+}
+
+.qfeverNo {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
 .gears {
   display: flex;
   flex-wrap: wrap;

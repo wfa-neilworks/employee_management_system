@@ -131,6 +131,7 @@ export default function DepartmentPage() {
               <th>Locker</th>
               <th>Employment Status</th>
               <th>Wage Status</th>
+              <th>Q-Fever</th>
               <th>Gears</th>
               <th>Start Date</th>
               {isResignedView && <th>End Date</th>}
@@ -140,7 +141,7 @@ export default function DepartmentPage() {
           <tbody>
             {filteredEmployees.length === 0 ? (
               <tr>
-                <td colSpan={isResignedView ? "10" : "9"} className={styles.noResults}>
+                <td colSpan={isResignedView ? "11" : "10"} className={styles.noResults}>
                   {searchQuery ? 'No employees found' : isResignedView ? 'No resigned employees' : 'No employees in this department'}
                 </td>
               </tr>
@@ -160,6 +161,11 @@ export default function DepartmentPage() {
                   <td>
                     <span className={`${styles.badge} ${styles[employee.wage_status?.toLowerCase()]}`}>
                       {employee.wage_status?.replace('_', ' ')}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={`${styles.badge} ${employee.q_fever ? styles.qfeverYes : styles.qfeverNo}`}>
+                      {employee.q_fever ? 'Yes' : 'No'}
                     </span>
                   </td>
                   <td>
