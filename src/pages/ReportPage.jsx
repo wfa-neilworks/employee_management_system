@@ -178,24 +178,23 @@ export default function ReportPage() {
     const colW = tableW / activeColumns.length
 
     const drawPage = (pageNum, totalPages) => {
-      // ── LOGO (centered) ───────────────────────────────────────────────────────
-      let headerBottomY = 6
-      if (logoBase64) {
-        const imgProps = doc.getImageProperties(logoBase64)
-        const logoH = 56
-        const logoW = (imgProps.width / imgProps.height) * logoH
-        doc.addImage(logoBase64, 'PNG', (pageW - logoW) / 2, 4, logoW, logoH)
-        headerBottomY = 4 + logoH + 2
+      // ── LOGO + TITLE (page 1 only) ────────────────────────────────────────────
+      let tableStartY = 10
+      if (pageNum === 1) {
+        if (logoBase64) {
+          const imgProps = doc.getImageProperties(logoBase64)
+          const logoH = 35
+          const logoW = (imgProps.width / imgProps.height) * logoH
+          doc.addImage(logoBase64, 'PNG', (pageW - logoW) / 2, 4, logoW, logoH)
+        }
+        doc.setFontSize(13)
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(30, 30, 30)
+        doc.text('EMPLOYEE REPORT', pageW / 2, 4 + 35 + 7, { align: 'center' })
+        tableStartY = 4 + 35 + 14
       }
 
-      // ── EMPLOYEE REPORT title ─────────────────────────────────────────────────
-      doc.setFontSize(13)
-      doc.setFont('helvetica', 'bold')
-      doc.setTextColor(30, 30, 30)
-      doc.text('EMPLOYEE REPORT', pageW / 2, headerBottomY + 6, { align: 'center' })
-
       // ── TABLE HEADER ─────────────────────────────────────────────────────────
-      const tableStartY = headerBottomY + 12
       const rowH = 8
       const headerH = 9
 
@@ -273,8 +272,8 @@ export default function ReportPage() {
       doc.line(margin, footerY - 3, pageW - margin, footerY - 3)
     }
 
-    // Calculate rows per page (logo 56mm + 2 gap + 6 title text + 12 spacing = ~80)
-    const tableStartY = 80
+    // Page 1 has logo+title so less space; use page 1 tableStartY for conservative fit
+    const tableStartY = 4 + 35 + 14
     const headerH = 9
     const rowH = 8
     const availableH = footerY - 6 - (tableStartY + headerH)
