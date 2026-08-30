@@ -179,15 +179,23 @@ export default function ReportPage() {
 
     const drawPage = (pageNum, totalPages) => {
       // ── LOGO (centered) ───────────────────────────────────────────────────────
+      let headerBottomY = 6
       if (logoBase64) {
         const imgProps = doc.getImageProperties(logoBase64)
-        const logoH = 14
+        const logoH = 56
         const logoW = (imgProps.width / imgProps.height) * logoH
         doc.addImage(logoBase64, 'PNG', (pageW - logoW) / 2, 4, logoW, logoH)
+        headerBottomY = 4 + logoH + 2
       }
 
+      // ── EMPLOYEE REPORT title ─────────────────────────────────────────────────
+      doc.setFontSize(13)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(30, 30, 30)
+      doc.text('EMPLOYEE REPORT', pageW / 2, headerBottomY + 6, { align: 'center' })
+
       // ── TABLE HEADER ─────────────────────────────────────────────────────────
-      const tableStartY = 22
+      const tableStartY = headerBottomY + 12
       const rowH = 8
       const headerH = 9
 
@@ -265,8 +273,8 @@ export default function ReportPage() {
       doc.line(margin, footerY - 3, pageW - margin, footerY - 3)
     }
 
-    // Calculate rows per page
-    const tableStartY = 22
+    // Calculate rows per page (logo 56mm + 2 gap + 6 title text + 12 spacing = ~80)
+    const tableStartY = 80
     const headerH = 9
     const rowH = 8
     const availableH = footerY - 6 - (tableStartY + headerH)
