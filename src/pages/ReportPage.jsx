@@ -138,7 +138,7 @@ export default function ReportPage() {
         setGenerating(false)
         return
       }
-      generatePDF(employees)
+      await generatePDF(employees)
     } catch (err) {
       alert('Error generating report: ' + err.message)
     } finally {
@@ -146,7 +146,23 @@ export default function ReportPage() {
     }
   }
 
-  const generatePDF = (employees) => {
+  const getLogoBase64 = () => new Promise((resolve) => {
+    const img = new Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = img.naturalWidth
+      canvas.height = img.naturalHeight
+      canvas.getContext('2d').drawImage(img, 0, 0)
+      resolve(canvas.toDataURL('image/png'))
+    }
+    img.onerror = () => resolve(null)
+    img.src = '/noel-logo.png'
+  })
+
+  const generatePDF = async (employees) => {
+    const logoBase64 = await getLogoBase64()
+
     const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
     const pageW = doc.internal.pageSize.getWidth()
     const pageH = doc.internal.pageSize.getHeight()
@@ -162,22 +178,26 @@ export default function ReportPage() {
     const colW = tableW / activeColumns.length
 
     const drawPage = (pageNum, totalPages) => {
-      // ── LOGO ─────────────────────────────────────────────────────────────────
-      // Draw a placeholder rect for logo (jsPDF can't load external URLs easily)
-      // We'll use text "NOEL" as logo text instead since logo is a local file
-      doc.setFontSize(18)
+      // ── LOGO (top-left) ───────────────────────────────────────────────────────
+      const logoH = 14
+      const logoW = 40
+      if (logoBase64) {
+        doc.addImage(logoBase64, 'PNG', margin, 6, logoW, logoH)
+      }
+
+      // ── HEADER (centered) ────────────────────────────────────────────────────
+      doc.setFontSize(15)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(40, 40, 40)
-      doc.text('NOEL', pageW / 2, 14, { align: 'center' })
+      doc.text('NOEL - Report', pageW / 2, 13, { align: 'center' })
 
-      // ── HEADER ───────────────────────────────────────────────────────────────
-      doc.setFontSize(11)
+      doc.setFontSize(9)
       doc.setFont('helvetica', 'normal')
-      doc.setTextColor(80, 80, 80)
-      doc.text('Employee Report', pageW / 2, 20, { align: 'center' })
+      doc.setTextColor(100, 100, 100)
+      doc.text('Employee Report', pageW / 2, 19, { align: 'center' })
 
       // ── TABLE HEADER ─────────────────────────────────────────────────────────
-      const tableStartY = 26
+      const tableStartY = 28
       const rowH = 8
       const headerH = 9
 
@@ -250,7 +270,7 @@ export default function ReportPage() {
     }
 
     // Calculate rows per page
-    const tableStartY = 26
+    const tableStartY = 28
     const headerH = 9
     const rowH = 8
     const availableH = footerY - 6 - (tableStartY + headerH)
