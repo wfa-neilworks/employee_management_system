@@ -206,6 +206,39 @@
   color: var(--text-secondary);
 }
 
+.toggleRow {
+  display: flex;
+  width: fit-content;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.toggleOption {
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 500;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggleOption + .toggleOption {
+  border-left: 1px solid var(--border-color);
+}
+
+.toggleOptionActive {
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+}
+
+.toggleOption:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 @media (max-width: 768px) {
   .actions {
     flex-direction: column-reverse;

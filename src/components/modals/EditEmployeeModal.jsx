@@ -17,9 +17,10 @@ export default function EditEmployeeModal({ employee, onClose, onSuccess }) {
     payroll_number: employee.payroll_number || '',
     department_id: employee.department_id || '',
     employment_status: employee.employment_status || '',
-    wage_status: employee.wage_status || 'WFA',
+    wage_status: employee.wage_status || '',
     locker_number: employee.locker_number || '',
-    start_date: employee.start_date || ''
+    start_date: employee.start_date || '',
+    q_fever: employee.q_fever ?? false
   })
 
   useEffect(() => {
@@ -94,6 +95,7 @@ export default function EditEmployeeModal({ employee, onClose, onSuccess }) {
           wage_status: formData.wage_status,
           locker_number: formData.locker_number || null,
           start_date: formData.start_date,
+          q_fever: formData.q_fever,
           updated_by: user.id
         })
         .eq('id', employee.id)
@@ -239,6 +241,28 @@ export default function EditEmployeeModal({ employee, onClose, onSuccess }) {
             required
             disabled={loading}
           />
+        </div>
+
+        <div className={styles.formGroup}>
+          <label className={styles.label}>Q-Fever</label>
+          <div className={styles.toggleRow}>
+            <button
+              type="button"
+              className={`${styles.toggleOption} ${!formData.q_fever ? styles.toggleOptionActive : ''}`}
+              onClick={() => setFormData(prev => ({ ...prev, q_fever: false }))}
+              disabled={loading}
+            >
+              No
+            </button>
+            <button
+              type="button"
+              className={`${styles.toggleOption} ${formData.q_fever ? styles.toggleOptionActive : ''}`}
+              onClick={() => setFormData(prev => ({ ...prev, q_fever: true }))}
+              disabled={loading}
+            >
+              Yes
+            </button>
+          </div>
         </div>
 
         {error && (

@@ -19,7 +19,8 @@ export default function AddEmployeeModal({ departmentId, onClose, onSuccess }) {
     employment_status: '',
     wage_status: '',
     locker_number: '',
-    start_date: new Date().toISOString().split('T')[0]
+    start_date: new Date().toISOString().split('T')[0],
+    q_fever: false
   })
 
   useEffect(() => {
@@ -102,6 +103,7 @@ export default function AddEmployeeModal({ departmentId, onClose, onSuccess }) {
           wage_status: formData.wage_status,
           locker_number: formData.locker_number || null,
           start_date: formData.start_date,
+          q_fever: formData.q_fever,
           created_by: user.id,
           updated_by: user.id,
           is_active: true
@@ -237,6 +239,28 @@ export default function AddEmployeeModal({ departmentId, onClose, onSuccess }) {
             required
             disabled={loading}
           />
+        </div>
+
+        <div className={styles.formGroup}>
+          <label className={styles.label}>Q-Fever</label>
+          <div className={styles.toggleRow}>
+            <button
+              type="button"
+              className={`${styles.toggleOption} ${!formData.q_fever ? styles.toggleOptionActive : ''}`}
+              onClick={() => setFormData(prev => ({ ...prev, q_fever: false }))}
+              disabled={loading}
+            >
+              No
+            </button>
+            <button
+              type="button"
+              className={`${styles.toggleOption} ${formData.q_fever ? styles.toggleOptionActive : ''}`}
+              onClick={() => setFormData(prev => ({ ...prev, q_fever: true }))}
+              disabled={loading}
+            >
+              Yes
+            </button>
+          </div>
         </div>
 
         {error && (
