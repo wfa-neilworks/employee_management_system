@@ -157,7 +157,7 @@ export default function ReportPage() {
       resolve(canvas.toDataURL('image/png'))
     }
     img.onerror = () => resolve(null)
-    img.src = '/noel-logo.png'
+    img.src = '/noellogo.png'
   })
 
   const generatePDF = async (employees) => {
@@ -178,10 +178,11 @@ export default function ReportPage() {
     const colW = tableW / activeColumns.length
 
     const drawPage = (pageNum, totalPages) => {
-      // ── LOGO (top-left) ───────────────────────────────────────────────────────
-      const logoH = 14
-      const logoW = 40
+      // ── LOGO (top-left, aspect-ratio preserved) ───────────────────────────────
       if (logoBase64) {
+        const imgProps = doc.getImageProperties(logoBase64)
+        const logoH = 12
+        const logoW = (imgProps.width / imgProps.height) * logoH
         doc.addImage(logoBase64, 'PNG', margin, 6, logoW, logoH)
       }
 
@@ -206,11 +207,12 @@ export default function ReportPage() {
 
       doc.setFontSize(7.5)
       doc.setFont('helvetica', 'bold')
-      doc.setTextColor(212, 255, 0)
+      doc.setTextColor(212, 175, 55) // yellow-gold
 
       activeColumns.forEach((col, i) => {
-        const x = margin + i * colW + 2
-        doc.text(col.label.toUpperCase(), x, tableStartY + 6, { maxWidth: colW - 4 })
+        const cellX = margin + i * colW
+        const cellCenterX = cellX + colW / 2
+        doc.text(col.label.toUpperCase(), cellCenterX, tableStartY + 6, { align: 'center', maxWidth: colW - 2 })
       })
 
       // ── TABLE ROWS ───────────────────────────────────────────────────────────
@@ -226,9 +228,14 @@ export default function ReportPage() {
 
         doc.setTextColor(30, 30, 30)
         activeColumns.forEach((col, i) => {
-          const x = margin + i * colW + 2
+          const cellX = margin + i * colW
           const val = getCellValue(emp, col.key)
-          doc.text(String(val), x, y + 5.5, { maxWidth: colW - 4 })
+          // Name is left-aligned, all others centered
+          if (col.key === 'name') {
+            doc.text(String(val), cellX + 2, y + 5.5, { maxWidth: colW - 4 })
+          } else {
+            doc.text(String(val), cellX + colW / 2, y + 5.5, { align: 'center', maxWidth: colW - 2 })
+          }
         })
 
         // Row border
