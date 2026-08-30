@@ -178,27 +178,16 @@ export default function ReportPage() {
     const colW = tableW / activeColumns.length
 
     const drawPage = (pageNum, totalPages) => {
-      // ── LOGO (top-left, aspect-ratio preserved) ───────────────────────────────
+      // ── LOGO (centered) ───────────────────────────────────────────────────────
       if (logoBase64) {
         const imgProps = doc.getImageProperties(logoBase64)
-        const logoH = 12
+        const logoH = 14
         const logoW = (imgProps.width / imgProps.height) * logoH
-        doc.addImage(logoBase64, 'PNG', margin, 6, logoW, logoH)
+        doc.addImage(logoBase64, 'PNG', (pageW - logoW) / 2, 4, logoW, logoH)
       }
 
-      // ── HEADER (centered) ────────────────────────────────────────────────────
-      doc.setFontSize(15)
-      doc.setFont('helvetica', 'bold')
-      doc.setTextColor(40, 40, 40)
-      doc.text('NOEL - Report', pageW / 2, 13, { align: 'center' })
-
-      doc.setFontSize(9)
-      doc.setFont('helvetica', 'normal')
-      doc.setTextColor(100, 100, 100)
-      doc.text('Employee Report', pageW / 2, 19, { align: 'center' })
-
       // ── TABLE HEADER ─────────────────────────────────────────────────────────
-      const tableStartY = 28
+      const tableStartY = 22
       const rowH = 8
       const headerH = 9
 
@@ -277,7 +266,7 @@ export default function ReportPage() {
     }
 
     // Calculate rows per page
-    const tableStartY = 28
+    const tableStartY = 22
     const headerH = 9
     const rowH = 8
     const availableH = footerY - 6 - (tableStartY + headerH)
