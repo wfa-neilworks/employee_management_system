@@ -1,0 +1,214 @@
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
+}
+
+.title {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.generateBtn {
+  padding: 12px 28px;
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.generateBtn:hover:not(:disabled) {
+  background: var(--accent-secondary);
+  transform: translateY(-1px);
+}
+
+.generateBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.sections {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Card */
+.card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.cardTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+
+.cardHeader .cardTitle {
+  margin-bottom: 0;
+}
+
+.checkAll {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.checkAll input {
+  accent-color: var(--accent-primary);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+/* Column grid */
+.columnGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+/* Filter section */
+.filterHint {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  margin-top: -8px;
+}
+
+.filterGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 24px;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.filterLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.checkboxList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+/* Shared checkbox/radio label */
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.checkboxLabel:hover {
+  color: var(--accent-primary);
+}
+
+.checkboxLabel input[type="checkbox"],
+.checkboxLabel input[type="radio"] {
+  accent-color: var(--accent-primary);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Preview table */
+.previewTable {
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table thead tr {
+  background: var(--bg-tertiary);
+}
+
+.table th {
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.table td {
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.previewCell {
+  font-style: italic;
+}
+
+.noResults {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 20px;
+}
+
+.previewNote {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}

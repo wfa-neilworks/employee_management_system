@@ -61,6 +61,14 @@ const IconKnife = () => (
   </svg>
 )
 
+const IconReport = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <path d="M14 2v6h6"/>
+    <path d="M8 18v-4M12 18v-2M16 18v-6"/>
+  </svg>
+)
+
 const IconPresetData = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
     <ellipse cx="12" cy="5" rx="9" ry="3"/>
@@ -208,6 +216,16 @@ export default function Sidebar({ departments, isOpen }) {
             )}
           </div>
         )}
+
+        <NavLink
+          to="/report"
+          className={({ isActive }) =>
+            `${styles.navItem} ${isActive ? styles.navItemActive : ''}`
+          }
+        >
+          <span className={styles.navIcon}><IconReport /></span>
+          <span className={styles.navLabel}>REPORT</span>
+        </NavLink>
 
         {hasPermission('manage_preset_data') && (
           <NavLink
