@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import styles from './PresetDataPage.module.css'
 
-const TABS = ['Departments', 'Gear Types', 'Employment Status']
+const TABS = ['Departments', 'Gear Types', 'Employment Status', 'Wage Status']
 
 export default function PresetDataPage() {
   const { hasPermission } = useAuth()
@@ -26,7 +26,7 @@ export default function PresetDataPage() {
       <div className={styles.header}>
         <div>
           <h1 className={styles.title}>Preset Data</h1>
-          <p className={styles.subtitle}>Manage departments, gear types, and employment statuses</p>
+          <p className={styles.subtitle}>Manage departments, gear types, employment statuses, and wage statuses</p>
         </div>
       </div>
 
@@ -46,6 +46,7 @@ export default function PresetDataPage() {
         {activeTab === 'Departments' && <DepartmentsTab />}
         {activeTab === 'Gear Types' && <GearTypesTab />}
         {activeTab === 'Employment Status' && <EmploymentStatusTab />}
+        {activeTab === 'Wage Status' && <WageStatusTab />}
       </div>
     </div>
   )
@@ -785,6 +786,220 @@ function StatusForm({ item, onClose, onSuccess }) {
             <button type="button" className={styles.cancelButton} onClick={onClose} disabled={loading}>Cancel</button>
             <button type="submit" className={styles.submitButton} disabled={loading}>
               {loading ? 'Saving...' : isEdit ? 'Save Changes' : 'Add Status'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+// ─── WAGE STATUS TAB ─────────────────────────────────────────────────────────
+
+function WageStatusTab() {
+  const [items, setItems] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [showForm, setShowForm] = useState(false)
+  const [editItem, setEditItem] = useState(null)
+  const [deleteItem, setDeleteItem] = useState(null)
+
+  useEffect(() => { fetchItems() }, [])
+
+  const fetchItems = async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const { data, error } = await supabase
+        .from('wage_statuses')
+        .select('*')
+        .order('sort_order')
+      if (error) throw error
+      setItems(data || [])
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDelete = async (item) => {
+    try {
+      const { count } = await supabase
+        .from('employees')
+        .select('id', { count: 'exact', head: true })
+        .eq('wage_status', item.value)
+        .eq('is_active', true)
+
+      if (count > 0) {
+        setError(`Cannot delete "${item.label}" — ${count} active employee(s) currently have this wage status.`)
+        setDeleteItem(null)
+        return
+      }
+
+      const { error } = await supabase.from('wage_statuses').delete().eq('id', item.id)
+      if (error) throw error
+      setDeleteItem(null)
+      fetchItems()
+    } catch (err) {
+      setError(err.message)
+      setDeleteItem(null)
+    }
+  }
+
+  return (
+    <div>
+      {error && <div className={styles.error}>{error}</div>}
+
+      <div className={styles.tableHeader}>
+        <span className={styles.count}>{items.length} wage status{items.length !== 1 ? 'es' : ''}</span>
+        <button className={styles.addButton} onClick={() => { setEditItem(null); setShowForm(true) }}>
+          + Add Wage Status
+        </button>
+      </div>
+
+      {loading ? (
+        <div className={styles.loading}>Loading...</div>
+      ) : (
+        <div className={styles.tableContainer}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Label</th>
+                <th>Internal Key</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.length === 0 ? (
+                <tr><td colSpan={3} className={styles.noResults}>No wage statuses found</td></tr>
+              ) : items.map(item => (
+                <tr key={item.id}>
+                  <td className={styles.primary}>{item.label}</td>
+                  <td><span className={styles.code}>{item.value}</span></td>
+                  <td>
+                    <div className={styles.actions}>
+                      <button className={styles.editBtn} onClick={() => { setEditItem(item); setShowForm(true) }}>Edit</button>
+                      <button className={styles.deleteBtn} onClick={() => setDeleteItem(item)}>Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {showForm && (
+        <WageStatusForm
+          item={editItem}
+          onClose={() => setShowForm(false)}
+          onSuccess={() => { setShowForm(false); fetchItems() }}
+        />
+      )}
+
+      {deleteItem && (
+        <ConfirmDelete
+          name={deleteItem.label}
+          onConfirm={() => handleDelete(deleteItem)}
+          onCancel={() => setDeleteItem(null)}
+        />
+      )}
+    </div>
+  )
+}
+
+function WageStatusForm({ item, onClose, onSuccess }) {
+  const isEdit = !!item
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [label, setLabel] = useState(item?.label || '')
+  const [internalKey, setInternalKey] = useState(item?.value || '')
+
+  const handleLabelChange = (e) => {
+    const val = e.target.value
+    setLabel(val)
+    if (!isEdit) {
+      setInternalKey(val.toUpperCase().replace(/\s+/g, '_').replace(/[^A-Z0-9_]/g, ''))
+    }
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!label.trim() || !internalKey.trim()) return
+    setLoading(true)
+    setError('')
+    try {
+      if (isEdit) {
+        const { error } = await supabase
+          .from('wage_statuses')
+          .update({ label: label.trim() })
+          .eq('id', item.id)
+        if (error) throw error
+      } else {
+        const { data: existing } = await supabase
+          .from('wage_statuses')
+          .select('id')
+          .eq('value', internalKey.trim())
+          .maybeSingle()
+        if (existing) {
+          setError('A wage status with this internal key already exists.')
+          setLoading(false)
+          return
+        }
+        const { data: maxOrder } = await supabase
+          .from('wage_statuses')
+          .select('sort_order')
+          .order('sort_order', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        const { error } = await supabase
+          .from('wage_statuses')
+          .insert({ value: internalKey.trim(), label: label.trim(), sort_order: (maxOrder?.sort_order || 0) + 1 })
+        if (error) throw error
+      }
+      onSuccess()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className={styles.overlay}>
+      <div className={styles.formCard}>
+        <h2 className={styles.formTitle}>{isEdit ? 'Edit Wage Status' : 'Add Wage Status'}</h2>
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Label *</label>
+            <input
+              className={styles.input}
+              value={label}
+              onChange={handleLabelChange}
+              placeholder="e.g. Labor Hire"
+              disabled={loading}
+              required
+            />
+          </div>
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Internal Key *</label>
+            <input
+              className={styles.input}
+              value={internalKey}
+              onChange={e => setInternalKey(e.target.value.toUpperCase().replace(/\s+/g, '_').replace(/[^A-Z0-9_]/g, ''))}
+              placeholder="e.g. LABOR_HIRE"
+              disabled={loading || isEdit}
+              required
+            />
+            {!isEdit && <span className={styles.hint}>Auto-generated. Cannot be changed after creation.</span>}
+            {isEdit && <span className={styles.hint}>Internal key cannot be changed after creation.</span>}
+          </div>
+          {error && <div className={styles.error}>{error}</div>}
+          <div className={styles.formActions}>
+            <button type="button" className={styles.cancelButton} onClick={onClose} disabled={loading}>Cancel</button>
+            <button type="submit" className={styles.submitButton} disabled={loading}>
+              {loading ? 'Saving...' : isEdit ? 'Save Changes' : 'Add Wage Status'}
             </button>
           </div>
         </form>

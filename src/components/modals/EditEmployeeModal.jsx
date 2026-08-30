@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { supabase, WAGE_STATUS } from '../../lib/supabase'
+import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import Modal from './Modal'
 import styles from './FormModal.module.css'
@@ -10,6 +10,7 @@ export default function EditEmployeeModal({ employee, onClose, onSuccess }) {
   const [error, setError] = useState('')
   const [departments, setDepartments] = useState([])
   const [employmentStatuses, setEmploymentStatuses] = useState([])
+  const [wageStatuses, setWageStatuses] = useState([])
   const [formData, setFormData] = useState({
     name: employee.name || '',
     english_name: employee.english_name || '',
@@ -24,6 +25,7 @@ export default function EditEmployeeModal({ employee, onClose, onSuccess }) {
   useEffect(() => {
     fetchDepartments()
     fetchEmploymentStatuses()
+    fetchWageStatuses()
   }, [])
 
   const fetchDepartments = async () => {
@@ -51,6 +53,20 @@ export default function EditEmployeeModal({ employee, onClose, onSuccess }) {
       setEmploymentStatuses(data || [])
     } catch (err) {
       console.error('Error fetching employment statuses:', err)
+    }
+  }
+
+  const fetchWageStatuses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('wage_statuses')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order')
+      if (error) throw error
+      setWageStatuses(data || [])
+    } catch (err) {
+      console.error('Error fetching wage statuses:', err)
     }
   }
 
@@ -192,7 +208,7 @@ export default function EditEmployeeModal({ employee, onClose, onSuccess }) {
             required
             disabled={loading}
           >
-            {WAGE_STATUS.map((status) => (
+            {wageStatuses.map((status) => (
               <option key={status.value} value={status.value}>
                 {status.label}
               </option>
