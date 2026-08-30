@@ -157,7 +157,7 @@ export default function ReportPage() {
       resolve(canvas.toDataURL('image/png'))
     }
     img.onerror = () => resolve(null)
-    img.src = '/noellogo.png'
+    img.src = '/noel-logo.png'
   })
 
   const generatePDF = async (employees) => {
