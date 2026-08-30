@@ -14,6 +14,7 @@ export default function DepartmentPage() {
   const { hasPermission } = useAuth()
   const [department, setDepartment] = useState(null)
   const [employees, setEmployees] = useState([])
+  const [wageStatusOrder, setWageStatusOrder] = useState({})
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
 
@@ -25,8 +26,25 @@ export default function DepartmentPage() {
   const isResignedView = location.pathname === '/resigned'
 
   useEffect(() => {
+    fetchWageStatusOrder()
     fetchData()
   }, [departmentId, isResignedView])
+
+  const fetchWageStatusOrder = async () => {
+    try {
+      const { data } = await supabase
+        .from('wage_statuses')
+        .select('value, sort_order')
+        .order('sort_order')
+      if (data) {
+        const order = {}
+        data.forEach(ws => { order[ws.value] = ws.sort_order })
+        setWageStatusOrder(order)
+      }
+    } catch (err) {
+      console.error('Error fetching wage status order:', err)
+    }
+  }
 
   const fetchData = async () => {
     try {
@@ -82,10 +100,9 @@ export default function DepartmentPage() {
       )
     })
     .sort((a, b) => {
-      // WFA first, then LABOR_HIRE (LH)
-      if (a.wage_status === 'WFA' && b.wage_status !== 'WFA') return -1
-      if (a.wage_status !== 'WFA' && b.wage_status === 'WFA') return 1
-      // Within same wage status, sort alphabetically by name
+      const orderA = wageStatusOrder[a.wage_status] ?? 999
+      const orderB = wageStatusOrder[b.wage_status] ?? 999
+      if (orderA !== orderB) return orderA - orderB
       return a.name.localeCompare(b.name)
     })
 
