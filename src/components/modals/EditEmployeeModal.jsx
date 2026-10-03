@@ -90,30 +90,26 @@ export default function EditEmployeeModal({ employee, onClose, onSuccess }) {
     setInviteError('')
 
     try {
-      // Save email to employee record first
-      const { error: emailErr } = await supabase
-        .from('employees')
-        .update({ email: portalEmail.trim() })
-        .eq('id', employee.id)
-      if (emailErr) throw emailErr
-
-      // Send Supabase invite email
-      const { data: inviteData, error: inviteErr } = await supabase.auth.admin.inviteUserByEmail(
-        portalEmail.trim(),
-        { redirectTo: `${window.location.origin}/employee-signup` }
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-employee`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          },
+          body: JSON.stringify({
+            email: portalEmail.trim(),
+            employeeId: employee.id,
+            redirectTo: `${window.location.origin}/employee-signup`,
+          }),
+        }
       )
-      if (inviteErr) throw inviteErr
 
-      // Pre-create the accounts record as EMPLOYEE linked to this employee
-      const { error: accountErr } = await supabase
-        .from('accounts')
-        .upsert({
-          id: inviteData.user.id,
-          email: portalEmail.trim(),
-          account_type: 'EMPLOYEE',
-          employee_id: employee.id
-        }, { onConflict: 'id' })
-      if (accountErr) throw accountErr
+      const result = await res.json()
+      if (!res.ok) throw new Error(result.error || 'Failed to send invite')
 
       setInviteStatus('sent')
     } catch (err) {

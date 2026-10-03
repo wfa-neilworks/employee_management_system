@@ -1,0 +1,6 @@
+[project]
+# Your Supabase project reference — find this in Settings > General in the Supabase dashboard
+id = "your-project-ref"
+
+[functions.invite-employee]
+verify_jwt = false
