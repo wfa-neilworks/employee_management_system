@@ -12,6 +12,7 @@ import TransactionHistoryPage from './pages/TransactionHistoryPage'
 import AdminPage from './pages/AdminPage'
 import PresetDataPage from './pages/PresetDataPage'
 import ReportPage from './pages/ReportPage'
+import EmployeeSignupPage from './pages/EmployeeSignupPage'
 import Layout from './components/Layout'
 
 function PrivateRoute({ children }) {
@@ -35,7 +36,12 @@ function PrivateRoute({ children }) {
     return <Navigate to="/login" />
   }
 
-  // If user is authenticated but hasn't completed signup, redirect to signup
+  // Employee accounts go to employee portal (not built yet — placeholder)
+  if (account?.account_type === 'EMPLOYEE') {
+    return <Navigate to="/employee-portal" />
+  }
+
+  // Staff accounts that haven't completed signup
   if (account && (!account.first_name || !account.last_name)) {
     return <Navigate to="/signup" />
   }
@@ -48,6 +54,8 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
+      <Route path="/employee-signup" element={<EmployeeSignupPage />} />
+      <Route path="/employee-portal" element={<div style={{ padding: 40, color: 'var(--text-primary)' }}>Employee portal coming soon.</div>} />
       <Route
         path="/"
         element={

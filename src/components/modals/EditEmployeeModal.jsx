@@ -23,6 +23,11 @@ export default function EditEmployeeModal({ employee, onClose, onSuccess }) {
     q_fever: employee.q_fever ?? false
   })
 
+  const [portalEmail, setPortalEmail] = useState(employee.email || '')
+  const [inviteLoading, setInviteLoading] = useState(false)
+  const [inviteStatus, setInviteStatus] = useState(null) // 'sent' | 'error' | null
+  const [inviteError, setInviteError] = useState('')
+
   useEffect(() => {
     fetchDepartments()
     fetchEmploymentStatuses()
@@ -76,6 +81,47 @@ export default function EditEmployeeModal({ employee, onClose, onSuccess }) {
       ...formData,
       [e.target.name]: e.target.value
     })
+  }
+
+  const handleSendInvite = async () => {
+    if (!portalEmail.trim()) return
+    setInviteLoading(true)
+    setInviteStatus(null)
+    setInviteError('')
+
+    try {
+      // Save email to employee record first
+      const { error: emailErr } = await supabase
+        .from('employees')
+        .update({ email: portalEmail.trim() })
+        .eq('id', employee.id)
+      if (emailErr) throw emailErr
+
+      // Send Supabase invite email
+      const { data: inviteData, error: inviteErr } = await supabase.auth.admin.inviteUserByEmail(
+        portalEmail.trim(),
+        { redirectTo: `${window.location.origin}/employee-signup` }
+      )
+      if (inviteErr) throw inviteErr
+
+      // Pre-create the accounts record as EMPLOYEE linked to this employee
+      const { error: accountErr } = await supabase
+        .from('accounts')
+        .upsert({
+          id: inviteData.user.id,
+          email: portalEmail.trim(),
+          account_type: 'EMPLOYEE',
+          employee_id: employee.id
+        }, { onConflict: 'id' })
+      if (accountErr) throw accountErr
+
+      setInviteStatus('sent')
+    } catch (err) {
+      setInviteError(err.message)
+      setInviteStatus('error')
+    } finally {
+      setInviteLoading(false)
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -263,6 +309,40 @@ export default function EditEmployeeModal({ employee, onClose, onSuccess }) {
               Yes
             </button>
           </div>
+        </div>
+
+        {/* Employee Portal Invite */}
+        <div className={styles.inviteSection}>
+          <label className={styles.label}>Employee Portal Access</label>
+          <p className={styles.inviteHint}>
+            {employee.email
+              ? `Invite already sent to ${employee.email}. Enter a new email to resend.`
+              : 'Add an email to invite this employee to the portal.'}
+          </p>
+          <div className={styles.inviteRow}>
+            <input
+              type="email"
+              value={portalEmail}
+              onChange={(e) => setPortalEmail(e.target.value)}
+              className={styles.input}
+              placeholder="employee@example.com"
+              disabled={inviteLoading}
+            />
+            <button
+              type="button"
+              className={styles.inviteButton}
+              onClick={handleSendInvite}
+              disabled={inviteLoading || !portalEmail.trim()}
+            >
+              {inviteLoading ? 'Sending...' : employee.email ? 'Resend Invite' : 'Send Invite'}
+            </button>
+          </div>
+          {inviteStatus === 'sent' && (
+            <p className={styles.inviteSuccess}>Invitation sent successfully!</p>
+          )}
+          {inviteStatus === 'error' && (
+            <p className={styles.inviteError}>{inviteError}</p>
+          )}
         </div>
 
         {error && (

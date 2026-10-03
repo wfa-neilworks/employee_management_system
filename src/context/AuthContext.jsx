@@ -91,6 +91,7 @@ export const AuthProvider = ({ children }) => {
   const isProcurement = () => account?.account_type === 'PROCUREMENT'
   const isAccounts = () => account?.account_type === 'ACCOUNTS'
   const isAdmin = () => account?.account_type === 'ADMIN'
+  const isEmployee = () => account?.account_type === 'EMPLOYEE'
   const canEdit = () => isHR() || isProcurement()
 
   const hasPermission = (permission) => {
@@ -109,6 +110,7 @@ export const AuthProvider = ({ children }) => {
     isProcurement,
     isAccounts,
     isAdmin,
+    isEmployee,
     canEdit,
     hasPermission
   }
