@@ -12,9 +12,8 @@ const IconProfile = () => (
 
 const IconGear = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 2H8.5l-.5 2.5A7 7 0 0 0 5 6.5L2.5 6 1 9l2 1.5a7 7 0 0 0 0 3L1 15l1.5 3 2.5-.5A7 7 0 0 0 8 19.5l.5 2.5h3.5"/>
-    <path d="M15.5 2.5l-.5 2A7 7 0 0 1 18 7l2-.5L21.5 9 20 10.5"/>
     <circle cx="12" cy="12" r="3"/>
+    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
   </svg>
 )
 
@@ -34,8 +33,21 @@ const IconKnife = () => (
   </svg>
 )
 
+const IconBell = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+  </svg>
+)
+
+const IconAnnouncement = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+  </svg>
+)
+
 const IconLogout = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
     <polyline points="16 17 21 12 16 7"/>
     <line x1="21" y1="12" x2="9" y2="12"/>
@@ -44,12 +56,13 @@ const IconLogout = () => (
 
 const NAV_TABS = [
   { key: 'profile', label: 'Profile', icon: IconProfile },
+  { key: 'announcement', label: 'Updates', icon: IconAnnouncement },
   { key: 'gears', label: 'Gears', icon: IconGear },
   { key: 'leave', label: 'Leave', icon: IconLeave },
   { key: 'knife', label: 'Knife', icon: IconKnife },
 ]
 
-function ProfileTab({ employee }) {
+function ProfileTab({ employee, onSignOut }) {
   if (!employee) {
     return <div className={styles.loading}>Loading profile...</div>
   }
@@ -99,6 +112,53 @@ function ProfileTab({ employee }) {
           </span>
         </div>
       </div>
+
+      {/* Logout */}
+      <div className={styles.logoutSection}>
+        <button className={styles.logoutBtn} onClick={onSignOut}>
+          <IconLogout />
+          Sign Out
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function AnnouncementTab({ announcements, unreadIds, onRead }) {
+  if (announcements.length === 0) {
+    return (
+      <div className={styles.comingSoon}>
+        <div className={styles.comingSoonIcon}>📢</div>
+        <h3 className={styles.comingSoonTitle}>No Announcements</h3>
+        <p className={styles.comingSoonText}>Check back later for updates from management.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className={styles.tabContent}>
+      <div className={styles.announcementList}>
+        {announcements.map(a => {
+          const isUnread = unreadIds.has(a.id)
+          return (
+            <div
+              key={a.id}
+              className={`${styles.announcementCard} ${isUnread ? styles.announcementUnread : ''}`}
+              onClick={() => isUnread && onRead(a.id)}
+            >
+              {isUnread && <span className={styles.unreadDot} />}
+              <div className={styles.announcementMeta}>
+                <span className={styles.announcementDate}>
+                  {new Date(a.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </span>
+                {isUnread && <span className={styles.newBadge}>NEW</span>}
+              </div>
+              <h3 className={styles.announcementTitle}>{a.title}</h3>
+              <p className={styles.announcementBody}>{a.body}</p>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -117,11 +177,14 @@ export default function EmployeePortal() {
   const { account, signOut } = useAuth()
   const [activeTab, setActiveTab] = useState('profile')
   const [employee, setEmployee] = useState(null)
+  const [announcements, setAnnouncements] = useState([])
+  const [unreadIds, setUnreadIds] = useState(new Set())
 
   useEffect(() => {
     if (account?.employee_id) {
       fetchEmployee(account.employee_id)
     }
+    fetchAnnouncements()
   }, [account])
 
   const fetchEmployee = async (employeeId) => {
@@ -133,6 +196,33 @@ export default function EmployeePortal() {
     if (data) setEmployee(data)
   }
 
+  const fetchAnnouncements = async () => {
+    const { data } = await supabase
+      .from('announcements')
+      .select('*')
+      .order('created_at', { ascending: false })
+    if (data) {
+      setAnnouncements(data)
+      // Track which ones are unread using localStorage
+      const readKey = `read_announcements_${account?.id}`
+      const readIds = new Set(JSON.parse(localStorage.getItem(readKey) || '[]'))
+      const unread = new Set(data.map(a => a.id).filter(id => !readIds.has(id)))
+      setUnreadIds(unread)
+    }
+  }
+
+  const markRead = (id) => {
+    const readKey = `read_announcements_${account?.id}`
+    const readIds = new Set(JSON.parse(localStorage.getItem(readKey) || '[]'))
+    readIds.add(id)
+    localStorage.setItem(readKey, JSON.stringify([...readIds]))
+    setUnreadIds(prev => {
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    })
+  }
+
   const handleSignOut = async () => {
     await signOut()
     window.location.href = '/login'
@@ -140,7 +230,8 @@ export default function EmployeePortal() {
 
   const renderTab = () => {
     switch (activeTab) {
-      case 'profile': return <ProfileTab employee={employee} />
+      case 'profile': return <ProfileTab employee={employee} onSignOut={handleSignOut} />
+      case 'announcement': return <AnnouncementTab announcements={announcements} unreadIds={unreadIds} onRead={markRead} />
       case 'gears': return <ComingSoon label="My Gears" />
       case 'leave': return <ComingSoon label="Leave Application" />
       case 'knife': return <ComingSoon label="Knife Dockets" />
@@ -152,14 +243,18 @@ export default function EmployeePortal() {
     <div className={styles.portal}>
       {/* Top bar */}
       <header className={styles.topBar}>
-        <div className={styles.topBarLeft}>
-          <img src="/noellogo.png" alt="NOEL" className={styles.topLogo} />
-        </div>
-        <div className={styles.topBarRight}>
-          <button className={styles.logoutBtn} onClick={handleSignOut}>
-            <IconLogout />
-          </button>
-        </div>
+        <img src="/noellogo.png" alt="NOEL" className={styles.topLogo} />
+        <button
+          className={`${styles.bellBtn} ${unreadIds.size > 0 ? styles.bellActive : ''}`}
+          onClick={() => setActiveTab('announcement')}
+        >
+          <IconBell />
+          {unreadIds.size > 0 && (
+            <span className={styles.bellBadge}>
+              {unreadIds.size > 9 ? '9+' : unreadIds.size}
+            </span>
+          )}
+        </button>
       </header>
 
       {/* Page content */}
@@ -175,7 +270,12 @@ export default function EmployeePortal() {
             className={`${styles.navTab} ${activeTab === key ? styles.navTabActive : ''}`}
             onClick={() => setActiveTab(key)}
           >
-            <span className={styles.navIcon}><Icon /></span>
+            <span className={styles.navIcon}>
+              <Icon />
+              {key === 'announcement' && unreadIds.size > 0 && (
+                <span className={styles.navDot} />
+              )}
+            </span>
             <span className={styles.navLabel}>{label}</span>
           </button>
         ))}
