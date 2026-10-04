@@ -13,6 +13,7 @@ import AdminPage from './pages/AdminPage'
 import PresetDataPage from './pages/PresetDataPage'
 import ReportPage from './pages/ReportPage'
 import EmployeeSignupPage from './pages/EmployeeSignupPage'
+import EmployeePortal from './pages/EmployeePortal'
 import Layout from './components/Layout'
 
 function PrivateRoute({ children }) {
@@ -55,7 +56,7 @@ function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/employee-signup" element={<EmployeeSignupPage />} />
-      <Route path="/employee-portal" element={<div style={{ padding: 40, color: 'var(--text-primary)' }}>Employee portal coming soon.</div>} />
+      <Route path="/employee-portal" element={<EmployeePortal />} />
       <Route
         path="/"
         element={
