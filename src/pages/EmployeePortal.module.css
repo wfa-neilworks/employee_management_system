@@ -298,6 +298,100 @@
   border: 1.5px solid var(--bg-secondary);
 }
 
+/* Leave tab */
+.leaveHeader {
+  padding: 16px 16px 0;
+}
+
+.applyLeaveBtn {
+  width: 100%;
+  padding: 14px;
+  background: var(--accent-primary);
+  color: #111111;
+  font-size: 15px;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.leaveLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 14px 16px;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legendDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legendLabel {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.leaveList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 16px 16px;
+}
+
+.leaveCard {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-left: 4px solid;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.leaveCardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.leaveTypeBadge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 6px;
+}
+
+.leaveDays {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.leaveDates {
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.leaveNotes {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
 /* Coming soon */
 .comingSoon {
   display: flex;

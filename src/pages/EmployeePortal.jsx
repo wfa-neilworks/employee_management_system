@@ -163,6 +163,93 @@ function AnnouncementTab({ announcements, unreadIds, onRead }) {
   )
 }
 
+const LEAVE_CONFIG = {
+  SICK_LEAVE:         { label: 'Sick Leave',              color: '#ff6b6b' },
+  ANNUAL_LEAVE:       { label: 'Annual Leave',            color: '#4caf50' },
+  LEAVE_WITHOUT_PAY:  { label: 'Leave Without Pay',       color: '#ff9800' },
+  ABSENT:             { label: 'Absent (No Notice)',       color: '#f44336' },
+  PUBLIC_HOLIDAY:     { label: 'Public Holiday',          color: '#2196f3' },
+}
+
+function LeaveTab({ employeeId }) {
+  const [leaves, setLeaves] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!employeeId) return
+    const fetch = async () => {
+      const { data } = await supabase
+        .from('leave')
+        .select('*')
+        .eq('employee_id', employeeId)
+        .order('start_date', { ascending: false })
+      setLeaves(data || [])
+      setLoading(false)
+    }
+    fetch()
+  }, [employeeId])
+
+  return (
+    <div className={styles.tabContent}>
+      {/* Apply button — not clickable yet */}
+      <div className={styles.leaveHeader}>
+        <button className={styles.applyLeaveBtn} disabled>
+          + Apply For Leave
+        </button>
+      </div>
+
+      {/* Legend */}
+      <div className={styles.leaveLegend}>
+        {Object.entries(LEAVE_CONFIG).map(([key, { label, color }]) => (
+          <div key={key} className={styles.legendItem}>
+            <span className={styles.legendDot} style={{ background: color }} />
+            <span className={styles.legendLabel}>{label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Leave list */}
+      {loading ? (
+        <div className={styles.loading}>Loading leave records...</div>
+      ) : leaves.length === 0 ? (
+        <div className={styles.comingSoon}>
+          <div className={styles.comingSoonIcon}>📅</div>
+          <h3 className={styles.comingSoonTitle}>No Leave Records</h3>
+          <p className={styles.comingSoonText}>Your leave history will appear here.</p>
+        </div>
+      ) : (
+        <div className={styles.leaveList}>
+          {leaves.map(leave => {
+            const config = LEAVE_CONFIG[leave.leave_type] || { label: leave.leave_type, color: '#888' }
+            const start = new Date(leave.start_date)
+            const end = new Date(leave.end_date)
+            const days = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1
+            return (
+              <div key={leave.id} className={styles.leaveCard} style={{ borderLeftColor: config.color }}>
+                <div className={styles.leaveCardTop}>
+                  <span className={styles.leaveTypeBadge} style={{ background: config.color + '22', color: config.color }}>
+                    {config.label}
+                  </span>
+                  <span className={styles.leaveDays}>{days} day{days !== 1 ? 's' : ''}</span>
+                </div>
+                <div className={styles.leaveDates}>
+                  {start.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  {days > 1 && (
+                    <> → {end.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}</>
+                  )}
+                </div>
+                {leave.notes && (
+                  <p className={styles.leaveNotes}>{leave.notes}</p>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function ComingSoon({ label }) {
   return (
     <div className={styles.comingSoon}>
@@ -233,7 +320,7 @@ export default function EmployeePortal() {
       case 'profile': return <ProfileTab employee={employee} onSignOut={handleSignOut} />
       case 'announcement': return <AnnouncementTab announcements={announcements} unreadIds={unreadIds} onRead={markRead} />
       case 'gears': return <ComingSoon label="My Gears" />
-      case 'leave': return <ComingSoon label="Leave Application" />
+      case 'leave': return <LeaveTab employeeId={account?.employee_id} />
       case 'knife': return <ComingSoon label="Knife Dockets" />
       default: return null
     }
