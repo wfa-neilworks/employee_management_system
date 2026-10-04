@@ -14,11 +14,29 @@ export default function EmployeeSignupPage() {
 
   useEffect(() => {
     const loadSession = async () => {
+      // Supabase invite links put the token in the URL hash.
+      // onAuthStateChange fires with SIGNED_IN after the SDK exchanges it.
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (session?.user) {
+          setEmail(session.user.email)
+
+          const { data: account } = await supabase
+            .from('accounts')
+            .select('employee_id, employees(name)')
+            .eq('id', session.user.id)
+            .single()
+
+          if (account?.employees?.name) {
+            setEmployeeName(account.employees.name)
+          }
+        }
+      })
+
+      // Also check if there's already a session (e.g. page refresh)
       const { data: { session } } = await supabase.auth.getSession()
       if (session?.user) {
         setEmail(session.user.email)
 
-        // Fetch linked employee name
         const { data: account } = await supabase
           .from('accounts')
           .select('employee_id, employees(name)')
@@ -29,6 +47,8 @@ export default function EmployeeSignupPage() {
           setEmployeeName(account.employees.name)
         }
       }
+
+      return () => subscription.unsubscribe()
     }
     loadSession()
   }, [])
@@ -48,6 +68,9 @@ export default function EmployeeSignupPage() {
 
     setLoading(true)
     try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('Session expired. Please click the invite link again.')
+
       const { error: updateError } = await supabase.auth.updateUser({ password })
       if (updateError) throw updateError
 
