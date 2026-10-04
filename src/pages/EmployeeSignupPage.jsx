@@ -71,11 +71,14 @@ export default function EmployeeSignupPage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) throw new Error('Session expired. Please click the invite link again.')
 
-      const { error: updateError } = await supabase.auth.updateUser({ password })
+      // Use the session token directly to update password
+      const { error: updateError } = await supabase.auth.updateUser(
+        { password },
+        { accessToken: session.access_token }
+      )
       if (updateError) throw updateError
 
-      // Sign out first, then redirect
-      await supabase.auth.signOut()
+      // Hard redirect — don't await signOut, let the login page handle it
       window.location.href = '/login'
     } catch (err) {
       setError(err.message || 'Failed to set password')
