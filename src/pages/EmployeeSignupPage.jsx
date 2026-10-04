@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import styles from './SignupPage.module.css'
+import styles from './EmployeeSignupPage.module.css'
 
 export default function EmployeeSignupPage() {
   const [password, setPassword] = useState('')
@@ -87,15 +87,15 @@ export default function EmployeeSignupPage() {
 
   return (
     <div className={styles.container}>
-      <div className={styles.signupBox}>
+      <div className={styles.card}>
         <div className={styles.header}>
           <img src="/noellogo.png" alt="NOEL" className={styles.logo} />
           <h2 className={styles.title}>Welcome to the Employee Portal</h2>
           {employeeName && (
-            <p className={styles.emailText}>Hi, <strong>{employeeName}</strong></p>
+            <p className={styles.greeting}>Hi, {employeeName}!</p>
           )}
           {email && (
-            <p className={styles.emailText}>Setting up account for: <strong>{email}</strong></p>
+            <p className={styles.emailText}>Account: <strong>{email}</strong></p>
           )}
         </div>
 
@@ -109,8 +109,9 @@ export default function EmployeeSignupPage() {
               className={styles.input}
               required
               disabled={loading}
-              placeholder="Choose a password (min 6 characters)"
+              placeholder="Min 6 characters"
               minLength={6}
+              autoComplete="new-password"
             />
           </div>
 
@@ -123,8 +124,9 @@ export default function EmployeeSignupPage() {
               className={styles.input}
               required
               disabled={loading}
-              placeholder="Confirm your password"
+              placeholder="Re-enter your password"
               minLength={6}
+              autoComplete="new-password"
             />
           </div>
 
