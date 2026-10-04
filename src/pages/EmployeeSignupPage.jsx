@@ -13,44 +13,43 @@ export default function EmployeeSignupPage() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    const loadSession = async () => {
-      // Supabase invite links put the token in the URL hash.
-      // onAuthStateChange fires with SIGNED_IN after the SDK exchanges it.
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-        if (session?.user) {
-          setEmail(session.user.email)
-
-          const { data: account } = await supabase
-            .from('accounts')
-            .select('employee_id, employees(name)')
-            .eq('id', session.user.id)
-            .single()
-
-          if (account?.employees?.name) {
-            setEmployeeName(account.employees.name)
-          }
-        }
-      })
-
-      // Also check if there's already a session (e.g. page refresh)
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session?.user) {
-        setEmail(session.user.email)
-
+    const loadUserInfo = async (session) => {
+      setEmail(session.user.email)
+      try {
+        // First get the account to find employee_id
         const { data: account } = await supabase
           .from('accounts')
-          .select('employee_id, employees(name)')
+          .select('employee_id')
           .eq('id', session.user.id)
           .single()
 
-        if (account?.employees?.name) {
-          setEmployeeName(account.employees.name)
-        }
-      }
+        if (account?.employee_id) {
+          const { data: employee } = await supabase
+            .from('employees')
+            .select('name')
+            .eq('id', account.employee_id)
+            .single()
 
-      return () => subscription.unsubscribe()
+          if (employee?.name) setEmployeeName(employee.name)
+        }
+      } catch (err) {
+        console.error('Error loading employee info:', err)
+      }
     }
-    loadSession()
+
+    // Listen for the SIGNED_IN event fired when invite token is exchanged
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session?.user) {
+        loadUserInfo(session)
+      }
+    })
+
+    // Also check existing session (e.g. page refresh)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) loadUserInfo(session)
+    })
+
+    return () => subscription.unsubscribe()
   }, [])
 
   const handleSubmit = async (e) => {
