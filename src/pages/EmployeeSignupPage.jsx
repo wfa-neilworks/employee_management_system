@@ -74,8 +74,8 @@ export default function EmployeeSignupPage() {
       const { error: updateError } = await supabase.auth.updateUser({ password })
       if (updateError) throw updateError
 
-      await supabase.auth.signOut()
       navigate('/login', { state: { signupSuccess: true } })
+      await supabase.auth.signOut()
     } catch (err) {
       setError(err.message || 'Failed to set password')
     } finally {

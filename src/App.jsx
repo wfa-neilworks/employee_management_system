@@ -36,13 +36,13 @@ function PrivateRoute({ children }) {
     return <Navigate to="/login" />
   }
 
-  // Employee accounts go to employee portal (not built yet — placeholder)
+  // Employee accounts go to employee portal
   if (account?.account_type === 'EMPLOYEE') {
     return <Navigate to="/employee-portal" />
   }
 
-  // Staff accounts that haven't completed signup
-  if (account && (!account.first_name || !account.last_name)) {
+  // Staff accounts that haven't completed signup (name required for staff only)
+  if (account && account.account_type !== 'EMPLOYEE' && (!account.first_name || !account.last_name)) {
     return <Navigate to="/signup" />
   }
 

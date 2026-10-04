@@ -46,9 +46,8 @@ export const AuthProvider = ({ children }) => {
       if (error) throw error
       setAccount(data)
 
-      // If user doesn't have first_name and last_name, they need to complete signup
-      if (!data.first_name || !data.last_name) {
-        console.log('User needs to complete signup - redirecting to /signup')
+      // Staff accounts without names need to complete signup (employees don't have names here)
+      if (data.account_type !== 'EMPLOYEE' && (!data.first_name || !data.last_name)) {
         return { needsSignup: true }
       }
 
