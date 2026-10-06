@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import styles from './EmployeePortal.module.css'
 
 const IconProfile = () => (
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="8" r="4"/>
     <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
   </svg>
@@ -54,8 +54,14 @@ const IconLogout = () => (
   </svg>
 )
 
+const IconBack = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M19 12H5M12 19l-7-7 7-7"/>
+  </svg>
+)
+
+// Profile removed from bottom nav
 const NAV_TABS = [
-  { key: 'profile', label: 'Profile', icon: IconProfile },
   { key: 'announcement', label: 'Updates', icon: IconAnnouncement },
   { key: 'gears', label: 'Gears', icon: IconGear },
   { key: 'leave', label: 'Leave', icon: IconLeave },
@@ -63,25 +69,17 @@ const NAV_TABS = [
 ]
 
 function ProfileTab({ employee, onSignOut }) {
-  if (!employee) {
-    return <div className={styles.loading}>Loading profile...</div>
-  }
+  if (!employee) return <div className={styles.loading}>Loading profile...</div>
 
   return (
     <div className={styles.tabContent}>
-      {/* Avatar */}
       <div className={styles.avatarSection}>
-        <div className={styles.avatar}>
-          {employee.name?.charAt(0).toUpperCase()}
-        </div>
+        <div className={styles.avatar}>{employee.name?.charAt(0).toUpperCase()}</div>
         <h2 className={styles.employeeName}>{employee.name}</h2>
-        {employee.english_name && (
-          <p className={styles.englishName}>{employee.english_name}</p>
-        )}
+        {employee.english_name && <p className={styles.englishName}>{employee.english_name}</p>}
         <span className={styles.deptBadge}>{employee.departments?.display_name}</span>
       </div>
 
-      {/* Details */}
       <div className={styles.detailsCard}>
         <div className={styles.detailRow}>
           <span className={styles.detailLabel}>Payroll Number</span>
@@ -113,11 +111,9 @@ function ProfileTab({ employee, onSignOut }) {
         </div>
       </div>
 
-      {/* Logout */}
       <div className={styles.logoutSection}>
         <button className={styles.logoutBtn} onClick={onSignOut}>
-          <IconLogout />
-          Sign Out
+          <IconLogout /> Sign Out
         </button>
       </div>
     </div>
@@ -125,6 +121,36 @@ function ProfileTab({ employee, onSignOut }) {
 }
 
 function AnnouncementTab({ announcements, unreadIds, onRead }) {
+  const [selected, setSelected] = useState(null)
+
+  const handleOpen = (a) => {
+    if (unreadIds.has(a.id)) onRead(a.id)
+    setSelected(a)
+  }
+
+  // Detail view
+  if (selected) {
+    return (
+      <div className={styles.tabContent}>
+        <div className={styles.detailBack}>
+          <button className={styles.backBtn} onClick={() => setSelected(null)}>
+            <IconBack /> Back
+          </button>
+        </div>
+        <div className={styles.announcementDetail}>
+          <p className={styles.announcementDetailDate}>
+            {new Date(selected.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })}
+            {' · '}
+            {new Date(selected.created_at).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })}
+          </p>
+          <h2 className={styles.announcementDetailTitle}>{selected.title}</h2>
+          <p className={styles.announcementDetailBody}>{selected.body}</p>
+        </div>
+      </div>
+    )
+  }
+
+  // List view
   if (announcements.length === 0) {
     return (
       <div className={styles.comingSoon}>
@@ -141,21 +167,29 @@ function AnnouncementTab({ announcements, unreadIds, onRead }) {
         {announcements.map(a => {
           const isUnread = unreadIds.has(a.id)
           return (
-            <div
+            <button
               key={a.id}
               className={`${styles.announcementCard} ${isUnread ? styles.announcementUnread : ''}`}
-              onClick={() => isUnread && onRead(a.id)}
+              onClick={() => handleOpen(a)}
             >
-              {isUnread && <span className={styles.unreadDot} />}
-              <div className={styles.announcementMeta}>
-                <span className={styles.announcementDate}>
-                  {new Date(a.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
-                </span>
-                {isUnread && <span className={styles.newBadge}>NEW</span>}
+              <div className={styles.announcementCardLeft}>
+                {isUnread && <span className={styles.unreadDot} />}
+                <div>
+                  <h3 className={styles.announcementTitle}>{a.title}</h3>
+                  <span className={styles.announcementDate}>
+                    {new Date(a.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    {' · '}
+                    {new Date(a.created_at).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
               </div>
-              <h3 className={styles.announcementTitle}>{a.title}</h3>
-              <p className={styles.announcementBody}>{a.body}</p>
-            </div>
+              <div className={styles.announcementCardRight}>
+                {isUnread && <span className={styles.newBadge}>NEW</span>}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+              </div>
+            </button>
           )
         })}
       </div>
@@ -164,11 +198,11 @@ function AnnouncementTab({ announcements, unreadIds, onRead }) {
 }
 
 const LEAVE_CONFIG = {
-  SICK_LEAVE:         { label: 'Sick Leave',              color: '#ff6b6b' },
-  ANNUAL_LEAVE:       { label: 'Annual Leave',            color: '#4caf50' },
-  LEAVE_WITHOUT_PAY:  { label: 'Leave Without Pay',       color: '#ff9800' },
-  ABSENT:             { label: 'Absent (No Notice)',       color: '#f44336' },
-  PUBLIC_HOLIDAY:     { label: 'Public Holiday',          color: '#2196f3' },
+  SICK_LEAVE:        { label: 'Sick Leave',         color: '#ff6b6b' },
+  ANNUAL_LEAVE:      { label: 'Annual Leave',        color: '#4caf50' },
+  LEAVE_WITHOUT_PAY: { label: 'Leave Without Pay',   color: '#ff9800' },
+  ABSENT:            { label: 'Absent (No Notice)',   color: '#f44336' },
+  PUBLIC_HOLIDAY:    { label: 'Public Holiday',       color: '#2196f3' },
 }
 
 function LeaveTab({ employeeId }) {
@@ -191,14 +225,9 @@ function LeaveTab({ employeeId }) {
 
   return (
     <div className={styles.tabContent}>
-      {/* Apply button — not clickable yet */}
       <div className={styles.leaveHeader}>
-        <button className={styles.applyLeaveBtn} disabled>
-          + Apply For Leave
-        </button>
+        <button className={styles.applyLeaveBtn} disabled>+ Apply For Leave</button>
       </div>
-
-      {/* Legend */}
       <div className={styles.leaveLegend}>
         {Object.entries(LEAVE_CONFIG).map(([key, { label, color }]) => (
           <div key={key} className={styles.legendItem}>
@@ -207,8 +236,6 @@ function LeaveTab({ employeeId }) {
           </div>
         ))}
       </div>
-
-      {/* Leave list */}
       {loading ? (
         <div className={styles.loading}>Loading leave records...</div>
       ) : leaves.length === 0 ? (
@@ -234,13 +261,9 @@ function LeaveTab({ employeeId }) {
                 </div>
                 <div className={styles.leaveDates}>
                   {start.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
-                  {days > 1 && (
-                    <> → {end.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}</>
-                  )}
+                  {days > 1 && <> → {end.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}</>}
                 </div>
-                {leave.notes && (
-                  <p className={styles.leaveNotes}>{leave.notes}</p>
-                )}
+                {leave.notes && <p className={styles.leaveNotes}>{leave.notes}</p>}
               </div>
             )
           })}
@@ -262,15 +285,14 @@ function ComingSoon({ label }) {
 
 export default function EmployeePortal() {
   const { account, signOut } = useAuth()
-  const [activeTab, setActiveTab] = useState('profile')
+  const [activeTab, setActiveTab] = useState('announcement')
+  const [showProfile, setShowProfile] = useState(false)
   const [employee, setEmployee] = useState(null)
   const [announcements, setAnnouncements] = useState([])
   const [unreadIds, setUnreadIds] = useState(new Set())
 
   useEffect(() => {
-    if (account?.employee_id) {
-      fetchEmployee(account.employee_id)
-    }
+    if (account?.employee_id) fetchEmployee(account.employee_id)
     fetchAnnouncements()
   }, [account])
 
@@ -286,7 +308,6 @@ export default function EmployeePortal() {
   const fetchAnnouncements = async () => {
     if (!account?.employee_id) return
 
-    // Fetch employee's department_id for targeting
     const { data: emp } = await supabase
       .from('employees')
       .select('department_id')
@@ -300,7 +321,6 @@ export default function EmployeePortal() {
       .order('created_at', { ascending: false })
 
     if (data) {
-      // Filter to only announcements targeted at this employee
       const filtered = data.filter(a => {
         if (a.target_type === 'ALL') return true
         if (a.target_type === 'DEPARTMENT') return a.target_ids?.includes(emp?.department_id)
@@ -309,25 +329,19 @@ export default function EmployeePortal() {
       })
       setAnnouncements(filtered)
 
-      // Fetch read receipts from DB
       const { data: reads } = await supabase
         .from('announcement_reads')
         .select('announcement_id')
         .eq('employee_id', account.employee_id)
 
       const readSet = new Set((reads || []).map(r => r.announcement_id))
-      const unread = new Set(filtered.map(a => a.id).filter(id => !readSet.has(id)))
-      setUnreadIds(unread)
+      setUnreadIds(new Set(filtered.map(a => a.id).filter(id => !readSet.has(id))))
     }
   }
 
   const markRead = async (id) => {
     if (!account?.employee_id) return
-    setUnreadIds(prev => {
-      const next = new Set(prev)
-      next.delete(id)
-      return next
-    })
+    setUnreadIds(prev => { const n = new Set(prev); n.delete(id); return n })
     await supabase
       .from('announcement_reads')
       .upsert({ announcement_id: id, employee_id: account.employee_id }, { onConflict: 'announcement_id,employee_id' })
@@ -338,9 +352,9 @@ export default function EmployeePortal() {
     window.location.href = '/login'
   }
 
-  const renderTab = () => {
+  const renderMain = () => {
+    if (showProfile) return <ProfileTab employee={employee} onSignOut={handleSignOut} />
     switch (activeTab) {
-      case 'profile': return <ProfileTab employee={employee} onSignOut={handleSignOut} />
       case 'announcement': return <AnnouncementTab announcements={announcements} unreadIds={unreadIds} onRead={markRead} />
       case 'gears': return <ComingSoon label="My Gears" />
       case 'leave': return <LeaveTab employeeId={account?.employee_id} />
@@ -354,42 +368,50 @@ export default function EmployeePortal() {
       {/* Top bar */}
       <header className={styles.topBar}>
         <img src="/noellogo.png" alt="NOEL" className={styles.topLogo} />
-        <button
-          className={`${styles.bellBtn} ${unreadIds.size > 0 ? styles.bellActive : ''}`}
-          onClick={() => setActiveTab('announcement')}
-        >
-          <IconBell />
-          {unreadIds.size > 0 && (
-            <span className={styles.bellBadge}>
-              {unreadIds.size > 9 ? '9+' : unreadIds.size}
-            </span>
-          )}
-        </button>
+        <div className={styles.topBarRight}>
+          {/* Profile avatar button */}
+          <button
+            className={`${styles.profileBtn} ${showProfile ? styles.profileBtnActive : ''}`}
+            onClick={() => setShowProfile(v => !v)}
+          >
+            <IconProfile />
+          </button>
+          {/* Bell */}
+          <button
+            className={`${styles.bellBtn} ${unreadIds.size > 0 ? styles.bellActive : ''}`}
+            onClick={() => { setShowProfile(false); setActiveTab('announcement') }}
+          >
+            <IconBell />
+            {unreadIds.size > 0 && (
+              <span className={styles.bellBadge}>{unreadIds.size > 9 ? '9+' : unreadIds.size}</span>
+            )}
+          </button>
+        </div>
       </header>
 
       {/* Page content */}
       <main className={styles.main}>
-        {renderTab()}
+        {renderMain()}
       </main>
 
-      {/* Bottom nav */}
-      <nav className={styles.bottomNav}>
-        {NAV_TABS.map(({ key, label, icon: Icon }) => (
-          <button
-            key={key}
-            className={`${styles.navTab} ${activeTab === key ? styles.navTabActive : ''}`}
-            onClick={() => setActiveTab(key)}
-          >
-            <span className={styles.navIcon}>
-              <Icon />
-              {key === 'announcement' && unreadIds.size > 0 && (
-                <span className={styles.navDot} />
-              )}
-            </span>
-            <span className={styles.navLabel}>{label}</span>
-          </button>
-        ))}
-      </nav>
+      {/* Bottom nav — hidden when profile is open */}
+      {!showProfile && (
+        <nav className={styles.bottomNav}>
+          {NAV_TABS.map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              className={`${styles.navTab} ${activeTab === key ? styles.navTabActive : ''}`}
+              onClick={() => setActiveTab(key)}
+            >
+              <span className={styles.navIcon}>
+                <Icon />
+                {key === 'announcement' && unreadIds.size > 0 && <span className={styles.navDot} />}
+              </span>
+              <span className={styles.navLabel}>{label}</span>
+            </button>
+          ))}
+        </nav>
+      )}
     </div>
   )
 }

@@ -28,6 +28,37 @@
   object-fit: contain;
 }
 
+/* Top bar right group (profile + bell) */
+.topBarRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Profile icon button */
+.profileBtn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  color: var(--text-secondary);
+  padding: 8px 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.profileBtn:active {
+  background: var(--bg-tertiary);
+}
+
+.profileBtnActive {
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
 /* Bell button */
 .bellBtn {
   background: transparent;
@@ -214,6 +245,58 @@
   background: rgba(255, 68, 68, 0.1);
 }
 
+/* Announcement detail view */
+.detailBack {
+  padding: 14px 16px 0;
+}
+
+.backBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.backBtn:active {
+  opacity: 0.7;
+}
+
+.announcementDetail {
+  padding: 20px 20px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.announcementDetailDate {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.announcementDetailTitle {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.announcementDetailBody {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
 /* Announcements */
 .announcementList {
   display: flex;
@@ -223,12 +306,39 @@
 }
 
 .announcementCard {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: 14px;
-  padding: 18px;
-  position: relative;
-  cursor: default;
+  padding: 16px 18px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.announcementCard:active {
+  background: var(--bg-tertiary);
+}
+
+.announcementCardLeft {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.announcementCardRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  color: var(--text-secondary);
 }
 
 .announcementUnread {
@@ -237,13 +347,12 @@
 }
 
 .unreadDot {
-  position: absolute;
-  top: 18px;
-  right: 18px;
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: var(--accent-primary);
+  flex-shrink: 0;
+  margin-top: 5px;
 }
 
 .announcementMeta {
@@ -269,10 +378,10 @@
 }
 
 .announcementTitle {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--text-primary);
-  margin: 0 0 8px;
+  margin: 0 0 4px;
 }
 
 .announcementBody {
