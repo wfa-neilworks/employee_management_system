@@ -134,7 +134,8 @@ function AnnouncementTab({ announcements, unreadIds, onRead }) {
       <div className={styles.tabContent}>
         <div className={styles.detailBack}>
           <button className={styles.backBtn} onClick={() => setSelected(null)}>
-            <IconBack /> Back
+            <span className={styles.backBtnIcon}><IconBack /></span>
+            Back
           </button>
         </div>
         <div className={styles.announcementDetail}>
