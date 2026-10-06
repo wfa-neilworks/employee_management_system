@@ -515,6 +515,124 @@
   line-height: 1.5;
 }
 
+/* Knife tab */
+.knifeSectionTabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 0;
+}
+
+.knifeSectionTab {
+  flex: 1;
+  padding: 14px 0;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.knifeSectionTab:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.knifeSectionTabActive {
+  color: var(--accent-primary);
+  border-bottom-color: var(--accent-primary);
+}
+
+.knifeSoonBadge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--border-color);
+  color: var(--text-secondary);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.knifeList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+}
+
+.knifeCard {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.knifeCardTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.knifeCode {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.knifeName {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.knifePrice {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent-primary);
+  white-space: nowrap;
+}
+
+.knifeMeta {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.knifeBadge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.06);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.knifeDesc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
 /* Coming soon */
 .comingSoon {
   display: flex;

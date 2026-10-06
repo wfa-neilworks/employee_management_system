@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { supabase } from '../lib/supabase'
+import { supabase, PRODUCT_TYPES, PRODUCT_CATEGORIES } from '../lib/supabase'
 import styles from './EmployeePortal.module.css'
 
 const IconProfile = () => (
@@ -146,6 +146,9 @@ function AnnouncementTab({ announcements, unreadIds, onRead }) {
             {new Date(selected.created_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })}
             {' · '}
             {new Date(selected.created_at).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })}
+            {selected.accounts && (
+              <> · Published by {selected.accounts.first_name} {selected.accounts.last_name}</>
+            )}
           </p>
           <h2 className={styles.announcementDetailTitle}>{selected.title}</h2>
           <div className={styles.announcementDetailContent}>
@@ -293,6 +296,81 @@ function ComingSoon({ label }) {
   )
 }
 
+const KNIFE_SECTIONS = [
+  { key: 'pricing', label: 'Pricing' },
+  { key: 'dockets', label: 'My Dockets' },
+]
+
+function KnifeTab() {
+  const [section, setSection] = useState('pricing')
+  const [products, setProducts] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetch = async () => {
+      const { data } = await supabase.from('knife_dockets').select('*').order('product_code')
+      setProducts(data || [])
+      setLoading(false)
+    }
+    fetch()
+  }, [])
+
+  const getTypeLabel = (v) => PRODUCT_TYPES.find(t => t.value === v)?.label || v
+  const getCategoryLabel = (v) => PRODUCT_CATEGORIES.find(c => c.value === v)?.label || v
+  const fmt = (price) => new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(price)
+
+  return (
+    <div className={styles.tabContent}>
+      {/* Section tabs */}
+      <div className={styles.knifeSectionTabs}>
+        {KNIFE_SECTIONS.map(s => (
+          <button
+            key={s.key}
+            className={`${styles.knifeSectionTab} ${section === s.key ? styles.knifeSectionTabActive : ''}`}
+            onClick={() => s.key !== 'dockets' && setSection(s.key)}
+            disabled={s.key === 'dockets'}
+            title={s.key === 'dockets' ? 'Coming soon' : ''}
+          >
+            {s.label}
+            {s.key === 'dockets' && <span className={styles.knifeSoonBadge}>Soon</span>}
+          </button>
+        ))}
+      </div>
+
+      {section === 'pricing' && (
+        loading ? (
+          <div className={styles.loading}>Loading pricing...</div>
+        ) : products.length === 0 ? (
+          <div className={styles.comingSoon}>
+            <div className={styles.comingSoonIcon}>🔪</div>
+            <h3 className={styles.comingSoonTitle}>No Products</h3>
+            <p className={styles.comingSoonText}>No knife products available yet.</p>
+          </div>
+        ) : (
+          <div className={styles.knifeList}>
+            {products.map(p => (
+              <div key={p.id} className={styles.knifeCard}>
+                <div className={styles.knifeCardTop}>
+                  <div>
+                    <span className={styles.knifeCode}>{p.product_code}</span>
+                    <h3 className={styles.knifeName}>{p.product_name}</h3>
+                  </div>
+                  <div className={styles.knifePrice}>{fmt(p.selling_price)}</div>
+                </div>
+                <div className={styles.knifeMeta}>
+                  <span className={styles.knifeBadge}>{getTypeLabel(p.product_type)}</span>
+                  <span className={styles.knifeBadge}>{getCategoryLabel(p.category)}</span>
+                </div>
+                {p.description && <p className={styles.knifeDesc}>{p.description}</p>}
+              </div>
+            ))}
+          </div>
+        )
+      )}
+    </div>
+  )
+}
+
 export default function EmployeePortal() {
   const { account, signOut } = useAuth()
   const [activeTab, setActiveTab] = useState('announcement')
@@ -326,7 +404,7 @@ export default function EmployeePortal() {
 
     const { data } = await supabase
       .from('announcements')
-      .select('*')
+      .select('*, accounts(first_name, last_name)')
       .eq('is_published', true)
       .order('created_at', { ascending: false })
 
@@ -368,7 +446,7 @@ export default function EmployeePortal() {
       case 'announcement': return <AnnouncementTab announcements={announcements} unreadIds={unreadIds} onRead={markRead} />
       case 'gears': return <ComingSoon label="My Gears" />
       case 'leave': return <LeaveTab employeeId={account?.employee_id} />
-      case 'knife': return <ComingSoon label="Knife Dockets" />
+      case 'knife': return <KnifeTab />
       default: return null
     }
   }
