@@ -167,7 +167,9 @@ function AnnouncementTab({ announcements, unreadIds, onRead }) {
   if (announcements.length === 0) {
     return (
       <div className={styles.comingSoon}>
-        <div className={styles.comingSoonIcon}>📢</div>
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" style={{color:'var(--text-secondary)'}}>
+          <path d="M3 11l19-9-9 19-2-8-8-2z"/>
+        </svg>
         <h3 className={styles.comingSoonTitle}>No Announcements</h3>
         <p className={styles.comingSoonText}>Check back later for updates from management.</p>
       </div>
@@ -253,7 +255,10 @@ function LeaveTab({ employeeId }) {
         <div className={styles.loading}>Loading leave records...</div>
       ) : leaves.length === 0 ? (
         <div className={styles.comingSoon}>
-          <div className={styles.comingSoonIcon}>📅</div>
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" style={{color:'var(--text-secondary)'}}>
+            <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+            <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>
+          </svg>
           <h3 className={styles.comingSoonTitle}>No Leave Records</h3>
           <p className={styles.comingSoonText}>Your leave history will appear here.</p>
         </div>
@@ -289,7 +294,9 @@ function LeaveTab({ employeeId }) {
 function ComingSoon({ label }) {
   return (
     <div className={styles.comingSoon}>
-      <div className={styles.comingSoonIcon}>🚧</div>
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" style={{color:'var(--text-secondary)'}}>
+        <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
+      </svg>
       <h3 className={styles.comingSoonTitle}>{label}</h3>
       <p className={styles.comingSoonText}>This feature is coming soon.</p>
     </div>
