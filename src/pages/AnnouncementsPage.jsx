@@ -7,6 +7,31 @@ const MAX_IMAGES = 2
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png']
 
+const BLANK_FORM = {
+  title: '',
+  blocks: [{ type: 'text', value: '' }],
+  targetType: 'ALL',
+  selectedDepts: [],
+  selectedEmployees: [],
+}
+
+function announcementToForm(a) {
+  const blocks = a.content?.length > 0
+    ? a.content.map(b =>
+        b.type === 'image'
+          ? { type: 'image', value: b.url, uploading: false, error: '' }
+          : { type: 'text', value: b.value }
+      )
+    : [{ type: 'text', value: a.body || '' }]
+  return {
+    title: a.title,
+    blocks,
+    targetType: a.target_type || 'ALL',
+    selectedDepts: a.target_type === 'DEPARTMENT' ? (a.target_ids || []) : [],
+    selectedEmployees: a.target_type === 'INDIVIDUAL' ? (a.target_ids || []) : [],
+  }
+}
+
 export default function AnnouncementsPage() {
   const { account } = useAuth()
   const [announcements, setAnnouncements] = useState([])
@@ -14,16 +39,10 @@ export default function AnnouncementsPage() {
   const [employees, setEmployees] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState(null) // null = create, id = edit
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
-
-  const [form, setForm] = useState({
-    title: '',
-    blocks: [{ type: 'text', value: '' }],
-    targetType: 'ALL',
-    selectedDepts: [],
-    selectedEmployees: [],
-  })
+  const [form, setForm] = useState(BLANK_FORM)
 
   useEffect(() => {
     fetchAnnouncements()
@@ -58,26 +77,45 @@ export default function AnnouncementsPage() {
     setEmployees(data || [])
   }
 
+  const openCreate = () => {
+    setEditingId(null)
+    setForm(BLANK_FORM)
+    setError('')
+    setShowForm(true)
+  }
+
+  const openEdit = (a) => {
+    setEditingId(a.id)
+    setForm(announcementToForm(a))
+    setError('')
+    setShowForm(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const closeForm = () => {
+    setShowForm(false)
+    setEditingId(null)
+    setForm(BLANK_FORM)
+    setError('')
+  }
+
   const toggleItem = (list, setList, id) => {
     setList(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
   }
 
   // --- Block editor helpers ---
-
   const imageCount = (blocks) => blocks.filter(b => b.type === 'image').length
 
-  const addTextBlock = () => {
+  const addTextBlock = () =>
     setForm(p => ({ ...p, blocks: [...p.blocks, { type: 'text', value: '' }] }))
-  }
 
   const addImageBlock = () => {
     if (imageCount(form.blocks) >= MAX_IMAGES) return
     setForm(p => ({ ...p, blocks: [...p.blocks, { type: 'image', value: null, uploading: false, error: '' }] }))
   }
 
-  const removeBlock = (idx) => {
+  const removeBlock = (idx) =>
     setForm(p => ({ ...p, blocks: p.blocks.filter((_, i) => i !== idx) }))
-  }
 
   const moveBlock = (idx, dir) => {
     setForm(p => {
@@ -99,119 +137,86 @@ export default function AnnouncementsPage() {
 
   const handleImagePick = async (idx, file) => {
     if (!file) return
-
     if (!ALLOWED_TYPES.includes(file.type)) {
-      setForm(p => {
-        const blocks = [...p.blocks]
-        blocks[idx] = { ...blocks[idx], error: 'Only JPG and PNG files are allowed.' }
-        return { ...p, blocks }
-      })
+      setForm(p => { const b = [...p.blocks]; b[idx] = { ...b[idx], error: 'Only JPG and PNG files are allowed.' }; return { ...p, blocks: b } })
       return
     }
     if (file.size > MAX_FILE_SIZE) {
-      setForm(p => {
-        const blocks = [...p.blocks]
-        blocks[idx] = { ...blocks[idx], error: 'File must be under 5MB.' }
-        return { ...p, blocks }
-      })
+      setForm(p => { const b = [...p.blocks]; b[idx] = { ...b[idx], error: 'File must be under 5MB.' }; return { ...p, blocks: b } })
       return
     }
-
-    // Mark uploading
-    setForm(p => {
-      const blocks = [...p.blocks]
-      blocks[idx] = { ...blocks[idx], uploading: true, error: '' }
-      return { ...p, blocks }
-    })
+    setForm(p => { const b = [...p.blocks]; b[idx] = { ...b[idx], uploading: true, error: '' }; return { ...p, blocks: b } })
 
     const ext = file.type === 'image/png' ? 'png' : 'jpg'
     const path = `${account.id}/${Date.now()}.${ext}`
-
     const { error: uploadErr } = await supabase.storage
       .from('announcement-images')
       .upload(path, file, { contentType: file.type, upsert: false })
 
     if (uploadErr) {
-      setForm(p => {
-        const blocks = [...p.blocks]
-        blocks[idx] = { ...blocks[idx], uploading: false, error: uploadErr.message }
-        return { ...p, blocks }
-      })
+      setForm(p => { const b = [...p.blocks]; b[idx] = { ...b[idx], uploading: false, error: uploadErr.message }; return { ...p, blocks: b } })
       return
     }
+    const { data: { publicUrl } } = supabase.storage.from('announcement-images').getPublicUrl(path)
+    setForm(p => { const b = [...p.blocks]; b[idx] = { type: 'image', value: publicUrl, uploading: false, error: '' }; return { ...p, blocks: b } })
+  }
 
-    const { data: { publicUrl } } = supabase.storage
-      .from('announcement-images')
-      .getPublicUrl(path)
+  const buildContent = () =>
+    form.blocks
+      .filter(b => b.type === 'text' ? b.value.trim() : b.value)
+      .map(b => b.type === 'text' ? { type: 'text', value: b.value.trim() } : { type: 'image', url: b.value })
 
-    setForm(p => {
-      const blocks = [...p.blocks]
-      blocks[idx] = { type: 'image', value: publicUrl, uploading: false, error: '' }
-      return { ...p, blocks }
-    })
+  const validate = () => {
+    if (!form.title.trim()) { setError('Title is required.'); return false }
+    const hasContent = form.blocks.some(b => b.type === 'text' ? b.value.trim() : b.value)
+    if (!hasContent) { setError('Add at least one text or image block.'); return false }
+    if (form.blocks.some(b => b.uploading)) { setError('Please wait for all images to finish uploading.'); return false }
+    if (form.targetType === 'DEPARTMENT' && form.selectedDepts.length === 0) { setError('Select at least one department.'); return false }
+    if (form.targetType === 'INDIVIDUAL' && form.selectedEmployees.length === 0) { setError('Select at least one employee.'); return false }
+    return true
   }
 
   const handleSubmit = async () => {
-    if (!form.title.trim()) { setError('Title is required.'); return }
-
-    const hasContent = form.blocks.some(b =>
-      b.type === 'text' ? b.value.trim() : b.value
-    )
-    if (!hasContent) { setError('Add at least one text or image block.'); return }
-
-    const stillUploading = form.blocks.some(b => b.uploading)
-    if (stillUploading) { setError('Please wait for all images to finish uploading.'); return }
-
-    if (form.targetType === 'DEPARTMENT' && form.selectedDepts.length === 0) {
-      setError('Select at least one department.'); return
-    }
-    if (form.targetType === 'INDIVIDUAL' && form.selectedEmployees.length === 0) {
-      setError('Select at least one employee.'); return
-    }
-
+    if (!validate()) return
     setError('')
     setSubmitting(true)
 
-    // Build clean content array (strip internal state fields)
-    const content = form.blocks
-      .filter(b => b.type === 'text' ? b.value.trim() : b.value)
-      .map(b => b.type === 'text'
-        ? { type: 'text', value: b.value.trim() }
-        : { type: 'image', url: b.value }
-      )
-
+    const content = buildContent()
     const targetIds = form.targetType === 'DEPARTMENT'
       ? form.selectedDepts
-      : form.targetType === 'INDIVIDUAL'
-        ? form.selectedEmployees
-        : []
+      : form.targetType === 'INDIVIDUAL' ? form.selectedEmployees : []
 
-    const { error: insertErr } = await supabase
-      .from('announcements')
-      .insert({
-        title: form.title.trim(),
-        body: content.filter(b => b.type === 'text').map(b => b.value).join('\n\n'),
-        content,
-        target_type: form.targetType,
-        target_ids: targetIds,
+    const payload = {
+      title: form.title.trim(),
+      body: content.filter(b => b.type === 'text').map(b => b.value).join('\n\n'),
+      content,
+      target_type: form.targetType,
+      target_ids: targetIds,
+    }
+
+    let dbError
+    if (editingId) {
+      const { error } = await supabase.from('announcements').update(payload).eq('id', editingId)
+      dbError = error
+    } else {
+      const { error } = await supabase.from('announcements').insert({
+        ...payload,
         is_published: true,
         publish_at: new Date().toISOString(),
         created_by: account.id,
       })
+      dbError = error
+    }
 
     setSubmitting(false)
+    if (dbError) { setError(dbError.message); return }
 
-    if (insertErr) { setError(insertErr.message); return }
-
-    setForm({ title: '', blocks: [{ type: 'text', value: '' }], targetType: 'ALL', selectedDepts: [], selectedEmployees: [] })
-    setShowForm(false)
+    closeForm()
     fetchAnnouncements()
   }
 
   const handleDelete = async (a) => {
     if (!confirm('Delete this announcement? This cannot be undone.')) return
-
-    // Delete uploaded images from storage
     const imageBlocks = (a.content || []).filter(b => b.type === 'image')
     for (const block of imageBlocks) {
       try {
@@ -220,7 +225,6 @@ export default function AnnouncementsPage() {
         if (path) await supabase.storage.from('announcement-images').remove([path])
       } catch (_) {}
     }
-
     await supabase.from('announcements').delete().eq('id', a.id)
     fetchAnnouncements()
   }
@@ -243,15 +247,20 @@ export default function AnnouncementsPage() {
           <h1 className={styles.title}>Announcements</h1>
           <p className={styles.subtitle}>{announcements.length} announcement{announcements.length !== 1 ? 's' : ''}</p>
         </div>
-        <button className={styles.newBtn} onClick={() => setShowForm(v => !v)}>
-          {showForm ? 'Cancel' : '+ New Announcement'}
-        </button>
+        {!showForm && (
+          <button className={styles.newBtn} onClick={openCreate}>
+            + New Announcement
+          </button>
+        )}
       </div>
 
-      {/* Compose form */}
+      {/* Compose / Edit form */}
       {showForm && (
         <div className={styles.formCard}>
-          <h2 className={styles.formTitle}>New Announcement</h2>
+          <div className={styles.formHeader}>
+            <h2 className={styles.formTitle}>{editingId ? 'Edit Announcement' : 'New Announcement'}</h2>
+            <button className={styles.formCancelBtn} onClick={closeForm}>Cancel</button>
+          </div>
 
           {/* Title */}
           <div className={styles.formGroup}>
@@ -282,11 +291,8 @@ export default function AnnouncementsPage() {
                 />
               ))}
             </div>
-
             <div className={styles.blockActions}>
-              <button className={styles.addBlockBtn} onClick={addTextBlock}>
-                + Text
-              </button>
+              <button className={styles.addBlockBtn} onClick={addTextBlock}>+ Text</button>
               <button
                 className={`${styles.addBlockBtn} ${imgCount >= MAX_IMAGES ? styles.addBlockBtnDisabled : ''}`}
                 onClick={addImageBlock}
@@ -350,13 +356,17 @@ export default function AnnouncementsPage() {
             </div>
           )}
 
-          {/* Publish actions */}
+          {/* Actions */}
           <div className={styles.formActions}>
-            <button className={styles.scheduleBtn} disabled title="Scheduling coming soon">
-              🕐 Schedule
-            </button>
+            {!editingId && (
+              <button className={styles.scheduleBtn} disabled title="Scheduling coming soon">
+                🕐 Schedule
+              </button>
+            )}
             <button className={styles.publishBtn} onClick={handleSubmit} disabled={submitting}>
-              {submitting ? 'Publishing...' : '📢 Publish Now'}
+              {submitting
+                ? (editingId ? 'Saving...' : 'Publishing...')
+                : (editingId ? '💾 Save Changes' : '📢 Publish Now')}
             </button>
           </div>
 
@@ -372,7 +382,7 @@ export default function AnnouncementsPage() {
       ) : (
         <div className={styles.list}>
           {announcements.map(a => (
-            <div key={a.id} className={styles.card}>
+            <div key={a.id} className={`${styles.card} ${editingId === a.id ? styles.cardEditing : ''}`}>
               <div className={styles.cardTop}>
                 <div>
                   <h3 className={styles.cardTitle}>{a.title}</h3>
@@ -384,11 +394,11 @@ export default function AnnouncementsPage() {
                     <span>By {a.accounts?.first_name} {a.accounts?.last_name}</span>
                   </div>
                 </div>
-                <button className={styles.deleteBtn} onClick={() => handleDelete(a)}>
-                  Delete
-                </button>
+                <div className={styles.cardActions}>
+                  <button className={styles.editBtn} onClick={() => openEdit(a)}>Edit</button>
+                  <button className={styles.deleteBtn} onClick={() => handleDelete(a)}>Delete</button>
+                </div>
               </div>
-              {/* Preview content blocks */}
               <div className={styles.cardPreview}>
                 {(a.content?.length > 0 ? a.content : [{ type: 'text', value: a.body }]).map((block, i) =>
                   block.type === 'image'
@@ -415,7 +425,6 @@ function BlockItem({ block, idx, total, onMoveUp, onMoveDown, onRemove, onTextCh
         <span className={styles.blockType}>{block.type === 'text' ? 'TXT' : 'IMG'}</span>
         <button className={styles.blockRemoveBtn} onClick={onRemove} title="Remove block">✕</button>
       </div>
-
       <div className={styles.blockBody}>
         {block.type === 'text' ? (
           <textarea
@@ -439,10 +448,7 @@ function BlockItem({ block, idx, total, onMoveUp, onMoveDown, onRemove, onTextCh
             )}
             {block.error && <div className={styles.imageError}>{block.error}</div>}
             {!block.uploading && (
-              <button
-                className={styles.imageChangeBtn}
-                onClick={() => fileRef.current?.click()}
-              >
+              <button className={styles.imageChangeBtn} onClick={() => fileRef.current?.click()}>
                 {block.value ? 'Change Image' : 'Choose Image'}
               </button>
             )}

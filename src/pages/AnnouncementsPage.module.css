@@ -52,11 +52,34 @@
   gap: 20px;
 }
 
+.formHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .formTitle {
   font-size: 18px;
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
+}
+
+.formCancelBtn {
+  padding: 7px 16px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.formCancelBtn:hover {
+  border-color: var(--text-secondary);
+  color: var(--text-primary);
 }
 
 .formGroup {
@@ -270,6 +293,30 @@
   white-space: pre-wrap;
 }
 
+.cardActions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.editBtn {
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.editBtn:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
 .deleteBtn {
   padding: 6px 14px;
   background: transparent;
@@ -281,11 +328,15 @@
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.2s ease;
-  flex-shrink: 0;
 }
 
 .deleteBtn:hover {
   background: rgba(255, 68, 68, 0.1);
+}
+
+.cardEditing {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 1px var(--accent-primary);
 }
 
 /* Card content preview */
