@@ -69,6 +69,12 @@ const IconReport = () => (
   </svg>
 )
 
+const IconAnnouncement = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 11l19-9-9 19-2-8-8-2z"/>
+  </svg>
+)
+
 const IconPresetData = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
     <ellipse cx="12" cy="5" rx="9" ry="3"/>
@@ -92,7 +98,7 @@ const IconChevron = () => (
 )
 
 export default function Sidebar({ departments, isOpen }) {
-  const { hasPermission } = useAuth()
+  const { hasPermission, account } = useAuth()
   const [isDepartmentsOpen, setIsDepartmentsOpen] = useState(true)
   const [isKnifeDocketsOpen, setIsKnifeDocketsOpen] = useState(true)
 
@@ -226,6 +232,18 @@ export default function Sidebar({ departments, isOpen }) {
           <span className={styles.navIcon}><IconReport /></span>
           <span className={styles.navLabel}>REPORT</span>
         </NavLink>
+
+        {(hasPermission('manage_users') || account?.account_type === 'HR') && (
+          <NavLink
+            to="/announcements"
+            className={({ isActive }) =>
+              `${styles.navItem} ${isActive ? styles.navItemActive : ''}`
+            }
+          >
+            <span className={styles.navIcon}><IconAnnouncement /></span>
+            <span className={styles.navLabel}>ANNOUNCEMENTS</span>
+          </NavLink>
+        )}
 
         {hasPermission('manage_preset_data') && (
           <NavLink

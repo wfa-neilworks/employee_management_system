@@ -284,30 +284,53 @@ export default function EmployeePortal() {
   }
 
   const fetchAnnouncements = async () => {
+    if (!account?.employee_id) return
+
+    // Fetch employee's department_id for targeting
+    const { data: emp } = await supabase
+      .from('employees')
+      .select('department_id')
+      .eq('id', account.employee_id)
+      .single()
+
     const { data } = await supabase
       .from('announcements')
       .select('*')
+      .eq('is_published', true)
       .order('created_at', { ascending: false })
+
     if (data) {
-      setAnnouncements(data)
-      // Track which ones are unread using localStorage
-      const readKey = `read_announcements_${account?.id}`
-      const readIds = new Set(JSON.parse(localStorage.getItem(readKey) || '[]'))
-      const unread = new Set(data.map(a => a.id).filter(id => !readIds.has(id)))
+      // Filter to only announcements targeted at this employee
+      const filtered = data.filter(a => {
+        if (a.target_type === 'ALL') return true
+        if (a.target_type === 'DEPARTMENT') return a.target_ids?.includes(emp?.department_id)
+        if (a.target_type === 'INDIVIDUAL') return a.target_ids?.includes(account.employee_id)
+        return false
+      })
+      setAnnouncements(filtered)
+
+      // Fetch read receipts from DB
+      const { data: reads } = await supabase
+        .from('announcement_reads')
+        .select('announcement_id')
+        .eq('employee_id', account.employee_id)
+
+      const readSet = new Set((reads || []).map(r => r.announcement_id))
+      const unread = new Set(filtered.map(a => a.id).filter(id => !readSet.has(id)))
       setUnreadIds(unread)
     }
   }
 
-  const markRead = (id) => {
-    const readKey = `read_announcements_${account?.id}`
-    const readIds = new Set(JSON.parse(localStorage.getItem(readKey) || '[]'))
-    readIds.add(id)
-    localStorage.setItem(readKey, JSON.stringify([...readIds]))
+  const markRead = async (id) => {
+    if (!account?.employee_id) return
     setUnreadIds(prev => {
       const next = new Set(prev)
       next.delete(id)
       return next
     })
+    await supabase
+      .from('announcement_reads')
+      .upsert({ announcement_id: id, employee_id: account.employee_id }, { onConflict: 'announcement_id,employee_id' })
   }
 
   const handleSignOut = async () => {
