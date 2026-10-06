@@ -130,6 +130,10 @@ function AnnouncementTab({ announcements, unreadIds, onRead }) {
 
   // Detail view
   if (selected) {
+    const blocks = selected.content?.length > 0
+      ? selected.content
+      : [{ type: 'text', value: selected.body }]
+
     return (
       <div className={styles.tabContent}>
         <div className={styles.detailBack}>
@@ -144,7 +148,13 @@ function AnnouncementTab({ announcements, unreadIds, onRead }) {
             {new Date(selected.created_at).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })}
           </p>
           <h2 className={styles.announcementDetailTitle}>{selected.title}</h2>
-          <p className={styles.announcementDetailBody}>{selected.body}</p>
+          <div className={styles.announcementDetailContent}>
+            {blocks.map((block, i) =>
+              block.type === 'image'
+                ? <img key={i} src={block.url} alt="" className={styles.announcementDetailImage} />
+                : <p key={i} className={styles.announcementDetailBody}>{block.value}</p>
+            )}
+          </div>
         </div>
       </div>
     )

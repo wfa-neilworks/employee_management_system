@@ -287,3 +287,227 @@
 .deleteBtn:hover {
   background: rgba(255, 68, 68, 0.1);
 }
+
+/* Card content preview */
+.cardPreview {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cardPreviewImage {
+  width: 100%;
+  max-height: 300px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+/* Block editor */
+.blockList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.block {
+  display: flex;
+  gap: 10px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.blockControls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.blockMoveBtn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 10px;
+  width: 26px;
+  height: 26px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.blockMoveBtn:hover:not(:disabled) {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.blockMoveBtn:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.blockType {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.5px;
+  padding: 2px 0;
+}
+
+.blockRemoveBtn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--error);
+  font-size: 11px;
+  width: 26px;
+  height: 26px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: auto;
+  transition: all 0.15s ease;
+}
+
+.blockRemoveBtn:hover {
+  background: rgba(255, 68, 68, 0.1);
+  border-color: var(--error);
+}
+
+.blockBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.blockTextarea {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  line-height: 1.6;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
+}
+
+.blockTextarea:focus {
+  border-color: var(--accent-primary);
+  outline: none;
+}
+
+/* Image block */
+.imageBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.imagePlaceholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 28px 16px;
+  background: var(--bg-secondary);
+  border: 2px dashed var(--border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  transition: border-color 0.2s ease;
+}
+
+.imagePlaceholder:hover {
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+}
+
+.imagePlaceholderHint {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.imagePreview {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.imageUploading {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 13px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+}
+
+.imageError {
+  font-size: 13px;
+  color: var(--error);
+  padding: 6px 10px;
+  background: rgba(255, 68, 68, 0.08);
+  border-radius: 6px;
+}
+
+.imageChangeBtn {
+  align-self: flex-start;
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.imageChangeBtn:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+/* Add block buttons */
+.blockActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.addBlockBtn {
+  padding: 8px 18px;
+  background: transparent;
+  border: 1px dashed var(--border-color);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.addBlockBtn:hover:not(:disabled) {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.addBlockBtnDisabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

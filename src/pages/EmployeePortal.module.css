@@ -291,12 +291,24 @@
   line-height: 1.3;
 }
 
+.announcementDetailContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 .announcementDetailBody {
   font-size: 15px;
   color: var(--text-secondary);
   line-height: 1.7;
   margin: 0;
   white-space: pre-wrap;
+}
+
+.announcementDetailImage {
+  width: 100%;
+  border-radius: 12px;
+  object-fit: cover;
 }
 
 /* Announcements */
