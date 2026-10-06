@@ -671,34 +671,6 @@
   font-weight: 700;
 }
 
-.knifePriceRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.knifePriceInput {
-  flex: 1;
-  padding: 9px 12px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  color: var(--text-primary);
-  font-size: 14px;
-  font-family: inherit;
-}
-
-.knifePriceInput:focus {
-  border-color: var(--accent-primary);
-  outline: none;
-}
-
-.knifePriceSep {
-  color: var(--text-secondary);
-  font-size: 14px;
-  flex-shrink: 0;
-}
-
 .knifeClearBtn {
   align-self: flex-start;
   padding: 7px 14px;

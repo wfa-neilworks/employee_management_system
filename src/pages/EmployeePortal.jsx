@@ -308,8 +308,6 @@ function KnifeTab() {
   const [search, setSearch] = useState('')
   const [filterType, setFilterType] = useState('')
   const [filterCategory, setFilterCategory] = useState('')
-  const [priceMin, setPriceMin] = useState('')
-  const [priceMax, setPriceMax] = useState('')
   const [showFilters, setShowFilters] = useState(false)
 
   useEffect(() => {
@@ -330,20 +328,16 @@ function KnifeTab() {
     if (q && !p.product_code?.toLowerCase().includes(q) && !p.product_name?.toLowerCase().includes(q) && !p.description?.toLowerCase().includes(q)) return false
     if (filterType && p.product_type !== filterType) return false
     if (filterCategory && p.category !== filterCategory) return false
-    if (priceMin !== '' && p.selling_price < parseFloat(priceMin)) return false
-    if (priceMax !== '' && p.selling_price > parseFloat(priceMax)) return false
     return true
   })
 
-  const hasFilters = search || filterType || filterCategory || priceMin !== '' || priceMax !== ''
-  const activeFilterCount = [filterType, filterCategory, priceMin !== '' || priceMax !== ''].filter(Boolean).length
+  const hasFilters = search || filterType || filterCategory
+  const activeFilterCount = [filterType, filterCategory].filter(Boolean).length
 
   const clearFilters = () => {
     setSearch('')
     setFilterType('')
     setFilterCategory('')
-    setPriceMin('')
-    setPriceMax('')
   }
 
   return (
@@ -381,8 +375,8 @@ function KnifeTab() {
                 className={`${styles.knifeFilterBtn} ${showFilters ? styles.knifeFilterBtnActive : ''}`}
                 onClick={() => setShowFilters(v => !v)}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
                 </svg>
                 Filter
                 {activeFilterCount > 0 && <span className={styles.knifeFilterCount}>{activeFilterCount}</span>}
@@ -426,29 +420,6 @@ function KnifeTab() {
                   </div>
                 </div>
 
-                <div className={styles.knifeFilterGroup}>
-                  <label className={styles.knifeFilterLabel}>Price Range (AUD)</label>
-                  <div className={styles.knifePriceRow}>
-                    <input
-                      className={styles.knifePriceInput}
-                      type="number"
-                      placeholder="Min"
-                      value={priceMin}
-                      min="0"
-                      onChange={e => setPriceMin(e.target.value)}
-                    />
-                    <span className={styles.knifePriceSep}>—</span>
-                    <input
-                      className={styles.knifePriceInput}
-                      type="number"
-                      placeholder="Max"
-                      value={priceMax}
-                      min="0"
-                      onChange={e => setPriceMax(e.target.value)}
-                    />
-                  </div>
-                </div>
-
                 {hasFilters && (
                   <button className={styles.knifeClearBtn} onClick={clearFilters}>Clear all filters</button>
                 )}
@@ -463,7 +434,9 @@ function KnifeTab() {
 
             {filtered.length === 0 ? (
               <div className={styles.comingSoon}>
-                <div className={styles.comingSoonIcon}>🔍</div>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" style={{color:'var(--text-secondary)'}}>
+                  <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+                </svg>
                 <h3 className={styles.comingSoonTitle}>No Results</h3>
                 <p className={styles.comingSoonText}>Try adjusting your search or filters.</p>
               </div>
