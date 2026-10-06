@@ -248,40 +248,26 @@
 /* Announcement detail view */
 .detailBack {
   padding: 16px 16px 0;
-  display: flex;
-  align-items: center;
-  gap: 12px;
 }
 
 .backBtn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 15px;
+  gap: 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  padding: 0;
+  padding: 9px 16px 9px 12px;
   -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s ease;
 }
 
 .backBtn:active {
-  opacity: 0.7;
-}
-
-.backBtnIcon {
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-primary);
-  flex-shrink: 0;
+  background: var(--bg-tertiary);
 }
 
 .announcementDetail {
