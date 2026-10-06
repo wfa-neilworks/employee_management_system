@@ -305,6 +305,12 @@ function KnifeTab() {
   const [section, setSection] = useState('pricing')
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [filterType, setFilterType] = useState('')
+  const [filterCategory, setFilterCategory] = useState('')
+  const [priceMin, setPriceMin] = useState('')
+  const [priceMax, setPriceMax] = useState('')
+  const [showFilters, setShowFilters] = useState(false)
 
   useEffect(() => {
     const fetch = async () => {
@@ -318,6 +324,27 @@ function KnifeTab() {
   const getTypeLabel = (v) => PRODUCT_TYPES.find(t => t.value === v)?.label || v
   const getCategoryLabel = (v) => PRODUCT_CATEGORIES.find(c => c.value === v)?.label || v
   const fmt = (price) => new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(price)
+
+  const filtered = products.filter(p => {
+    const q = search.toLowerCase()
+    if (q && !p.product_code?.toLowerCase().includes(q) && !p.product_name?.toLowerCase().includes(q) && !p.description?.toLowerCase().includes(q)) return false
+    if (filterType && p.product_type !== filterType) return false
+    if (filterCategory && p.category !== filterCategory) return false
+    if (priceMin !== '' && p.selling_price < parseFloat(priceMin)) return false
+    if (priceMax !== '' && p.selling_price > parseFloat(priceMax)) return false
+    return true
+  })
+
+  const hasFilters = search || filterType || filterCategory || priceMin !== '' || priceMax !== ''
+  const activeFilterCount = [filterType, filterCategory, priceMin !== '' || priceMax !== ''].filter(Boolean).length
+
+  const clearFilters = () => {
+    setSearch('')
+    setFilterType('')
+    setFilterCategory('')
+    setPriceMin('')
+    setPriceMax('')
+  }
 
   return (
     <div className={styles.tabContent}>
@@ -340,31 +367,127 @@ function KnifeTab() {
       {section === 'pricing' && (
         loading ? (
           <div className={styles.loading}>Loading pricing...</div>
-        ) : products.length === 0 ? (
-          <div className={styles.comingSoon}>
-            <div className={styles.comingSoonIcon}>🔪</div>
-            <h3 className={styles.comingSoonTitle}>No Products</h3>
-            <p className={styles.comingSoonText}>No knife products available yet.</p>
-          </div>
         ) : (
-          <div className={styles.knifeList}>
-            {products.map(p => (
-              <div key={p.id} className={styles.knifeCard}>
-                <div className={styles.knifeCardTop}>
-                  <div>
-                    <span className={styles.knifeCode}>{p.product_code}</span>
-                    <h3 className={styles.knifeName}>{p.product_name}</h3>
+          <>
+            {/* Search + filter bar */}
+            <div className={styles.knifeSearchRow}>
+              <input
+                className={styles.knifeSearch}
+                placeholder="Search by code, name..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+              <button
+                className={`${styles.knifeFilterBtn} ${showFilters ? styles.knifeFilterBtnActive : ''}`}
+                onClick={() => setShowFilters(v => !v)}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
+                </svg>
+                Filter
+                {activeFilterCount > 0 && <span className={styles.knifeFilterCount}>{activeFilterCount}</span>}
+              </button>
+            </div>
+
+            {/* Filter panel */}
+            {showFilters && (
+              <div className={styles.knifeFilterPanel}>
+                <div className={styles.knifeFilterGroup}>
+                  <label className={styles.knifeFilterLabel}>Type</label>
+                  <div className={styles.knifeFilterChips}>
+                    <button
+                      className={`${styles.knifeChip} ${!filterType ? styles.knifeChipActive : ''}`}
+                      onClick={() => setFilterType('')}
+                    >All</button>
+                    {PRODUCT_TYPES.map(t => (
+                      <button
+                        key={t.value}
+                        className={`${styles.knifeChip} ${filterType === t.value ? styles.knifeChipActive : ''}`}
+                        onClick={() => setFilterType(v => v === t.value ? '' : t.value)}
+                      >{t.label}</button>
+                    ))}
                   </div>
-                  <div className={styles.knifePrice}>{fmt(p.selling_price)}</div>
                 </div>
-                <div className={styles.knifeMeta}>
-                  <span className={styles.knifeBadge}>{getTypeLabel(p.product_type)}</span>
-                  <span className={styles.knifeBadge}>{getCategoryLabel(p.category)}</span>
+
+                <div className={styles.knifeFilterGroup}>
+                  <label className={styles.knifeFilterLabel}>Category</label>
+                  <div className={styles.knifeFilterChips}>
+                    <button
+                      className={`${styles.knifeChip} ${!filterCategory ? styles.knifeChipActive : ''}`}
+                      onClick={() => setFilterCategory('')}
+                    >All</button>
+                    {PRODUCT_CATEGORIES.map(c => (
+                      <button
+                        key={c.value}
+                        className={`${styles.knifeChip} ${filterCategory === c.value ? styles.knifeChipActive : ''}`}
+                        onClick={() => setFilterCategory(v => v === c.value ? '' : c.value)}
+                      >{c.label}</button>
+                    ))}
+                  </div>
                 </div>
-                {p.description && <p className={styles.knifeDesc}>{p.description}</p>}
+
+                <div className={styles.knifeFilterGroup}>
+                  <label className={styles.knifeFilterLabel}>Price Range (AUD)</label>
+                  <div className={styles.knifePriceRow}>
+                    <input
+                      className={styles.knifePriceInput}
+                      type="number"
+                      placeholder="Min"
+                      value={priceMin}
+                      min="0"
+                      onChange={e => setPriceMin(e.target.value)}
+                    />
+                    <span className={styles.knifePriceSep}>—</span>
+                    <input
+                      className={styles.knifePriceInput}
+                      type="number"
+                      placeholder="Max"
+                      value={priceMax}
+                      min="0"
+                      onChange={e => setPriceMax(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {hasFilters && (
+                  <button className={styles.knifeClearBtn} onClick={clearFilters}>Clear all filters</button>
+                )}
               </div>
-            ))}
-          </div>
+            )}
+
+            {/* Results count */}
+            <div className={styles.knifeResultsCount}>
+              {filtered.length} product{filtered.length !== 1 ? 's' : ''}
+              {hasFilters && ` · filtered`}
+            </div>
+
+            {filtered.length === 0 ? (
+              <div className={styles.comingSoon}>
+                <div className={styles.comingSoonIcon}>🔍</div>
+                <h3 className={styles.comingSoonTitle}>No Results</h3>
+                <p className={styles.comingSoonText}>Try adjusting your search or filters.</p>
+              </div>
+            ) : (
+              <div className={styles.knifeList}>
+                {filtered.map(p => (
+                  <div key={p.id} className={styles.knifeCard}>
+                    <div className={styles.knifeCardTop}>
+                      <div>
+                        <span className={styles.knifeCode}>{p.product_code}</span>
+                        <h3 className={styles.knifeName}>{p.product_name}</h3>
+                      </div>
+                      <div className={styles.knifePrice}>{fmt(p.selling_price)}</div>
+                    </div>
+                    <div className={styles.knifeMeta}>
+                      <span className={styles.knifeBadge}>{getTypeLabel(p.product_type)}</span>
+                      <span className={styles.knifeBadge}>{getCategoryLabel(p.category)}</span>
+                    </div>
+                    {p.description && <p className={styles.knifeDesc}>{p.description}</p>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )
       )}
     </div>

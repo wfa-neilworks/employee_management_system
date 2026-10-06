@@ -562,11 +562,171 @@
   text-transform: uppercase;
 }
 
+/* Search + filter */
+.knifeSearchRow {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px 0;
+}
+
+.knifeSearch {
+  flex: 1;
+  padding: 10px 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.knifeSearch:focus {
+  border-color: var(--accent-primary);
+  outline: none;
+}
+
+.knifeFilterBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.15s ease;
+}
+
+.knifeFilterBtnActive {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.knifeFilterCount {
+  background: var(--accent-primary);
+  color: #111;
+  font-size: 10px;
+  font-weight: 700;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.knifeFilterPanel {
+  margin: 10px 16px 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.knifeFilterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.knifeFilterLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.knifeFilterChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.knifeChip {
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.knifeChipActive {
+  background: var(--accent-primary);
+  color: #111;
+  border-color: var(--accent-primary);
+  font-weight: 700;
+}
+
+.knifePriceRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.knifePriceInput {
+  flex: 1;
+  padding: 9px 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.knifePriceInput:focus {
+  border-color: var(--accent-primary);
+  outline: none;
+}
+
+.knifePriceSep {
+  color: var(--text-secondary);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.knifeClearBtn {
+  align-self: flex-start;
+  padding: 7px 14px;
+  background: transparent;
+  border: 1px solid var(--error);
+  border-radius: 8px;
+  color: var(--error);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.knifeClearBtn:active {
+  background: rgba(255, 68, 68, 0.1);
+}
+
+.knifeResultsCount {
+  padding: 10px 16px 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
 .knifeList {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 16px;
+  padding: 10px 16px 16px;
 }
 
 .knifeCard {
