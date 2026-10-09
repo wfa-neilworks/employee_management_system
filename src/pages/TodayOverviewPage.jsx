@@ -17,6 +17,8 @@ export default function TodayOverviewPage() {
 
   useEffect(() => {
     fetchToday()
+    const interval = setInterval(fetchToday, 30000)
+    return () => clearInterval(interval)
   }, [])
 
   const fetchToday = async () => {
