@@ -15,6 +15,7 @@ import ReportPage from './pages/ReportPage'
 import EmployeeSignupPage from './pages/EmployeeSignupPage'
 import EmployeePortal from './pages/EmployeePortal'
 import AnnouncementsPage from './pages/AnnouncementsPage'
+import TodayOverviewPage from './pages/TodayOverviewPage'
 import Layout from './components/Layout'
 
 function PrivateRoute({ children }) {
@@ -78,6 +79,7 @@ function AppRoutes() {
         <Route path="preset-data" element={<PresetDataPage />} />
         <Route path="report" element={<ReportPage />} />
         <Route path="announcements" element={<AnnouncementsPage />} />
+        <Route path="today-overview" element={<TodayOverviewPage />} />
       </Route>
     </Routes>
   )
