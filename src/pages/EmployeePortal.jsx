@@ -220,29 +220,131 @@ const LEAVE_CONFIG = {
   PUBLIC_HOLIDAY:    { label: 'Public Holiday',       color: '#2196f3' },
 }
 
-function LeaveTab({ employeeId }) {
+function LeaveTab({ employeeId, accountId }) {
   const [leaves, setLeaves] = useState([])
   const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [leaveType, setLeaveType] = useState('SICK_LEAVE')
+  const [reason, setReason] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
+  const [submitSuccess, setSubmitSuccess] = useState(false)
 
-  useEffect(() => {
+  const fetchLeaves = async () => {
     if (!employeeId) return
-    const fetch = async () => {
-      const { data } = await supabase
-        .from('leave')
-        .select('*')
-        .eq('employee_id', employeeId)
-        .order('start_date', { ascending: false })
-      setLeaves(data || [])
-      setLoading(false)
+    const { data } = await supabase
+      .from('leave')
+      .select('*')
+      .eq('employee_id', employeeId)
+      .order('start_date', { ascending: false })
+    setLeaves(data || [])
+    setLoading(false)
+  }
+
+  useEffect(() => { fetchLeaves() }, [employeeId])
+
+  const handleApply = () => {
+    setLeaveType('SICK_LEAVE')
+    setReason('')
+    setSubmitError('')
+    setSubmitSuccess(false)
+    setShowForm(true)
+  }
+
+  const handleSubmit = async () => {
+    if (leaveType === 'SICK_LEAVE' && !reason.trim()) {
+      setSubmitError('Please provide a reason.')
+      return
     }
-    fetch()
-  }, [employeeId])
+    setSubmitting(true)
+    setSubmitError('')
+    const today = new Date().toISOString().split('T')[0]
+    const { error } = await supabase.from('leave').insert({
+      employee_id: employeeId,
+      leave_type: leaveType,
+      start_date: today,
+      end_date: today,
+      notes: reason.trim() || null,
+      created_by: accountId,
+      updated_by: accountId,
+    })
+    setSubmitting(false)
+    if (error) { setSubmitError(error.message); return }
+    setSubmitSuccess(true)
+    setShowForm(false)
+    setReason('')
+    fetchLeaves()
+  }
 
   return (
     <div className={styles.tabContent}>
       <div className={styles.leaveHeader}>
-        <button className={styles.applyLeaveBtn} disabled>+ Apply For Leave</button>
+        <button className={styles.applyLeaveBtn} onClick={handleApply}>+ Apply For Leave</button>
       </div>
+
+      {/* Leave application form */}
+      {showForm && (
+        <div className={styles.leaveForm}>
+          <div className={styles.leaveFormHeader}>
+            <h3 className={styles.leaveFormTitle}>Apply For Leave</h3>
+            <button className={styles.leaveFormClose} onClick={() => setShowForm(false)}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 6L6 18M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+
+          <div className={styles.leaveFormGroup}>
+            <label className={styles.leaveFormLabel}>Leave Type</label>
+            <select
+              className={styles.leaveFormSelect}
+              value={leaveType}
+              onChange={e => { setLeaveType(e.target.value); setSubmitError('') }}
+            >
+              <option value="SICK_LEAVE">Sick Leave</option>
+              <option value="ANNUAL_LEAVE">Annual Leave</option>
+            </select>
+          </div>
+
+          {leaveType === 'ANNUAL_LEAVE' ? (
+            <div className={styles.annualLeaveNotice}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
+              </svg>
+              ANNUAL LEAVE SHOULD BE FILED IN HR OFFICE.
+            </div>
+          ) : (
+            <div className={styles.leaveFormGroup}>
+              <label className={styles.leaveFormLabel}>Reason *</label>
+              <textarea
+                className={styles.leaveFormTextarea}
+                value={reason}
+                onChange={e => setReason(e.target.value)}
+                placeholder="Describe your reason for sick leave..."
+                rows={4}
+              />
+            </div>
+          )}
+
+          {submitError && <div className={styles.leaveFormError}>{submitError}</div>}
+
+          {leaveType === 'SICK_LEAVE' && (
+            <button
+              className={styles.leaveSubmitBtn}
+              onClick={handleSubmit}
+              disabled={submitting}
+            >
+              {submitting ? 'Submitting...' : 'Submit'}
+            </button>
+          )}
+        </div>
+      )}
+
+      {submitSuccess && (
+        <div className={styles.leaveSuccessBanner}>
+          Sick leave submitted successfully.
+        </div>
+      )}
       <div className={styles.leaveLegend}>
         {Object.entries(LEAVE_CONFIG).map(([key, { label, color }]) => (
           <div key={key} className={styles.legendItem}>
@@ -548,7 +650,7 @@ export default function EmployeePortal() {
     switch (activeTab) {
       case 'announcement': return <AnnouncementTab announcements={announcements} unreadIds={unreadIds} onRead={markRead} />
       case 'gears': return <ComingSoon label="My Gears" />
-      case 'leave': return <LeaveTab employeeId={account?.employee_id} />
+      case 'leave': return <LeaveTab employeeId={account?.employee_id} accountId={account?.id} />
       case 'knife': return <KnifeTab />
       default: return null
     }
