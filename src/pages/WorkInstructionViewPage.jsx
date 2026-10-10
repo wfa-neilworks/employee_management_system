@@ -144,46 +144,43 @@ export default function WorkInstructionViewPage() {
     body { font-family: Arial, sans-serif; font-size: 13px; color: #000; }
     table { border-collapse: collapse; }
 
-    /* Repeating header and footer on every printed page */
     @page {
       size: A4;
-      margin: 16mm 12mm 28mm 12mm;
+      margin: 6mm 12mm 22mm 12mm;
+      @bottom-right { content: "Page " counter(page) " of " counter(pages); font-family: Arial, sans-serif; font-size: 11px; }
     }
 
+    /* Header fixed at top of every page */
     #page-header {
-      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      display: flex;
+      border: 1px solid #000;
+      background: #fff;
+      z-index: 100;
     }
+
+    /* Footer fixed at bottom of every page */
     #page-footer {
-      display: none;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: #fff;
+      z-index: 100;
     }
 
-    @media print {
-      #page-header {
-        display: flex;
-        position: fixed;
-        top: 0; left: 0; right: 0;
-        gap: 16px;
-        border: 1px solid #000;
-        background: #fff;
-      }
-      #page-footer {
-        display: block;
-        position: fixed;
-        bottom: 0; left: 0; right: 0;
-        background: #fff;
-      }
-      /* Push body content down so it doesn't hide under the fixed header */
-      #main-content {
-        margin-top: 90px;
-      }
+    /* Content clears fixed header and footer */
+    #main-content {
+      padding-top: 100px;
+      padding-bottom: 55px;
     }
 
-    /* Screen preview spacing */
+    /* Screen only */
     @media screen {
       body { margin: 20px; }
-      #page-header { display: flex; gap: 16px; border: 1px solid #000; margin-bottom: 0; }
-      #page-footer { margin-top: 12px; }
-      #main-content { }
+      #page-header { position: static; margin-bottom: 0; }
+      #page-footer { position: static; margin-top: 12px; }
+      #main-content { padding-top: 0; padding-bottom: 0; }
+      #page-num { display: none; }
     }
   </style>
 </head>
@@ -204,11 +201,12 @@ export default function WorkInstructionViewPage() {
 
   <!-- Fixed footer: repeats on every page when printing -->
   <div id="page-footer">
-    <div style="border:1px solid #000;padding:8px 12px;display:flex;justify-content:space-between;align-items:flex-end;font-size:11px;">
+    <div style="border:1px solid #000;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;font-size:11px;">
       <div><div>Woodward Foods Australia</div><div>Authorized By: ${wi.authorized_by}</div></div>
       <div style="text-align:center;"><div>Issue No: ${wi.issue_no}</div><div>Date of Revision: ${fmtDate(wi.revision_date)}</div></div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-        <img src="${window.location.origin}/noel-logo.png" style="height:28px;width:auto;object-fit:contain;opacity:0.85;" />
+        <span id="page-num" style="font-size:11px;color:#000;"></span>
+        <img src="${window.location.origin}/noel-logo.png" style="height:26px;width:auto;object-fit:contain;opacity:0.85;" />
       </div>
     </div>
   </div>
