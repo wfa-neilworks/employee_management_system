@@ -79,7 +79,7 @@ export default function WorkInstructionViewPage() {
     const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'
 
     const certBlocks = filteredAssignments.map(a => `
-      <div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #ddd;">
+      <div style="page-break-inside:avoid;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #ddd;">
         <div style="font-size:13px;line-height:2;margin-bottom:10px;">
           <span style="border-bottom:1px solid #000;display:inline-block;min-width:120px;">${a.employees?.name || ''}</span>
           has been trained in this function by
@@ -126,7 +126,7 @@ export default function WorkInstructionViewPage() {
     ` : ''
 
     const stepsHTML = steps.map(s => `
-      <tr>
+      <tr style="page-break-inside:avoid;">
         <td style="padding:8px 10px;border:1px solid #000;vertical-align:top;font-size:13px;line-height:1.5;">${s.step_text}</td>
         <td style="padding:8px 10px;border:1px solid #000;vertical-align:top;font-size:13px;line-height:1.5;">
           ${s.criteria_text ? `<p style="margin:0 0 8px;">${s.criteria_text}</p>` : ''}
@@ -176,20 +176,22 @@ export default function WorkInstructionViewPage() {
     <tbody>${stepsHTML}</tbody>
   </table>
   ${keyPointsHTML}
-  <!-- Competency Certificate -->
-  <div style="border:1px solid #000;border-top:none;padding:16px;">
-    <div style="font-weight:700;font-size:13px;margin-bottom:14px;">COMPETENCY CERTIFICATE</div>
-    ${certBlocks}
-  </div>
-  <!-- Footer -->
-  <div style="border:1px solid #000;border-top:none;padding:8px 12px;display:flex;justify-content:space-between;align-items:flex-end;font-size:11px;">
-    <div><div>Woodward Foods Australia</div><div>Authorized By: ${wi.authorized_by}</div></div>
-    <div style="text-align:center;"><div>Issue No: ${wi.issue_no}</div><div>Date of Revision: ${fmtDate(wi.revision_date)}</div></div>
-    <div>Page 1 of 1</div>
-  </div>
-  <!-- Stamp -->
-  <div style="display:flex;justify-content:center;padding:10px 0 0;">
-    <img src="${window.location.origin}/noel-logo.png" style="height:40px;width:auto;object-fit:contain;opacity:0.85;" />
+  <!-- Competency Certificate — always starts on a new page -->
+  <div style="page-break-before:always;">
+    <div style="border:1px solid #000;padding:16px;">
+      <div style="font-weight:700;font-size:13px;margin-bottom:14px;">COMPETENCY CERTIFICATE</div>
+      ${certBlocks}
+    </div>
+    <!-- Footer -->
+    <div style="page-break-inside:avoid;border:1px solid #000;border-top:none;padding:8px 12px;display:flex;justify-content:space-between;align-items:flex-end;font-size:11px;">
+      <div><div>Woodward Foods Australia</div><div>Authorized By: ${wi.authorized_by}</div></div>
+      <div style="text-align:center;"><div>Issue No: ${wi.issue_no}</div><div>Date of Revision: ${fmtDate(wi.revision_date)}</div></div>
+      <div>Page 1 of 1</div>
+    </div>
+    <!-- Stamp -->
+    <div style="display:flex;justify-content:center;padding:10px 0 0;">
+      <img src="${window.location.origin}/noel-logo.png" style="height:40px;width:auto;object-fit:contain;opacity:0.85;" />
+    </div>
   </div>
   <script>window.onload = function() { window.print(); window.onafterprint = function() { window.close(); }; }</script>
 </body>
