@@ -121,8 +121,8 @@
 .footerCenter { display: flex; flex-direction: column; gap: 2px; text-align: center; }
 .footerRight { font-size: 11px; }
 
-.docBottomLogo { border: 1px solid #000; border-top: none; padding: 12px; display: flex; justify-content: center; }
-.bottomLogoImg { height: 48px; width: auto; object-fit: contain; }
+.docBottomLogo { display: flex; justify-content: center; padding: 10px 0 0; }
+.bottomLogoImg { height: 40px; width: auto; object-fit: contain; opacity: 0.85; }
 
 /* Signature summary */
 .sigSummary {

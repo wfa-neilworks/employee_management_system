@@ -1053,8 +1053,8 @@
   border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer;
 }
 
-.wiDocBottomLogo { border: 1px solid #000; border-top: none; padding: 10px; display: flex; justify-content: center; }
-.wiBottomLogoImg { height: 36px; width: auto; object-fit: contain; }
+.wiDocBottomLogo { display: flex; justify-content: center; padding: 8px 0 0; }
+.wiBottomLogoImg { height: 32px; width: auto; object-fit: contain; opacity: 0.85; }
 
 /* Signature modal */
 .sigModalOverlay {

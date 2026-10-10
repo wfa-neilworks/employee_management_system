@@ -279,9 +279,9 @@ export default function WorkInstructionViewPage() {
           <div className={styles.footerRight}>Page 1 of 1</div>
         </div>
 
-        {/* Bottom logo */}
+        {/* Bottom stamp */}
         <div className={styles.docBottomLogo}>
-          <img src="/noellogo.png" alt="NOEL" className={styles.bottomLogoImg} />
+          <img src="/noel-logo.png" alt="NOEL" className={styles.bottomLogoImg} />
         </div>
       </div>
 

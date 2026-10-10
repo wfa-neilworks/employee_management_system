@@ -842,9 +842,9 @@ function WorkInstructionTab({ employeeId, employee }) {
                 )}
               </div>
 
-              {/* Bottom logo */}
+              {/* Bottom stamp */}
               <div className={styles.wiDocBottomLogo}>
-                <img src="/noellogo.png" alt="NOEL" className={styles.wiBottomLogoImg} />
+                <img src="/noel-logo.png" alt="NOEL" className={styles.wiBottomLogoImg} />
               </div>
             </div>
           </div>
