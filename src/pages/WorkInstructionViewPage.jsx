@@ -66,6 +66,7 @@ export default function WorkInstructionViewPage() {
 
   const handleSign = async (assignment) => {
     const now = new Date().toISOString()
+    // Admin/HR/QA sign on behalf — no signature image, just timestamp
     await supabase.from('wi_assignments').update({
       signed_at: now,
       signed_by_account_id: account.id,
@@ -228,7 +229,11 @@ export default function WorkInstructionViewPage() {
                   <div className={styles.certField}>
                     <span className={styles.certFieldLabel}>Signed (Candidate):</span>
                     {a.signed_at ? (
-                      <span className={styles.certSigned}>✓ Signed {fmt(a.signed_at)}</span>
+                      a.signature_url ? (
+                        <img src={a.signature_url} alt="Signature" className={styles.certSigImg} />
+                      ) : (
+                        <span className={styles.certSigned}>✓ Signed {fmt(a.signed_at)}</span>
+                      )
                     ) : (
                       canEdit ? (
                         <button className={styles.signBtn} onClick={() => handleSign(a)}>

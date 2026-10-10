@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import SignaturePad from 'signature_pad'
 import { useAuth } from '../context/AuthContext'
 import { supabase, PRODUCT_TYPES, PRODUCT_CATEGORIES } from '../lib/supabase'
 import styles from './EmployeePortal.module.css'
@@ -30,6 +31,14 @@ const IconKnife = () => (
     <path d="M14.5 2.5c0 1.5-1.5 6-1.5 6h-2S9.5 4 9.5 2.5a2.5 2.5 0 0 1 5 0z"/>
     <path d="M11 8.5V21"/>
     <path d="M9 21h6"/>
+  </svg>
+)
+
+const IconWorkInstruction = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <path d="M14 2v6h6"/>
+    <path d="M8 13h8M8 17h5"/>
   </svg>
 )
 
@@ -66,6 +75,7 @@ const NAV_TABS = [
   { key: 'gears', label: 'Gears', icon: IconGear },
   { key: 'leave', label: 'Leave', icon: IconLeave },
   { key: 'knife', label: 'Knife', icon: IconKnife },
+  { key: 'wi', label: 'Work Inst.', icon: IconWorkInstruction },
 ]
 
 function ProfileTab({ employee, onSignOut }) {
@@ -576,6 +586,309 @@ function KnifeTab() {
   )
 }
 
+function SignatureModal({ assignment, employee, onClose, onSigned }) {
+  const canvasRef = useRef(null)
+  const padRef = useRef(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (!canvasRef.current) return
+    padRef.current = new SignaturePad(canvasRef.current, {
+      backgroundColor: 'rgb(255,255,255)',
+      penColor: 'rgb(0,0,0)',
+    })
+    const resizeCanvas = () => {
+      const canvas = canvasRef.current
+      if (!canvas) return
+      const ratio = Math.max(window.devicePixelRatio || 1, 1)
+      canvas.width = canvas.offsetWidth * ratio
+      canvas.height = canvas.offsetHeight * ratio
+      canvas.getContext('2d').scale(ratio, ratio)
+      padRef.current.clear()
+    }
+    resizeCanvas()
+    return () => { if (padRef.current) padRef.current.off() }
+  }, [])
+
+  const handleClear = () => padRef.current?.clear()
+
+  const handleSubmit = async () => {
+    if (!padRef.current || padRef.current.isEmpty()) {
+      setError('Please draw your signature.')
+      return
+    }
+    setSubmitting(true)
+    setError('')
+    try {
+      const dataUrl = padRef.current.toDataURL('image/png')
+      const res = await fetch(dataUrl)
+      const blob = await res.blob()
+      const path = `signatures/${assignment.id}.png`
+      const { error: uploadError } = await supabase.storage
+        .from('wi-signatures')
+        .upload(path, blob, { contentType: 'image/png', upsert: true })
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage.from('wi-signatures').getPublicUrl(path)
+
+      const { error: updateError } = await supabase
+        .from('wi_assignments')
+        .update({ signed_at: new Date().toISOString(), signature_url: publicUrl })
+        .eq('id', assignment.id)
+      if (updateError) throw updateError
+
+      onSigned()
+    } catch (e) {
+      setError(e.message || 'Failed to save signature.')
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className={styles.sigModalOverlay}>
+      <div className={styles.sigModal}>
+        <div className={styles.sigModalHeader}>
+          <h3 className={styles.sigModalTitle}>Sign Work Instruction</h3>
+          <button className={styles.sigModalClose} onClick={onClose}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <p className={styles.sigModalText}>
+          I, <strong>{employee?.name}</strong>, have read and understand these work instructions. I agree that I am competent to perform this function.
+        </p>
+        <div className={styles.sigCanvasWrap}>
+          <canvas ref={canvasRef} className={styles.sigCanvas} />
+          <span className={styles.sigCanvasHint}>Draw your signature above</span>
+        </div>
+        {error && <p className={styles.sigError}>{error}</p>}
+        <div className={styles.sigModalActions}>
+          <button className={styles.sigClearBtn} onClick={handleClear} disabled={submitting}>Clear</button>
+          <button className={styles.sigSubmitBtn} onClick={handleSubmit} disabled={submitting}>
+            {submitting ? 'Saving...' : 'Confirm & Sign'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function WorkInstructionTab({ employeeId, employee }) {
+  const [wis, setWis] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [selected, setSelected] = useState(null)
+  const [steps, setSteps] = useState([])
+  const [assignment, setAssignment] = useState(null)
+  const [loadingDetail, setLoadingDetail] = useState(false)
+  const [signingModal, setSigningModal] = useState(false)
+
+  useEffect(() => {
+    if (!employeeId) return
+    const fetch = async () => {
+      const { data } = await supabase
+        .from('wi_assignments')
+        .select('*, work_instructions(id, doc_number, title, dept_code, status, departments(display_name))')
+        .eq('employee_id', employeeId)
+        .order('assigned_at', { ascending: false })
+      setWis((data || []).filter(a => a.work_instructions?.status === 'published'))
+      setLoading(false)
+    }
+    fetch()
+  }, [employeeId])
+
+  const openWI = async (item) => {
+    setLoadingDetail(true)
+    setSelected(item.work_instructions)
+    setAssignment(item)
+    const { data } = await supabase
+      .from('wi_steps')
+      .select('*')
+      .eq('wi_id', item.work_instructions.id)
+      .order('order_index')
+    setSteps(data || [])
+    setLoadingDetail(false)
+  }
+
+  const handleSigned = async () => {
+    setSigningModal(false)
+    if (!employeeId) return
+    const { data } = await supabase
+      .from('wi_assignments')
+      .select('*, work_instructions(id, doc_number, title, dept_code, status, departments(display_name))')
+      .eq('employee_id', employeeId)
+      .order('assigned_at', { ascending: false })
+    const updated = (data || []).filter(a => a.work_instructions?.status === 'published')
+    setWis(updated)
+    const refreshed = updated.find(a => a.id === assignment?.id)
+    if (refreshed) setAssignment(refreshed)
+  }
+
+  const fmt = (d) => d ? new Date(d).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'
+
+  // Detail view
+  if (selected) {
+    return (
+      <div className={styles.tabContent}>
+        {signingModal && (
+          <SignatureModal
+            assignment={assignment}
+            employee={employee}
+            onClose={() => setSigningModal(false)}
+            onSigned={handleSigned}
+          />
+        )}
+        <div className={styles.detailBack}>
+          <button className={styles.backBtn} onClick={() => { setSelected(null); setAssignment(null); setSteps([]) }}>
+            <IconBack /> Back
+          </button>
+        </div>
+
+        {loadingDetail ? (
+          <div className={styles.loading}>Loading...</div>
+        ) : (
+          <div className={styles.wiDetail}>
+            {/* Document */}
+            <div className={styles.wiDocument}>
+              {/* Header */}
+              <div className={styles.wiDocHeader}>
+                <div className={styles.wiDocHeaderLeft}>
+                  <img src="/noellogo.png" alt="NOEL" className={styles.wiDocLogo} />
+                </div>
+                <div className={styles.wiDocHeaderRight}>
+                  <div className={styles.wiDocHeaderTitle}>Woodward Foods Australia – Est# 2306</div>
+                  <div className={styles.wiDocHeaderRow}>
+                    <span className={styles.wiDocHeaderKey}>Department:</span>
+                    <span>{selected.departments?.display_name || '—'}</span>
+                  </div>
+                  <div className={styles.wiDocHeaderRow}>
+                    <span className={styles.wiDocHeaderKey}>Document No:</span>
+                    <span>{selected.doc_number}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Title table */}
+              <table className={styles.wiTitleTable}>
+                <tbody>
+                  <tr><td className={styles.wiTitleKey}>Title:</td><td className={styles.wiTitleVal}>{selected.title}</td></tr>
+                  <tr><td className={styles.wiTitleKey}>Aim:</td><td>{selected.aim}</td></tr>
+                  <tr><td className={styles.wiTitleKey}>PPE:</td><td>{selected.ppe}</td></tr>
+                </tbody>
+              </table>
+
+              {/* Steps */}
+              <table className={styles.wiStepsTable}>
+                <thead>
+                  <tr>
+                    <th className={styles.wiStepsTh}>Steps</th>
+                    <th className={styles.wiStepsTh}>Performance Criteria</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {steps.map((s, i) => (
+                    <tr key={i}>
+                      <td className={styles.wiStepsTd}>{s.step_text}</td>
+                      <td className={styles.wiStepsTd}>
+                        {s.criteria_text && <p style={{margin:'0 0 6px'}}>{s.criteria_text}</p>}
+                        {s.criteria_image_url && <img src={s.criteria_image_url} alt="" style={{maxWidth:'100%',maxHeight:'180px',objectFit:'contain'}} />}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {/* Key points */}
+              {selected.key_points?.length > 0 && (
+                <div className={styles.wiKeyPoints}>
+                  <div className={styles.wiKeyPointsTitle}>KEY POINTS</div>
+                  <ul className={styles.wiKeyPointsList}>
+                    {selected.key_points.map((kp, i) => <li key={i}>{kp.text}</li>)}
+                  </ul>
+                </div>
+              )}
+
+              {/* Cert section */}
+              <div className={styles.wiCert}>
+                <div className={styles.wiCertTitle}>COMPETENCY CERTIFICATE</div>
+                <p className={styles.wiCertText}>
+                  I, <strong>{employee?.name}{employee?.english_name ? ` (${employee.english_name})` : ''}</strong>, have read and understand, these are my work instructions. I agree that I am competent to perform this function.
+                </p>
+                <div className={styles.wiCertSigRow}>
+                  <div className={styles.wiCertSigLabel}>Signed (Candidate):</div>
+                  {assignment?.signed_at ? (
+                    <div className={styles.wiCertSigned}>
+                      <img src={assignment.signature_url} alt="Signature" className={styles.wiCertSigImg} />
+                      <span className={styles.wiCertSignedDate}>Signed {fmt(assignment.signed_at)}</span>
+                    </div>
+                  ) : (
+                    <button className={styles.wiSignBtn} onClick={() => setSigningModal(true)}>
+                      Tap to Sign
+                    </button>
+                  )}
+                </div>
+                {assignment?.signed_at && (
+                  <div className={styles.wiCertDateRow}>
+                    <span className={styles.wiCertSigLabel}>Date:</span>
+                    <span>{fmt(assignment.signed_at)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // List view
+  if (loading) return <div className={styles.tabContent}><div className={styles.loading}>Loading...</div></div>
+
+  if (wis.length === 0) {
+    return (
+      <div className={styles.tabContent}>
+        <div className={styles.comingSoon}>
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" style={{color:'var(--text-secondary)'}}>
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/>
+          </svg>
+          <h3 className={styles.comingSoonTitle}>No Work Instructions</h3>
+          <p className={styles.comingSoonText}>You have no work instructions assigned to you yet.</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className={styles.tabContent}>
+      <div className={styles.wiList}>
+        {wis.map(item => {
+          const wi = item.work_instructions
+          const signed = !!item.signed_at
+          return (
+            <button key={item.id} className={styles.wiCard} onClick={() => openWI(item)}>
+              <div className={styles.wiCardLeft}>
+                <span className={styles.wiCardDocNo}>{wi?.doc_number}</span>
+                <span className={styles.wiCardTitle}>{wi?.title}</span>
+                <span className={styles.wiCardDept}>{wi?.departments?.display_name}</span>
+              </div>
+              <div className={styles.wiCardRight}>
+                <span className={`${styles.wiCardStatus} ${signed ? styles.wiCardSigned : styles.wiCardPending}`}>
+                  {signed ? 'Signed' : 'Pending'}
+                </span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 18l6-6-6-6"/>
+                </svg>
+              </div>
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 export default function EmployeePortal() {
   const { account, signOut } = useAuth()
   const [activeTab, setActiveTab] = useState('announcement')
@@ -652,6 +965,7 @@ export default function EmployeePortal() {
       case 'gears': return <ComingSoon label="My Gears" />
       case 'leave': return <LeaveTab employeeId={account?.employee_id} accountId={account?.id} />
       case 'knife': return <KnifeTab />
+      case 'wi': return <WorkInstructionTab employeeId={account?.employee_id} employee={employee} />
       default: return null
     }
   }
