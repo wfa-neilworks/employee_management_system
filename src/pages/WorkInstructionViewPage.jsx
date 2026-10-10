@@ -146,11 +146,11 @@ export default function WorkInstructionViewPage() {
 
     @page {
       size: A4;
-      margin: 6mm 12mm 22mm 12mm;
+      margin: 42mm 12mm 24mm 12mm;
       @bottom-right { content: "Page " counter(page) " of " counter(pages); font-family: Arial, sans-serif; font-size: 11px; }
     }
 
-    /* Header fixed at top of every page */
+    /* Header fixed at top of every page — height must match top margin above */
     #page-header {
       position: fixed;
       top: 0; left: 0; right: 0;
@@ -160,18 +160,12 @@ export default function WorkInstructionViewPage() {
       z-index: 100;
     }
 
-    /* Footer fixed at bottom of every page */
+    /* Footer fixed at bottom of every page — height must match bottom margin above */
     #page-footer {
       position: fixed;
       bottom: 0; left: 0; right: 0;
       background: #fff;
       z-index: 100;
-    }
-
-    /* Content clears fixed header and footer */
-    #main-content {
-      padding-top: 100px;
-      padding-bottom: 55px;
     }
 
     /* Screen only */
@@ -211,7 +205,7 @@ export default function WorkInstructionViewPage() {
     </div>
   </div>
 
-  <!-- Main content -->
+  <!-- Main content — no padding needed; @page margins clear the fixed header/footer -->
   <div id="main-content">
     <!-- Title table -->
     <table style="width:100%;border:1px solid #000;border-top:none;margin-bottom:0;">
