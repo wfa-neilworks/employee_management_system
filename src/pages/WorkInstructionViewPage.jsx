@@ -135,6 +135,34 @@ export default function WorkInstructionViewPage() {
       </tr>
     `).join('')
 
+    const headerHTML = `
+      <tr style="display:flex;gap:0;border:1px solid #000;">
+        <td style="padding:8px;border-right:1px solid #000;display:flex;align-items:center;flex-shrink:0;">
+          <img src="${window.location.origin}/WFA_LOGO.png" style="height:60px;width:auto;" />
+        </td>
+        <td style="flex:1;padding:0;display:flex;flex-direction:column;">
+          <div style="font-weight:700;font-size:13px;text-align:center;padding:6px;border-bottom:1px solid #000;">Woodward Foods Australia – Est# 2306</div>
+          <div style="display:flex;padding:5px 8px;border-bottom:1px solid #000;font-size:12px;"><span style="font-weight:700;min-width:110px;">Department:</span><span>${wi.departments?.display_name || '—'}</span></div>
+          ${wi.location ? `<div style="display:flex;padding:5px 8px;border-bottom:1px solid #000;font-size:12px;"><span style="font-weight:700;min-width:110px;">Location/Section:</span><span>${wi.location}</span></div>` : ''}
+          <div style="display:flex;padding:5px 8px;font-size:12px;"><span style="font-weight:700;min-width:110px;">Document No:</span><span>${wi.doc_number}</span></div>
+        </td>
+      </tr>
+    `
+
+    const footerHTML = `
+      <tr>
+        <td style="padding:8px 12px;border:1px solid #000;font-size:11px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div><div>Woodward Foods Australia</div><div>Authorized By: ${wi.authorized_by}</div></div>
+            <div style="text-align:center;"><div>Issue No: ${wi.issue_no}</div><div>Date of Revision: ${fmtDate(wi.revision_date)}</div></div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;">
+              <img src="${window.location.origin}/noel-logo.png" style="height:26px;width:auto;object-fit:contain;opacity:0.85;" />
+            </div>
+          </div>
+        </td>
+      </tr>
+    `
+
     return `<!DOCTYPE html>
 <html>
 <head>
@@ -142,94 +170,93 @@ export default function WorkInstructionViewPage() {
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Arial, sans-serif; font-size: 13px; color: #000; }
-    table { border-collapse: collapse; }
 
     @page {
       size: A4;
-      margin: 42mm 12mm 24mm 12mm;
+      margin: 10mm 12mm;
       @bottom-right { content: "Page " counter(page) " of " counter(pages); font-family: Arial, sans-serif; font-size: 11px; }
     }
 
-    /* Header fixed at top of every page — height must match top margin above */
-    #page-header {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      display: flex;
-      border: 1px solid #000;
-      background: #fff;
-      z-index: 100;
+    /* Outer wrapper table — thead/tfoot repeat on every printed page natively */
+    #page-wrap {
+      width: 100%;
+      border-collapse: collapse;
     }
+    #page-wrap thead { display: table-header-group; }
+    #page-wrap tfoot { display: table-footer-group; }
+    #page-wrap tbody { display: table-row-group; }
 
-    /* Footer fixed at bottom of every page — height must match bottom margin above */
-    #page-footer {
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      background: #fff;
-      z-index: 100;
-    }
+    /* Inner content tables */
+    .content-table { width: 100%; border-collapse: collapse; }
 
-    /* Screen only */
     @media screen {
       body { margin: 20px; }
-      #page-header { position: static; margin-bottom: 0; }
-      #page-footer { position: static; margin-top: 12px; }
-      #main-content { padding-top: 0; padding-bottom: 0; }
-      #page-num { display: none; }
     }
   </style>
 </head>
 <body>
+  <table id="page-wrap">
+    <thead>
+      <tr><td style="padding-bottom:4px;">
+        <table style="width:100%;border-collapse:collapse;">
+          <tr>
+            <td style="padding:8px;border:1px solid #000;border-right:none;width:90px;vertical-align:middle;">
+              <img src="${window.location.origin}/WFA_LOGO.png" style="height:60px;width:auto;display:block;" />
+            </td>
+            <td style="border:1px solid #000;padding:0;vertical-align:top;">
+              <div style="font-weight:700;font-size:13px;text-align:center;padding:6px;border-bottom:1px solid #000;">Woodward Foods Australia – Est# 2306</div>
+              <div style="display:flex;padding:5px 8px;border-bottom:1px solid #000;font-size:12px;"><span style="font-weight:700;min-width:110px;">Department:</span><span>${wi.departments?.display_name || '—'}</span></div>
+              ${wi.location ? `<div style="display:flex;padding:5px 8px;border-bottom:1px solid #000;font-size:12px;"><span style="font-weight:700;min-width:110px;">Location/Section:</span><span>${wi.location}</span></div>` : ''}
+              <div style="display:flex;padding:5px 8px;font-size:12px;"><span style="font-weight:700;min-width:110px;">Document No:</span><span>${wi.doc_number}</span></div>
+            </td>
+          </tr>
+        </table>
+      </td></tr>
+    </thead>
 
-  <!-- Fixed header: repeats on every page when printing -->
-  <div id="page-header">
-    <div style="padding:8px;border-right:1px solid #000;display:flex;align-items:center;">
-      <img src="${window.location.origin}/WFA_LOGO.png" style="height:60px;width:auto;" />
-    </div>
-    <div style="flex:1;padding:0;">
-      <div style="font-weight:700;font-size:13px;text-align:center;padding:6px;border-bottom:1px solid #000;">Woodward Foods Australia – Est# 2306</div>
-      <div style="display:flex;padding:5px 8px;border-bottom:1px solid #000;font-size:12px;"><span style="font-weight:700;min-width:110px;">Department:</span><span>${wi.departments?.display_name || '—'}</span></div>
-      ${wi.location ? `<div style="display:flex;padding:5px 8px;border-bottom:1px solid #000;font-size:12px;"><span style="font-weight:700;min-width:110px;">Location/Section:</span><span>${wi.location}</span></div>` : ''}
-      <div style="display:flex;padding:5px 8px;font-size:12px;"><span style="font-weight:700;min-width:110px;">Document No:</span><span>${wi.doc_number}</span></div>
-    </div>
-  </div>
+    <tfoot>
+      <tr><td style="padding-top:4px;">
+        <table style="width:100%;border-collapse:collapse;">
+          <tr>
+            <td style="padding:8px 12px;border:1px solid #000;font-size:11px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div><div>Woodward Foods Australia</div><div>Authorized By: ${wi.authorized_by}</div></div>
+                <div style="text-align:center;"><div>Issue No: ${wi.issue_no}</div><div>Date of Revision: ${fmtDate(wi.revision_date)}</div></div>
+                <div><img src="${window.location.origin}/noel-logo.png" style="height:26px;width:auto;object-fit:contain;opacity:0.85;display:block;" /></div>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td></tr>
+    </tfoot>
 
-  <!-- Fixed footer: repeats on every page when printing -->
-  <div id="page-footer">
-    <div style="border:1px solid #000;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;font-size:11px;">
-      <div><div>Woodward Foods Australia</div><div>Authorized By: ${wi.authorized_by}</div></div>
-      <div style="text-align:center;"><div>Issue No: ${wi.issue_no}</div><div>Date of Revision: ${fmtDate(wi.revision_date)}</div></div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-        <span id="page-num" style="font-size:11px;color:#000;"></span>
-        <img src="${window.location.origin}/noel-logo.png" style="height:26px;width:auto;object-fit:contain;opacity:0.85;" />
-      </div>
-    </div>
-  </div>
-
-  <!-- Main content — no padding needed; @page margins clear the fixed header/footer -->
-  <div id="main-content">
-    <!-- Title table -->
-    <table style="width:100%;border:1px solid #000;border-top:none;margin-bottom:0;">
-      <tr><td style="padding:7px 10px;border:1px solid #000;font-weight:700;background:#1e3a5f;color:#fff;width:80px;">Title:</td><td style="padding:7px 10px;border:1px solid #000;font-weight:700;background:#1e3a5f;color:#fff;">${wi.title}</td></tr>
-      <tr><td style="padding:7px 10px;border:1px solid #000;font-weight:700;background:#1e3a5f;color:#fff;">Aim:</td><td style="padding:7px 10px;border:1px solid #000;">${wi.aim}</td></tr>
-      <tr><td style="padding:7px 10px;border:1px solid #000;font-weight:700;background:#1e3a5f;color:#fff;">PPE:</td><td style="padding:7px 10px;border:1px solid #000;">${wi.ppe}</td></tr>
-    </table>
-    <!-- Steps -->
-    <table style="width:100%;border:1px solid #000;border-top:none;margin-bottom:0;">
-      <thead>
-        <tr>
-          <th style="padding:8px 10px;background:#1e3a5f;color:#fff;font-weight:700;font-size:13px;border:1px solid #000;width:50%;text-align:left;">Steps</th>
-          <th style="padding:8px 10px;background:#1e3a5f;color:#fff;font-weight:700;font-size:13px;border:1px solid #000;width:50%;text-align:left;">Performance Criteria</th>
-        </tr>
-      </thead>
-      <tbody>${stepsHTML}</tbody>
-    </table>
-    ${keyPointsHTML}
-    <!-- Competency Certificate -->
-    <div style="border:1px solid #000;border-top:none;padding:16px;">
-      <div style="font-weight:700;font-size:13px;margin-bottom:14px;">COMPETENCY CERTIFICATE</div>
-      ${certBlocks}
-    </div>
-  </div>
+    <tbody>
+      <tr><td>
+        <!-- Title -->
+        <table class="content-table" style="border:1px solid #000;">
+          <tr><td style="padding:7px 10px;border:1px solid #000;font-weight:700;background:#1e3a5f;color:#fff;width:80px;">Title:</td><td style="padding:7px 10px;border:1px solid #000;font-weight:700;background:#1e3a5f;color:#fff;">${wi.title}</td></tr>
+          <tr><td style="padding:7px 10px;border:1px solid #000;font-weight:700;background:#1e3a5f;color:#fff;">Aim:</td><td style="padding:7px 10px;border:1px solid #000;">${wi.aim}</td></tr>
+          <tr><td style="padding:7px 10px;border:1px solid #000;font-weight:700;background:#1e3a5f;color:#fff;">PPE:</td><td style="padding:7px 10px;border:1px solid #000;">${wi.ppe}</td></tr>
+        </table>
+        <!-- Steps -->
+        <table class="content-table" style="border:1px solid #000;border-top:none;">
+          <thead>
+            <tr>
+              <th style="padding:8px 10px;background:#1e3a5f;color:#fff;font-weight:700;font-size:13px;border:1px solid #000;width:50%;text-align:left;">Steps</th>
+              <th style="padding:8px 10px;background:#1e3a5f;color:#fff;font-weight:700;font-size:13px;border:1px solid #000;width:50%;text-align:left;">Performance Criteria</th>
+            </tr>
+          </thead>
+          <tbody>${stepsHTML}</tbody>
+        </table>
+        ${keyPointsHTML}
+        <!-- Competency Certificate -->
+        <div style="border:1px solid #000;border-top:none;padding:16px;">
+          <div style="font-weight:700;font-size:13px;margin-bottom:14px;">COMPETENCY CERTIFICATE</div>
+          ${certBlocks}
+        </div>
+      </td></tr>
+    </tbody>
+  </table>
 
   <script>window.onload = function() { window.print(); window.onafterprint = function() { window.close(); }; }</script>
 </body>
