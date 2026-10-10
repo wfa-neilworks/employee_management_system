@@ -168,7 +168,7 @@ export default function WorkInstructionViewPage() {
 <head>
   <title>${wi.doc_number} - ${wi.title}</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     body { font-family: Arial, sans-serif; font-size: 13px; color: #000; }
 
     @page {
