@@ -91,6 +91,14 @@ const IconAdmin = () => (
   </svg>
 )
 
+const IconWorkInstructions = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <path d="M14 2v6h6"/>
+    <path d="M8 13h8M8 17h5"/>
+  </svg>
+)
+
 const IconTodayOverview = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -128,6 +136,18 @@ export default function Sidebar({ departments, isOpen }) {
           <span className={styles.navIcon}><IconDashboard /></span>
           <span className={styles.navLabel}>DASHBOARD</span>
         </NavLink>
+
+        {(hasPermission('manage_users') || account?.account_type === 'HR' || account?.account_type === 'QA') && (
+          <NavLink
+            to="/work-instructions"
+            className={({ isActive }) =>
+              `${styles.navItem} ${isActive ? styles.navItemActive : ''}`
+            }
+          >
+            <span className={styles.navIcon}><IconWorkInstructions /></span>
+            <span className={styles.navLabel}>WORK INSTRUCTIONS</span>
+          </NavLink>
+        )}
 
         {(hasPermission('manage_users') || account?.account_type === 'HR') && (
           <NavLink

@@ -16,6 +16,9 @@ import EmployeeSignupPage from './pages/EmployeeSignupPage'
 import EmployeePortal from './pages/EmployeePortal'
 import AnnouncementsPage from './pages/AnnouncementsPage'
 import TodayOverviewPage from './pages/TodayOverviewPage'
+import WorkInstructionsPage from './pages/WorkInstructionsPage'
+import WorkInstructionEditorPage from './pages/WorkInstructionEditorPage'
+import WorkInstructionViewPage from './pages/WorkInstructionViewPage'
 import Layout from './components/Layout'
 
 function PrivateRoute({ children }) {
@@ -80,6 +83,10 @@ function AppRoutes() {
         <Route path="report" element={<ReportPage />} />
         <Route path="announcements" element={<AnnouncementsPage />} />
         <Route path="today-overview" element={<TodayOverviewPage />} />
+        <Route path="work-instructions" element={<WorkInstructionsPage />} />
+        <Route path="work-instructions/new" element={<WorkInstructionEditorPage />} />
+        <Route path="work-instructions/:id" element={<WorkInstructionViewPage />} />
+        <Route path="work-instructions/:id/edit" element={<WorkInstructionEditorPage />} />
       </Route>
     </Routes>
   )

@@ -1,0 +1,63 @@
+.container { max-width: 1100px; margin: 0 auto; }
+
+.header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; }
+.title { font-size: 32px; font-weight: 700; color: var(--text-primary); margin: 0 0 6px; }
+.subtitle { font-size: 14px; color: var(--text-secondary); margin: 0; }
+
+.addBtn {
+  padding: 11px 22px; background: var(--accent-primary); color: #111;
+  font-size: 14px; font-weight: 700; border: none; border-radius: 8px; cursor: pointer;
+  transition: background 0.2s; white-space: nowrap;
+}
+.addBtn:hover { background: var(--accent-secondary); }
+
+.filterRow { display: flex; gap: 12px; margin-bottom: 24px; }
+.search {
+  flex: 1; padding: 10px 14px; background: var(--bg-secondary);
+  border: 1px solid var(--border-color); border-radius: 8px;
+  color: var(--text-primary); font-size: 14px; font-family: inherit;
+}
+.search:focus { border-color: var(--accent-primary); outline: none; }
+.filterSelect {
+  padding: 10px 14px; background: var(--bg-secondary);
+  border: 1px solid var(--border-color); border-radius: 8px;
+  color: var(--text-primary); font-size: 14px; font-family: inherit; min-width: 200px;
+}
+
+.loading, .empty {
+  text-align: center; color: var(--text-secondary); padding: 60px 24px;
+  display: flex; flex-direction: column; align-items: center; gap: 16px; font-size: 15px;
+}
+
+.tableWrap { overflow-x: auto; border: 1px solid var(--border-color); border-radius: 12px; }
+.table { width: 100%; border-collapse: collapse; }
+.table thead tr { background: var(--bg-secondary); }
+.table th {
+  padding: 13px 16px; text-align: left; font-size: 12px; font-weight: 700;
+  color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border-color);
+}
+.row { cursor: pointer; transition: background 0.15s; }
+.row:hover { background: var(--hover-bg); }
+.table td { padding: 14px 16px; font-size: 14px; color: var(--text-primary); border-bottom: 1px solid var(--border-color); }
+.table tbody tr:last-child td { border-bottom: none; }
+
+.docNo { font-weight: 700; color: var(--accent-primary); font-family: monospace; font-size: 13px; }
+.wiTitle { font-weight: 600; }
+
+.statusBadge { padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+.published { background: rgba(76,175,80,0.15); color: #4caf50; }
+.draft { background: rgba(255,152,0,0.15); color: #ff9800; }
+
+.actions { display: flex; gap: 8px; }
+.editBtn {
+  padding: 5px 12px; background: transparent; border: 1px solid var(--border-color);
+  border-radius: 6px; color: var(--text-secondary); font-size: 12px; font-weight: 600; cursor: pointer;
+  transition: all 0.15s;
+}
+.editBtn:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+.deleteBtn {
+  padding: 5px 12px; background: transparent; border: 1px solid var(--error);
+  border-radius: 6px; color: var(--error); font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.deleteBtn:hover { background: rgba(255,68,68,0.1); }

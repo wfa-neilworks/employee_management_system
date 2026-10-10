@@ -1,0 +1,139 @@
+.container { max-width: 900px; margin: 0 auto; padding-bottom: 60px; }
+.loading { text-align: center; color: var(--text-secondary); padding: 60px; }
+
+.pageHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.backBtn {
+  display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px 9px 12px;
+  background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 10px;
+  color: var(--text-primary); font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.backBtn:hover { border-color: var(--accent-primary); }
+.headerActions { display: flex; gap: 10px; }
+.assignBtn {
+  padding: 9px 18px; background: var(--accent-primary); color: #111;
+  border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.editBtn {
+  padding: 9px 18px; background: transparent; border: 1px solid var(--border-color);
+  border-radius: 8px; color: var(--text-secondary); font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.editBtn:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+
+/* Assign panel */
+.assignPanel {
+  background: var(--bg-secondary); border: 1px solid var(--border-color);
+  border-radius: 12px; padding: 20px; margin-bottom: 24px;
+}
+.assignTitle { font-size: 15px; font-weight: 700; color: var(--text-primary); margin: 0 0 14px; }
+.assignSearch {
+  width: 100%; padding: 10px 14px; background: var(--bg-primary);
+  border: 1px solid var(--border-color); border-radius: 8px;
+  color: var(--text-primary); font-size: 14px; font-family: inherit;
+  box-sizing: border-box; margin-bottom: 12px;
+}
+.assignSearch:focus { border-color: var(--accent-primary); outline: none; }
+.assignList { display: flex; flex-direction: column; gap: 6px; max-height: 280px; overflow-y: auto; }
+.assignEmpty { font-size: 14px; color: var(--text-secondary); margin: 0; }
+.assignEmpBtn {
+  display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+  background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px;
+  cursor: pointer; text-align: left; transition: border-color 0.15s;
+}
+.assignEmpBtn:hover { border-color: var(--accent-primary); }
+.assignEmpName { font-size: 14px; font-weight: 600; color: var(--text-primary); flex: 1; }
+.assignEmpEng { font-size: 12px; color: var(--text-secondary); }
+.assignEmpDept { font-size: 11px; color: var(--text-secondary); margin-left: auto; }
+
+/* Document */
+.document {
+  background: #ffffff; color: #000000;
+  border: 1px solid #cccccc; border-radius: 4px;
+  padding: 32px; font-family: Arial, sans-serif; font-size: 13px;
+  margin-bottom: 28px;
+}
+
+.docHeader { display: flex; gap: 16px; border: 1px solid #000; margin-bottom: 0; }
+.docHeaderLeft { padding: 8px; border-right: 1px solid #000; display: flex; align-items: center; }
+.docLogo { height: 60px; width: auto; }
+.docHeaderRight { flex: 1; padding: 0; }
+.docHeaderTitle {
+  font-weight: 700; font-size: 13px; text-align: center;
+  padding: 6px; border-bottom: 1px solid #000;
+}
+.docHeaderRow { display: flex; padding: 5px 8px; border-bottom: 1px solid #000; font-size: 12px; }
+.docHeaderRow:last-child { border-bottom: none; }
+.docHeaderKey { font-weight: 700; min-width: 110px; }
+
+.titleTable { width: 100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 0; }
+.titleTable td { padding: 7px 10px; border: 1px solid #000; font-size: 13px; }
+.titleKey { font-weight: 700; background: #1e3a5f; color: #ffffff; width: 80px; }
+.titleVal { font-weight: 700; background: #1e3a5f; color: #ffffff; }
+
+.stepsTable { width: 100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 0; }
+.stepsThLeft, .stepsThRight {
+  padding: 8px 10px; background: #1e3a5f; color: #ffffff;
+  font-weight: 700; font-size: 13px; border: 1px solid #000; width: 50%;
+}
+.stepsTdLeft, .stepsTdRight {
+  padding: 8px 10px; border: 1px solid #000; vertical-align: top;
+  font-size: 13px; line-height: 1.5;
+}
+.criteriaText { margin: 0 0 8px; }
+.criteriaImg { max-width: 100%; max-height: 220px; object-fit: contain; display: block; }
+
+.keyPoints { border: 1px solid #000; border-top: none; padding: 14px 16px; }
+.keyPointsTitle { font-weight: 700; font-size: 13px; text-align: center; margin-bottom: 10px; }
+.keyPointsList { margin: 0; padding-left: 24px; }
+.keyPointsList li { margin-bottom: 4px; font-size: 13px; }
+
+/* Cert */
+.cert { border: 1px solid #000; border-top: none; padding: 16px; }
+.certTitle { font-weight: 700; font-size: 13px; margin-bottom: 14px; }
+.certBlock { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #ddd; }
+.certBlock:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.certNoAssign { color: #888; font-size: 13px; margin: 0; }
+.certSupervisorLine { font-size: 13px; line-height: 2; margin-bottom: 10px; }
+.certDots { border-bottom: 1px solid #000; display: inline-block; min-width: 120px; }
+.certRow { display: flex; gap: 24px; margin-bottom: 10px; }
+.certField { display: flex; align-items: center; gap: 10px; flex: 1; }
+.certFieldLabel { font-weight: 700; font-size: 13px; white-space: nowrap; }
+.certFieldLine { flex: 1; border-bottom: 1px solid #000; min-width: 80px; }
+.certFieldValue { font-size: 13px; }
+.certCandidateLine { font-size: 13px; line-height: 1.6; margin-bottom: 10px; }
+.certUnderline { border-bottom: 1px solid #000; }
+.certSigned { color: #4caf50; font-weight: 700; font-size: 13px; }
+
+.signBtn {
+  padding: 5px 14px; background: var(--accent-primary); color: #111;
+  border: none; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.removeAssignBtn {
+  padding: 4px 12px; background: transparent; border: 1px solid #cc4444;
+  border-radius: 6px; color: #cc4444; font-size: 11px; font-weight: 600; cursor: pointer; margin-top: 6px;
+}
+
+.docFooter {
+  border: 1px solid #000; border-top: none; padding: 8px 12px;
+  display: flex; justify-content: space-between; align-items: flex-end; font-size: 11px;
+}
+.footerLeft { display: flex; flex-direction: column; gap: 2px; }
+.footerCenter { display: flex; flex-direction: column; gap: 2px; text-align: center; }
+.footerRight { font-size: 11px; }
+
+/* Signature summary */
+.sigSummary {
+  background: var(--bg-secondary); border: 1px solid var(--border-color);
+  border-radius: 12px; padding: 20px;
+}
+.sigSummaryTitle { font-size: 15px; font-weight: 700; color: var(--text-primary); margin: 0 0 4px; }
+.sigSummaryCount { font-size: 13px; color: var(--text-secondary); margin: 0 0 14px; }
+.sigList { display: flex; flex-direction: column; gap: 8px; }
+.sigRow {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 14px; border: 1px solid var(--border-color); border-radius: 8px;
+  background: var(--bg-primary);
+}
+.sigRowSigned { border-color: #4caf50; }
+.sigName { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.sigStatus { font-size: 12px; color: #4caf50; font-weight: 600; }
+.sigPending { font-size: 12px; color: #ff9800; font-weight: 600; }

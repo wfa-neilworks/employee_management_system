@@ -1,0 +1,128 @@
+.container { max-width: 960px; margin: 0 auto; padding-bottom: 60px; }
+
+.pageHeader { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.title { font-size: 28px; font-weight: 700; color: var(--text-primary); margin: 0 0 4px; }
+.docPreview { font-size: 14px; color: var(--text-secondary); margin: 0; }
+.headerActions { display: flex; gap: 10px; align-items: center; }
+
+.error {
+  padding: 12px 16px; background: rgba(255,68,68,0.1); border: 1px solid var(--error);
+  border-radius: 8px; color: var(--error); font-size: 14px; margin-bottom: 20px;
+}
+
+.section {
+  background: var(--bg-secondary); border: 1px solid var(--border-color);
+  border-radius: 14px; padding: 24px; margin-bottom: 20px;
+}
+.sectionTitle { font-size: 16px; font-weight: 700; color: var(--text-primary); margin: 0 0 20px; }
+.sectionHeaderRow { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.sectionHeaderRow .sectionTitle { margin: 0; }
+
+.fieldGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.fieldGroup { display: flex; flex-direction: column; gap: 7px; }
+.label { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+.hint { font-size: 12px; color: var(--accent-primary); font-weight: 600; }
+.input, .select, .textarea {
+  padding: 11px 14px; background: var(--bg-primary); border: 1px solid var(--border-color);
+  border-radius: 8px; color: var(--text-primary); font-size: 14px; font-family: inherit;
+}
+.input:focus, .select:focus, .textarea:focus { border-color: var(--accent-primary); outline: none; }
+.textarea { resize: vertical; line-height: 1.6; }
+.select { appearance: none; }
+
+/* Steps */
+.stepsHeader {
+  display: grid; grid-template-columns: 40px 1fr 1fr; gap: 0;
+  background: var(--bg-primary); border: 1px solid var(--border-color);
+  border-radius: 8px 8px 0 0; padding: 10px 14px;
+  font-size: 12px; font-weight: 700; color: var(--text-secondary);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.stepsCol { padding-left: 4px; }
+
+.stepRow {
+  display: grid; grid-template-columns: 40px 1fr 1fr; gap: 0;
+  border: 1px solid var(--border-color); border-top: none;
+  background: var(--bg-primary);
+}
+.stepRow:last-of-type { border-radius: 0 0 8px 8px; }
+
+.stepControls {
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+  gap: 4px; padding: 10px 6px; border-right: 1px solid var(--border-color);
+}
+.stepNum { font-size: 11px; font-weight: 700; color: var(--text-secondary); }
+.moveBtn {
+  background: transparent; border: 1px solid var(--border-color); border-radius: 4px;
+  color: var(--text-secondary); font-size: 9px; width: 22px; height: 22px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.moveBtn:hover:not(:disabled) { border-color: var(--accent-primary); color: var(--accent-primary); }
+.moveBtn:disabled { opacity: 0.25; cursor: default; }
+.removeBtn {
+  background: transparent; border: 1px solid var(--border-color); border-radius: 4px;
+  color: var(--error); font-size: 9px; width: 22px; height: 22px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; margin-top: 4px;
+}
+.removeBtn:disabled { opacity: 0.25; cursor: default; }
+
+.stepLeft { padding: 10px; border-right: 1px solid var(--border-color); }
+.stepRight { padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.stepTextarea {
+  width: 100%; padding: 8px 10px; background: var(--bg-secondary);
+  border: 1px solid var(--border-color); border-radius: 6px;
+  color: var(--text-primary); font-size: 13px; font-family: inherit;
+  resize: vertical; line-height: 1.5; box-sizing: border-box;
+}
+.stepTextarea:focus { border-color: var(--accent-primary); outline: none; }
+
+.criteriaImg { display: flex; flex-direction: column; gap: 6px; }
+.imgUploading { font-size: 12px; color: var(--text-secondary); }
+.imgPreviewWrap { display: flex; flex-direction: column; gap: 6px; }
+.imgPreview { width: 100%; max-height: 160px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border-color); }
+.imgRemoveBtn, .imgAddBtn {
+  align-self: flex-start; padding: 5px 12px; border-radius: 6px;
+  font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+}
+.imgAddBtn {
+  background: transparent; border: 1px dashed var(--border-color); color: var(--text-secondary);
+}
+.imgAddBtn:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+.imgRemoveBtn {
+  background: transparent; border: 1px solid var(--error); color: var(--error);
+}
+.imgRemoveBtn:hover { background: rgba(255,68,68,0.1); }
+.imgError { font-size: 12px; color: var(--error); }
+
+/* Key points */
+.keyPointList { display: flex; flex-direction: column; gap: 8px; }
+.keyPointRow { display: flex; align-items: center; gap: 10px; }
+.bullet { font-size: 18px; color: var(--text-secondary); flex-shrink: 0; }
+.keyPointInput {
+  flex: 1; padding: 9px 12px; background: var(--bg-primary);
+  border: 1px solid var(--border-color); border-radius: 8px;
+  color: var(--text-primary); font-size: 14px; font-family: inherit;
+}
+.keyPointInput:focus { border-color: var(--accent-primary); outline: none; }
+
+.addRowBtn {
+  padding: 7px 16px; background: transparent; border: 1px dashed var(--border-color);
+  border-radius: 8px; color: var(--text-secondary); font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.addRowBtn:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+
+/* Bottom actions */
+.bottomActions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 8px; }
+.cancelBtn {
+  padding: 11px 20px; background: transparent; border: 1px solid var(--border-color);
+  border-radius: 8px; color: var(--text-secondary); font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.draftBtn {
+  padding: 11px 20px; background: transparent; border: 1px solid var(--accent-primary);
+  border-radius: 8px; color: var(--accent-primary); font-size: 14px; font-weight: 700; cursor: pointer;
+}
+.publishBtn {
+  padding: 11px 24px; background: var(--accent-primary); color: #111;
+  border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer;
+}
+.publishBtn:disabled, .draftBtn:disabled { opacity: 0.5; cursor: not-allowed; }
