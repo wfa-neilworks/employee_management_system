@@ -150,6 +150,12 @@ export default function WorkInstructionViewPage() {
               <span className={styles.docHeaderKey}>Department:</span>
               <span>{wi.departments?.display_name || '—'}</span>
             </div>
+            {wi.location && (
+              <div className={styles.docHeaderRow}>
+                <span className={styles.docHeaderKey}>Location/Section:</span>
+                <span>{wi.location}</span>
+              </div>
+            )}
             <div className={styles.docHeaderRow}>
               <span className={styles.docHeaderKey}>Document No:</span>
               <span>{wi.doc_number}</span>

@@ -6,9 +6,9 @@ import styles from './WorkInstructionEditorPage.module.css'
 
 const MAX_IMG_SIZE = 5 * 1024 * 1024
 
-// Extract department code from display name: "Ancillary Areas – Runner Room" → "AARR"
-function deptCode(displayName) {
-  return displayName
+// Extract code from location/section name: "Kill Floor – Section A" → "KFSA"
+function locationCode(name) {
+  return name
     .replace(/[–—-]/g, ' ')
     .split(/\s+/)
     .filter(w => w.length > 0 && /[a-zA-Z]/.test(w))
@@ -29,6 +29,7 @@ export default function WorkInstructionEditorPage() {
 
   const [form, setForm] = useState({
     department_id: '',
+    location: '',
     title: '',
     aim: '',
     ppe: '',
@@ -63,6 +64,7 @@ export default function WorkInstructionEditorPage() {
 
     setForm({
       department_id: wi.department_id || '',
+      location: wi.location || '',
       title: wi.title,
       aim: wi.aim,
       ppe: wi.ppe,
@@ -92,13 +94,11 @@ export default function WorkInstructionEditorPage() {
     }
   }
 
-  // Update doc number preview when dept changes
+  // Update doc number preview when location changes
   useEffect(() => {
-    if (!form.department_id || !isNew) return
-    const dept = departments.find(d => d.id === form.department_id)
-    if (!dept) return
-    const code = deptCode(dept.display_name)
-    // Count existing docs for this dept to get next number
+    if (!form.location.trim() || !isNew) return
+    const code = locationCode(form.location.trim())
+    if (!code) return
     supabase
       .from('work_instructions')
       .select('id', { count: 'exact', head: true })
@@ -107,7 +107,7 @@ export default function WorkInstructionEditorPage() {
         const next = String((count || 0) + 1).padStart(2, '0')
         setDocNumberPreview(`${code}-${next}`)
       })
-  }, [form.department_id, departments])
+  }, [form.location])
 
   // --- Step helpers ---
   const addStep = () => setSteps(p => [...p, { step_text: '', criteria_text: '', criteria_image_url: null, uploading: false, imgError: '' }])
@@ -153,6 +153,7 @@ export default function WorkInstructionEditorPage() {
   const handleSave = async (statusOverride) => {
     const saveStatus = statusOverride || form.status
     if (!form.department_id) { setError('Select a department.'); return }
+    if (!form.location.trim()) { setError('Location/Section is required.'); return }
     if (!form.title.trim()) { setError('Title is required.'); return }
     if (!form.aim.trim()) { setError('Aim is required.'); return }
     if (!form.ppe.trim()) { setError('PPE is required.'); return }
@@ -162,8 +163,7 @@ export default function WorkInstructionEditorPage() {
     setError('')
     setSaving(true)
 
-    const dept = departments.find(d => d.id === form.department_id)
-    const code = deptCode(dept.display_name)
+    const code = locationCode(form.location.trim())
 
     let wiId = id
     let docNumber = docNumberPreview
@@ -182,6 +182,7 @@ export default function WorkInstructionEditorPage() {
           doc_number: docNumber,
           dept_code: code,
           department_id: form.department_id,
+          location: form.location.trim(),
           title: form.title.trim(),
           aim: form.aim.trim(),
           ppe: form.ppe.trim(),
@@ -202,6 +203,7 @@ export default function WorkInstructionEditorPage() {
         .from('work_instructions')
         .update({
           department_id: form.department_id,
+          location: form.location.trim(),
           title: form.title.trim(),
           aim: form.aim.trim(),
           ppe: form.ppe.trim(),
@@ -233,8 +235,6 @@ export default function WorkInstructionEditorPage() {
     setSaving(false)
     navigate(`/work-instructions/${wiId}`)
   }
-
-  const dept = departments.find(d => d.id === form.department_id)
 
   return (
     <div className={styles.container}>
@@ -271,7 +271,19 @@ export default function WorkInstructionEditorPage() {
               <option value="">Select department...</option>
               {departments.map(d => <option key={d.id} value={d.id}>{d.display_name}</option>)}
             </select>
-            {dept && <span className={styles.hint}>Code: {deptCode(dept.display_name)}</span>}
+          </div>
+          <div className={styles.fieldGroup}>
+            <label className={styles.label}>Location / Section *</label>
+            <input
+              className={styles.input}
+              value={form.location}
+              placeholder="e.g. Kill Floor"
+              onChange={e => setForm(p => ({ ...p, location: e.target.value }))}
+              disabled={!isNew}
+            />
+            {form.location.trim() && (
+              <span className={styles.hint}>Code: {locationCode(form.location.trim())}</span>
+            )}
           </div>
           <div className={styles.fieldGroup}>
             <label className={styles.label}>Issue No.</label>

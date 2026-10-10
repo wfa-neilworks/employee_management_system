@@ -689,7 +689,7 @@ function WorkInstructionTab({ employeeId, employee }) {
     const fetch = async () => {
       const { data } = await supabase
         .from('wi_assignments')
-        .select('*, work_instructions(id, doc_number, title, dept_code, status, departments(display_name))')
+        .select('*, work_instructions(id, doc_number, title, dept_code, location, status, aim, ppe, key_points, departments(display_name))')
         .eq('employee_id', employeeId)
         .order('assigned_at', { ascending: false })
       setWis((data || []).filter(a => a.work_instructions?.status === 'published'))
@@ -716,7 +716,7 @@ function WorkInstructionTab({ employeeId, employee }) {
     if (!employeeId) return
     const { data } = await supabase
       .from('wi_assignments')
-      .select('*, work_instructions(id, doc_number, title, dept_code, status, departments(display_name))')
+      .select('*, work_instructions(id, doc_number, title, dept_code, location, status, aim, ppe, key_points, departments(display_name))')
       .eq('employee_id', employeeId)
       .order('assigned_at', { ascending: false })
     const updated = (data || []).filter(a => a.work_instructions?.status === 'published')
@@ -762,6 +762,12 @@ function WorkInstructionTab({ employeeId, employee }) {
                     <span className={styles.wiDocHeaderKey}>Department:</span>
                     <span>{selected.departments?.display_name || '—'}</span>
                   </div>
+                  {selected.location && (
+                    <div className={styles.wiDocHeaderRow}>
+                      <span className={styles.wiDocHeaderKey}>Location/Section:</span>
+                      <span>{selected.location}</span>
+                    </div>
+                  )}
                   <div className={styles.wiDocHeaderRow}>
                     <span className={styles.wiDocHeaderKey}>Document No:</span>
                     <span>{selected.doc_number}</span>
