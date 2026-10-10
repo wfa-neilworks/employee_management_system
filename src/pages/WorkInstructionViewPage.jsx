@@ -142,7 +142,7 @@ export default function WorkInstructionViewPage() {
         {/* Company header */}
         <div className={styles.docHeader}>
           <div className={styles.docHeaderLeft}>
-            <img src="/noellogo.png" alt="NOEL" className={styles.docLogo} />
+            <img src="/WFA_LOGO.png" alt="WFA" className={styles.docLogo} />
           </div>
           <div className={styles.docHeaderRight}>
             <div className={styles.docHeaderTitle}>Woodward Foods Australia – Est# 2306</div>
@@ -277,6 +277,11 @@ export default function WorkInstructionViewPage() {
             <div>Date of Revision: &nbsp; {fmt(wi.revision_date)}</div>
           </div>
           <div className={styles.footerRight}>Page 1 of 1</div>
+        </div>
+
+        {/* Bottom logo */}
+        <div className={styles.docBottomLogo}>
+          <img src="/noellogo.png" alt="NOEL" className={styles.bottomLogoImg} />
         </div>
       </div>
 

@@ -754,7 +754,7 @@ function WorkInstructionTab({ employeeId, employee }) {
               {/* Header */}
               <div className={styles.wiDocHeader}>
                 <div className={styles.wiDocHeaderLeft}>
-                  <img src="/noellogo.png" alt="NOEL" className={styles.wiDocLogo} />
+                  <img src="/WFA_LOGO.png" alt="WFA" className={styles.wiDocLogo} />
                 </div>
                 <div className={styles.wiDocHeaderRight}>
                   <div className={styles.wiDocHeaderTitle}>Woodward Foods Australia – Est# 2306</div>
@@ -840,6 +840,11 @@ function WorkInstructionTab({ employeeId, employee }) {
                     <span>{fmt(assignment.signed_at)}</span>
                   </div>
                 )}
+              </div>
+
+              {/* Bottom logo */}
+              <div className={styles.wiDocBottomLogo}>
+                <img src="/noellogo.png" alt="NOEL" className={styles.wiBottomLogoImg} />
               </div>
             </div>
           </div>
