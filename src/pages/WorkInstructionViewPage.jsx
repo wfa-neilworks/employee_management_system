@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
@@ -75,6 +75,141 @@ export default function WorkInstructionViewPage() {
     fetchAll()
   }
 
+  const buildPrintHTML = (filteredAssignments) => {
+    const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'
+
+    const certBlocks = filteredAssignments.map(a => `
+      <div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #ddd;">
+        <div style="font-size:13px;line-height:2;margin-bottom:10px;">
+          <span style="border-bottom:1px solid #000;display:inline-block;min-width:120px;">${a.employees?.name || ''}</span>
+          has been trained in this function by
+          <span style="border-bottom:1px solid #000;display:inline-block;min-width:120px;">&nbsp;</span>
+          and has been assessed as being competent to perform this function.
+        </div>
+        <div style="display:flex;gap:24px;margin-bottom:10px;">
+          <div style="display:flex;align-items:center;gap:10px;flex:1;">
+            <span style="font-weight:700;font-size:13px;white-space:nowrap;">Signed (Supervisor):</span>
+            <span style="flex:1;border-bottom:1px solid #000;min-width:80px;display:inline-block;">&nbsp;</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;flex:1;">
+            <span style="font-weight:700;font-size:13px;">Date:</span>
+            <span style="font-size:13px;">${a.signed_at ? fmtDate(a.signed_at) : ''}</span>
+          </div>
+        </div>
+        <div style="font-size:13px;line-height:1.6;margin-bottom:10px;">
+          I, <span style="border-bottom:1px solid #000;">${a.employees?.name || ''}${a.employees?.english_name ? ` (${a.employees.english_name})` : ''}</span>,
+          have read and understand, these are my work instructions. I agree that I am competent to perform this function.
+        </div>
+        <div style="display:flex;gap:24px;margin-bottom:6px;">
+          <div style="display:flex;align-items:center;gap:10px;flex:1;">
+            <span style="font-weight:700;font-size:13px;white-space:nowrap;">Signed (Candidate):</span>
+            ${a.signature_url
+              ? `<img src="${a.signature_url}" style="height:48px;width:auto;object-fit:contain;border-bottom:1px solid #000;" />`
+              : `<span style="flex:1;border-bottom:1px solid #000;min-width:80px;display:inline-block;">&nbsp;</span>`
+            }
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;flex:1;">
+            <span style="font-weight:700;font-size:13px;">Date:</span>
+            <span style="font-size:13px;">${a.signed_at ? fmtDate(a.signed_at) : ''}</span>
+          </div>
+        </div>
+      </div>
+    `).join('')
+
+    const keyPointsHTML = wi.key_points?.length > 0 ? `
+      <div style="border:1px solid #000;border-top:none;padding:14px 16px;">
+        <div style="font-weight:700;font-size:13px;text-align:center;margin-bottom:10px;">KEY POINTS</div>
+        <ul style="margin:0;padding-left:24px;">
+          ${wi.key_points.map(kp => `<li style="margin-bottom:4px;font-size:13px;">${kp.text}</li>`).join('')}
+        </ul>
+      </div>
+    ` : ''
+
+    const stepsHTML = steps.map(s => `
+      <tr>
+        <td style="padding:8px 10px;border:1px solid #000;vertical-align:top;font-size:13px;line-height:1.5;">${s.step_text}</td>
+        <td style="padding:8px 10px;border:1px solid #000;vertical-align:top;font-size:13px;line-height:1.5;">
+          ${s.criteria_text ? `<p style="margin:0 0 8px;">${s.criteria_text}</p>` : ''}
+          ${s.criteria_image_url ? `<img src="${s.criteria_image_url}" style="max-width:100%;max-height:200px;object-fit:contain;display:block;" />` : ''}
+        </td>
+      </tr>
+    `).join('')
+
+    return `<!DOCTYPE html>
+<html>
+<head>
+  <title>${wi.doc_number} - ${wi.title}</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 20px; font-family: Arial, sans-serif; font-size: 13px; color: #000; }
+    @media print { body { margin: 10px; } }
+    table { border-collapse: collapse; }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div style="display:flex;gap:16px;border:1px solid #000;margin-bottom:0;">
+    <div style="padding:8px;border-right:1px solid #000;display:flex;align-items:center;">
+      <img src="${window.location.origin}/WFA_LOGO.png" style="height:60px;width:auto;" />
+    </div>
+    <div style="flex:1;padding:0;">
+      <div style="font-weight:700;font-size:13px;text-align:center;padding:6px;border-bottom:1px solid #000;">Woodward Foods Australia – Est# 2306</div>
+      <div style="display:flex;padding:5px 8px;border-bottom:1px solid #000;font-size:12px;"><span style="font-weight:700;min-width:110px;">Department:</span><span>${wi.departments?.display_name || '—'}</span></div>
+      ${wi.location ? `<div style="display:flex;padding:5px 8px;border-bottom:1px solid #000;font-size:12px;"><span style="font-weight:700;min-width:110px;">Location/Section:</span><span>${wi.location}</span></div>` : ''}
+      <div style="display:flex;padding:5px 8px;font-size:12px;"><span style="font-weight:700;min-width:110px;">Document No:</span><span>${wi.doc_number}</span></div>
+    </div>
+  </div>
+  <!-- Title table -->
+  <table style="width:100%;border:1px solid #000;margin-bottom:0;">
+    <tr><td style="padding:7px 10px;border:1px solid #000;font-weight:700;background:#1e3a5f;color:#fff;width:80px;">Title:</td><td style="padding:7px 10px;border:1px solid #000;font-weight:700;background:#1e3a5f;color:#fff;">${wi.title}</td></tr>
+    <tr><td style="padding:7px 10px;border:1px solid #000;font-weight:700;background:#1e3a5f;color:#fff;">Aim:</td><td style="padding:7px 10px;border:1px solid #000;">${wi.aim}</td></tr>
+    <tr><td style="padding:7px 10px;border:1px solid #000;font-weight:700;background:#1e3a5f;color:#fff;">PPE:</td><td style="padding:7px 10px;border:1px solid #000;">${wi.ppe}</td></tr>
+  </table>
+  <!-- Steps -->
+  <table style="width:100%;border:1px solid #000;margin-bottom:0;">
+    <thead>
+      <tr>
+        <th style="padding:8px 10px;background:#1e3a5f;color:#fff;font-weight:700;font-size:13px;border:1px solid #000;width:50%;text-align:left;">Steps</th>
+        <th style="padding:8px 10px;background:#1e3a5f;color:#fff;font-weight:700;font-size:13px;border:1px solid #000;width:50%;text-align:left;">Performance Criteria</th>
+      </tr>
+    </thead>
+    <tbody>${stepsHTML}</tbody>
+  </table>
+  ${keyPointsHTML}
+  <!-- Competency Certificate -->
+  <div style="border:1px solid #000;border-top:none;padding:16px;">
+    <div style="font-weight:700;font-size:13px;margin-bottom:14px;">COMPETENCY CERTIFICATE</div>
+    ${certBlocks}
+  </div>
+  <!-- Footer -->
+  <div style="border:1px solid #000;border-top:none;padding:8px 12px;display:flex;justify-content:space-between;align-items:flex-end;font-size:11px;">
+    <div><div>Woodward Foods Australia</div><div>Authorized By: ${wi.authorized_by}</div></div>
+    <div style="text-align:center;"><div>Issue No: ${wi.issue_no}</div><div>Date of Revision: ${fmtDate(wi.revision_date)}</div></div>
+    <div>Page 1 of 1</div>
+  </div>
+  <!-- Stamp -->
+  <div style="display:flex;justify-content:center;padding:10px 0 0;">
+    <img src="${window.location.origin}/noel-logo.png" style="height:40px;width:auto;object-fit:contain;opacity:0.85;" />
+  </div>
+  <script>window.onload = function() { window.print(); window.onafterprint = function() { window.close(); }; }</script>
+</body>
+</html>`
+  }
+
+  const handlePrintAll = () => {
+    const html = buildPrintHTML(assignments)
+    const w = window.open('', '_blank')
+    w.document.write(html)
+    w.document.close()
+  }
+
+  const handlePrintEmployee = (assignment) => {
+    const html = buildPrintHTML([assignment])
+    const w = window.open('', '_blank')
+    w.document.write(html)
+    w.document.close()
+  }
+
   const filteredEmployees = employees.filter(e => {
     const q = assignSearch.toLowerCase()
     if (!q) return true
@@ -109,6 +244,13 @@ export default function WorkInstructionViewPage() {
               </button>
             </>
           )}
+          <button className={styles.printBtn} onClick={handlePrintAll}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+              <rect x="6" y="14" width="12" height="8"/>
+            </svg>
+            Print
+          </button>
         </div>
       </div>
 
@@ -294,10 +436,18 @@ export default function WorkInstructionViewPage() {
             {assignments.map(a => (
               <div key={a.id} className={`${styles.sigRow} ${a.signed_at ? styles.sigRowSigned : ''}`}>
                 <span className={styles.sigName}>{a.employees?.name}</span>
-                {a.signed_at
-                  ? <span className={styles.sigStatus}>Signed {fmt(a.signed_at)}</span>
-                  : <span className={styles.sigPending}>Pending</span>
-                }
+                <div className={styles.sigRowRight}>
+                  {a.signed_at
+                    ? <span className={styles.sigStatus}>Signed {fmt(a.signed_at)}</span>
+                    : <span className={styles.sigPending}>Pending</span>
+                  }
+                  <button className={styles.sigPrintBtn} onClick={() => handlePrintEmployee(a)} title="Print this employee's certificate">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                      <rect x="6" y="14" width="12" height="8"/>
+                    </svg>
+                  </button>
+                </div>
               </div>
             ))}
           </div>

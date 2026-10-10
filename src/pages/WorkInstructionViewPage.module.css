@@ -1,6 +1,7 @@
 .container { max-width: 900px; margin: 0 auto; padding-bottom: 60px; }
 .loading { text-align: center; color: var(--text-secondary); padding: 60px; }
 
+
 .pageHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
 .backBtn {
   display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px 9px 12px;
@@ -18,6 +19,12 @@
   border-radius: 8px; color: var(--text-secondary); font-size: 13px; font-weight: 600; cursor: pointer;
 }
 .editBtn:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+.printBtn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 18px; background: transparent; border: 1px solid var(--border-color);
+  border-radius: 8px; color: var(--text-secondary); font-size: 13px; font-weight: 600; cursor: pointer;
+}
+.printBtn:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
 
 /* Assign panel */
 .assignPanel {
@@ -139,5 +146,12 @@
 }
 .sigRowSigned { border-color: #4caf50; }
 .sigName { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.sigRowRight { display: flex; align-items: center; gap: 10px; }
 .sigStatus { font-size: 12px; color: #4caf50; font-weight: 600; }
 .sigPending { font-size: 12px; color: #ff9800; font-weight: 600; }
+.sigPrintBtn {
+  display: flex; align-items: center; justify-content: center;
+  padding: 5px 8px; background: transparent; border: 1px solid var(--border-color);
+  border-radius: 6px; color: var(--text-secondary); cursor: pointer;
+}
+.sigPrintBtn:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
