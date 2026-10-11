@@ -212,6 +212,37 @@
   color: var(--text-secondary);
 }
 
+/* Invite */
+.inviteBtn {
+  padding: 10px 20px; background: var(--accent-primary); color: #111;
+  border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer;
+  white-space: nowrap;
+}
+.inviteBtn:hover { background: var(--accent-secondary); }
+
+.invitePanel {
+  background: var(--bg-secondary); border: 1px solid var(--border-color);
+  border-radius: 12px; padding: 20px 24px; margin-bottom: 24px;
+}
+.invitePanelTitle { font-size: 15px; font-weight: 700; color: var(--text-primary); margin: 0 0 16px; }
+.inviteRow { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+.inviteField { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 200px; }
+.inviteLabel { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+.inviteInput, .inviteSelect {
+  padding: 10px 14px; background: var(--bg-primary); border: 1px solid var(--border-color);
+  border-radius: 8px; color: var(--text-primary); font-size: 14px; font-family: inherit;
+}
+.inviteInput:focus, .inviteSelect:focus { border-color: var(--accent-primary); outline: none; }
+.inviteSelect { appearance: none; min-width: 160px; flex: 0; }
+.inviteSendBtn {
+  padding: 10px 24px; background: var(--accent-primary); color: #111;
+  border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer;
+  white-space: nowrap; align-self: flex-end;
+}
+.inviteSendBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+.inviteError { font-size: 13px; color: var(--error); margin: 10px 0 0; }
+.inviteSuccess { font-size: 13px; color: #4caf50; font-weight: 600; margin: 10px 0 0; }
+
 @media (max-width: 768px) {
   .header {
     flex-direction: column;
