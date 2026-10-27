@@ -1095,3 +1095,335 @@
   border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer;
 }
 .sigSubmitBtn:disabled, .sigClearBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ─── Meat Order Tab ──────────────────────────────────────────────────────── */
+.meatSuccessBanner {
+  padding: 12px 16px;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid #10b981;
+  border-radius: 10px;
+  color: #10b981;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.meatCategoryList { display: flex; flex-direction: column; gap: 8px; }
+
+.meatCatBlock {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.meatCatHeader {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--bg-tertiary);
+  border: none;
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.meatCatName {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.meatCatRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+}
+
+.meatCatCount {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.meatProductList { display: flex; flex-direction: column; }
+
+.meatProductRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-color);
+  gap: 8px;
+  transition: background 0.15s;
+}
+
+.meatProductRow:last-child { border-bottom: none; }
+.meatProductInCart { background: rgba(212, 255, 0, 0.05); }
+
+.meatProductInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.meatProductCode {
+  font-size: 11px;
+  font-family: monospace;
+  color: var(--text-secondary);
+}
+
+.meatProductDesc {
+  font-size: 13px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.meatProductPrice {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-primary);
+}
+
+.meatQtyControl {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.meatQtyBtn {
+  width: 28px;
+  height: 28px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.meatQtyInput {
+  width: 52px;
+  padding: 4px 6px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 13px;
+  text-align: center;
+  -moz-appearance: textfield;
+}
+.meatQtyInput::-webkit-outer-spin-button,
+.meatQtyInput::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+.meatAddBtn {
+  padding: 6px 14px;
+  background: var(--accent-primary);
+  border: none;
+  border-radius: 7px;
+  color: #111;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* Floating cart bar */
+.meatCartBar {
+  position: fixed;
+  bottom: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 568px;
+  background: var(--accent-primary);
+  color: #111;
+  border-radius: 12px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+  z-index: 100;
+}
+
+.meatCartBarLabel { font-size: 14px; font-weight: 700; flex: 1; }
+.meatCartBarTotal { font-size: 14px; font-weight: 700; }
+.meatCartBarArrow { font-size: 13px; opacity: 0.8; }
+
+/* Cart panel overlay */
+.meatCartOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+}
+
+.meatCartPanel {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  background: var(--bg-secondary);
+  border-radius: 20px 20px 0 0;
+  padding: 20px 16px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.meatCartHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.meatCartTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.meatCartClose {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  padding: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.meatCartItems {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.meatCartItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 10px 12px;
+  gap: 8px;
+}
+
+.meatCartItemInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.meatCartItemCode { font-size: 11px; font-family: monospace; color: var(--text-secondary); }
+.meatCartItemDesc { font-size: 13px; font-weight: 600; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.meatCartItemSub { font-size: 12px; color: var(--text-secondary); }
+
+.meatCartFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border-color);
+}
+
+.meatCartTotal {
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.meatCartSubmitBtn {
+  padding: 12px 24px;
+  background: var(--accent-primary);
+  border: none;
+  border-radius: 10px;
+  color: #111;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Past orders */
+.meatPastOrders { display: flex; flex-direction: column; gap: 12px; }
+
+.meatPastCard {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.meatPastPlaced { border-color: #10b981; }
+
+.meatPastCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.meatPastDate { font-size: 13px; color: var(--text-secondary); }
+
+.meatPastStatus {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 10px;
+  text-transform: uppercase;
+}
+
+.meatPastStatusPending { background: rgba(255,170,0,0.15); color: var(--warning); }
+.meatPastStatusPlaced { background: rgba(16,185,129,0.15); color: #10b981; }
+
+.meatPastItemList { display: flex; flex-direction: column; }
+
+.meatPastItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 13px;
+}
+
+.meatPastItem:last-child { border-bottom: none; }
+
+.meatPastItemCode { font-family: monospace; font-size: 11px; color: var(--text-secondary); white-space: nowrap; }
+.meatPastItemDesc { flex: 1; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.meatPastItemQty { color: var(--text-secondary); white-space: nowrap; }
+.meatPastItemSub { font-weight: 600; color: var(--accent-primary); white-space: nowrap; }
+
+.meatPastCardFooter {
+  padding: 10px 14px;
+  background: var(--bg-tertiary);
+  border-top: 1px solid var(--border-color);
+}
+
+.meatPastTotal { font-size: 13px; font-weight: 700; color: var(--text-primary); }

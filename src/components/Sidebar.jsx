@@ -99,6 +99,14 @@ const IconWorkInstructions = () => (
   </svg>
 )
 
+const IconMeatOffer = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17.5 5.5a5 5 0 0 1 0 7.07L12 18l-5.5-5.43a5 5 0 0 1 7.07-7.07z"/>
+    <path d="M12 18v3"/>
+    <path d="M9 21h6"/>
+  </svg>
+)
+
 const IconTodayOverview = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -295,6 +303,18 @@ export default function Sidebar({ departments, isOpen }) {
           >
             <span className={styles.navIcon}><IconPresetData /></span>
             <span className={styles.navLabel}>PRESET DATA</span>
+          </NavLink>
+        )}
+
+        {hasPermission('manage_users') && (
+          <NavLink
+            to="/meat-offer"
+            className={({ isActive }) =>
+              `${styles.navItem} ${isActive ? styles.navItemActive : ''}`
+            }
+          >
+            <span className={styles.navIcon}><IconMeatOffer /></span>
+            <span className={styles.navLabel}>MEAT OFFER</span>
           </NavLink>
         )}
 

@@ -42,6 +42,14 @@ const IconWorkInstruction = () => (
   </svg>
 )
 
+const IconMeat = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M17.5 5.5a5 5 0 0 1 0 7.07L12 18l-5.5-5.43a5 5 0 0 1 7.07-7.07z"/>
+    <path d="M12 18v3"/>
+    <path d="M9 21h6"/>
+  </svg>
+)
+
 const IconBell = () => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -76,6 +84,7 @@ const NAV_TABS = [
   { key: 'leave', label: 'Leave', icon: IconLeave },
   { key: 'knife', label: 'Knife', icon: IconKnife },
   { key: 'wi', label: 'Work Inst.', icon: IconWorkInstruction },
+  { key: 'meat', label: 'Meat Order', icon: IconMeat },
 ]
 
 function ProfileTab({ employee, onSignOut }) {
@@ -900,6 +909,419 @@ function WorkInstructionTab({ employeeId, employee }) {
   )
 }
 
+// ─── Meat Order Signature Modal ────────────────────────────────────────────
+function MeatSigModal({ employee, cart, onClose, onSubmitted }) {
+  const canvasRef = useRef(null)
+  const padRef = useRef(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (!canvasRef.current) return
+    padRef.current = new SignaturePad(canvasRef.current, {
+      backgroundColor: 'rgb(255,255,255)',
+      penColor: 'rgb(0,0,0)',
+    })
+    const resizeCanvas = () => {
+      const canvas = canvasRef.current
+      if (!canvas) return
+      const ratio = Math.max(window.devicePixelRatio || 1, 1)
+      canvas.width = canvas.offsetWidth * ratio
+      canvas.height = canvas.offsetHeight * ratio
+      canvas.getContext('2d').scale(ratio, ratio)
+      padRef.current.clear()
+    }
+    resizeCanvas()
+    return () => { if (padRef.current) padRef.current.off() }
+  }, [])
+
+  const handleClear = () => padRef.current?.clear()
+
+  const handleSubmit = async () => {
+    if (!padRef.current || padRef.current.isEmpty()) { setError('Please draw your signature.'); return }
+    setSubmitting(true)
+    setError('')
+    try {
+      // Create order
+      const { data: order, error: orderErr } = await supabase
+        .from('meat_orders')
+        .insert({ employee_id: employee.id, status: 'pending' })
+        .select()
+        .single()
+      if (orderErr) throw orderErr
+
+      // Upload signature
+      const dataUrl = padRef.current.toDataURL('image/png')
+      const blob = await (await fetch(dataUrl)).blob()
+      const path = `signatures/${order.id}.png`
+      const { error: uploadErr } = await supabase.storage
+        .from('meat-signatures')
+        .upload(path, blob, { contentType: 'image/png', upsert: true })
+      if (uploadErr) throw uploadErr
+
+      const { data: { publicUrl } } = supabase.storage.from('meat-signatures').getPublicUrl(path)
+
+      // Update order with signature url
+      await supabase.from('meat_orders').update({ signature_url: publicUrl }).eq('id', order.id)
+
+      // Insert order items
+      const items = cart.map(item => ({
+        order_id: order.id,
+        product_code: item.product_code,
+        description: item.description,
+        price_per_kg: item.price_per_kg,
+        category: item.category,
+        quantity: item.quantity,
+      }))
+      const { error: itemsErr } = await supabase.from('meat_order_items').insert(items)
+      if (itemsErr) throw itemsErr
+
+      onSubmitted()
+    } catch (e) {
+      setError(e.message || 'Failed to submit order.')
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className={styles.sigModalOverlay}>
+      <div className={styles.sigModal}>
+        <div className={styles.sigModalHeader}>
+          <h3 className={styles.sigModalTitle}>Sign & Submit Order</h3>
+          <button className={styles.sigModalClose} onClick={onClose}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <p className={styles.sigModalText}>
+          I, <strong>{employee?.name}</strong>, confirm this is my meat order.
+        </p>
+        <div className={styles.sigCanvasWrap}>
+          <canvas ref={canvasRef} className={styles.sigCanvas} />
+          <span className={styles.sigCanvasHint}>Draw your signature above</span>
+        </div>
+        {error && <p className={styles.sigError}>{error}</p>}
+        <div className={styles.sigModalActions}>
+          <button className={styles.sigClearBtn} onClick={handleClear} disabled={submitting}>Clear</button>
+          <button className={styles.sigSubmitBtn} onClick={handleSubmit} disabled={submitting}>
+            {submitting ? 'Submitting...' : 'Confirm & Submit'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Order Meat Tab ─────────────────────────────────────────────────────────
+function OrderMeatTab({ employee }) {
+  const [products, setProducts] = useState([])
+  const [orders, setOrders] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [section, setSection] = useState('order') // 'order' | 'past'
+  const [search, setSearch] = useState('')
+  const [cart, setCart] = useState({}) // { productId: { ...product, quantity } }
+  const [showCart, setShowCart] = useState(false)
+  const [showSig, setShowSig] = useState(false)
+  const [submitSuccess, setSubmitSuccess] = useState(false)
+  const [collapsedCats, setCollapsedCats] = useState({})
+
+  useEffect(() => {
+    const load = async () => {
+      const [{ data: prods }, { data: ords }] = await Promise.all([
+        supabase.from('meat_products').select('*').order('category').order('product_code'),
+        employee?.id
+          ? supabase.from('meat_orders')
+              .select('*, meat_order_items(*)')
+              .eq('employee_id', employee.id)
+              .order('submitted_at', { ascending: false })
+          : { data: [] },
+      ])
+      setProducts(prods || [])
+      setOrders(ords || [])
+      setLoading(false)
+    }
+    load()
+  }, [employee?.id])
+
+  const toggleCat = (cat) => setCollapsedCats(prev => ({ ...prev, [cat]: !prev[cat] }))
+
+  const setQty = (product, qty) => {
+    if (qty <= 0) {
+      setCart(prev => { const n = { ...prev }; delete n[product.id]; return n })
+    } else {
+      setCart(prev => ({ ...prev, [product.id]: { ...product, quantity: qty } }))
+    }
+  }
+
+  const cartItems = Object.values(cart)
+  const cartTotal = cartItems.reduce((s, i) => s + i.price_per_kg * i.quantity, 0)
+  const cartCount = cartItems.length
+
+  const filtered = products.filter(p => {
+    if (!search) return true
+    const q = search.toLowerCase()
+    return p.product_code.toLowerCase().includes(q) || p.description.toLowerCase().includes(q)
+  })
+
+  const grouped = filtered.reduce((acc, p) => {
+    if (!acc[p.category]) acc[p.category] = []
+    acc[p.category].push(p)
+    return acc
+  }, {})
+
+  const fmtPrice = (p) => `$${Number(p).toFixed(2)}/kg`
+  const fmt = (d) => d ? new Date(d).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
+
+  const handleSubmitted = async () => {
+    setShowSig(false)
+    setSubmitSuccess(true)
+    setCart({})
+    setShowCart(false)
+    // Refresh orders
+    if (employee?.id) {
+      const { data } = await supabase
+        .from('meat_orders')
+        .select('*, meat_order_items(*)')
+        .eq('employee_id', employee.id)
+        .order('submitted_at', { ascending: false })
+      setOrders(data || [])
+    }
+    setSection('past')
+  }
+
+  if (loading) return <div className={styles.tabContent}><div className={styles.loading}>Loading...</div></div>
+
+  return (
+    <div className={styles.tabContent}>
+      {showSig && (
+        <MeatSigModal
+          employee={employee}
+          cart={cartItems}
+          onClose={() => setShowSig(false)}
+          onSubmitted={handleSubmitted}
+        />
+      )}
+
+      {/* Section tabs */}
+      <div className={styles.knifeSectionTabs}>
+        <button
+          className={`${styles.knifeSectionTab} ${section === 'order' ? styles.knifeSectionTabActive : ''}`}
+          onClick={() => { setSection('order'); setSubmitSuccess(false) }}
+        >
+          Order
+        </button>
+        <button
+          className={`${styles.knifeSectionTab} ${section === 'past' ? styles.knifeSectionTabActive : ''}`}
+          onClick={() => setSection('past')}
+        >
+          My Orders
+        </button>
+      </div>
+
+      {section === 'order' && (
+        <>
+          {submitSuccess && (
+            <div className={styles.meatSuccessBanner}>
+              Order submitted successfully!
+            </div>
+          )}
+
+          {products.length === 0 ? (
+            <div className={styles.comingSoon}>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" style={{color:'var(--text-secondary)'}}>
+                <path d="M17.5 5.5a5 5 0 0 1 0 7.07L12 18l-5.5-5.43a5 5 0 0 1 7.07-7.07z"/>
+                <path d="M12 18v3M9 21h6"/>
+              </svg>
+              <h3 className={styles.comingSoonTitle}>No Products Available</h3>
+              <p className={styles.comingSoonText}>The meat offer list has not been uploaded yet.</p>
+            </div>
+          ) : (
+            <>
+              {/* Search */}
+              <div className={styles.knifeSearchRow}>
+                <input
+                  className={styles.knifeSearch}
+                  placeholder="Search products..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                />
+              </div>
+
+              {/* Category groups */}
+              <div className={styles.meatCategoryList}>
+                {Object.keys(grouped).sort().map(cat => (
+                  <div key={cat} className={styles.meatCatBlock}>
+                    <button
+                      className={styles.meatCatHeader}
+                      onClick={() => toggleCat(cat)}
+                    >
+                      <span className={styles.meatCatName}>{cat}</span>
+                      <span className={styles.meatCatRight}>
+                        <span className={styles.meatCatCount}>{grouped[cat].length}</span>
+                        <svg
+                          width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                          style={{ transform: collapsedCats[cat] ? 'rotate(-90deg)' : 'rotate(90deg)', transition: 'transform 0.2s' }}
+                        >
+                          <path d="M9 18l6-6-6-6"/>
+                        </svg>
+                      </span>
+                    </button>
+                    {!collapsedCats[cat] && (
+                      <div className={styles.meatProductList}>
+                        {grouped[cat].map(p => {
+                          const inCart = cart[p.id]
+                          return (
+                            <div key={p.id} className={`${styles.meatProductRow} ${inCart ? styles.meatProductInCart : ''}`}>
+                              <div className={styles.meatProductInfo}>
+                                <span className={styles.meatProductCode}>{p.product_code}</span>
+                                <span className={styles.meatProductDesc}>{p.description}</span>
+                                <span className={styles.meatProductPrice}>{fmtPrice(p.price_per_kg)}</span>
+                              </div>
+                              <div className={styles.meatQtyControl}>
+                                {inCart ? (
+                                  <>
+                                    <button
+                                      className={styles.meatQtyBtn}
+                                      onClick={() => setQty(p, Math.max(0, +(inCart.quantity - 0.5).toFixed(3)))}
+                                    >−</button>
+                                    <input
+                                      className={styles.meatQtyInput}
+                                      type="number"
+                                      min="0"
+                                      step="0.5"
+                                      value={inCart.quantity}
+                                      onChange={e => {
+                                        const v = parseFloat(e.target.value)
+                                        if (!isNaN(v)) setQty(p, v)
+                                      }}
+                                    />
+                                    <button
+                                      className={styles.meatQtyBtn}
+                                      onClick={() => setQty(p, +(inCart.quantity + 0.5).toFixed(3))}
+                                    >+</button>
+                                  </>
+                                ) : (
+                                  <button
+                                    className={styles.meatAddBtn}
+                                    onClick={() => setQty(p, 0.5)}
+                                  >Add</button>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Floating cart bar */}
+          {cartCount > 0 && !showCart && (
+            <div className={styles.meatCartBar} onClick={() => setShowCart(true)}>
+              <span className={styles.meatCartBarLabel}>{cartCount} item{cartCount !== 1 ? 's' : ''} in cart</span>
+              <span className={styles.meatCartBarTotal}>${cartTotal.toFixed(2)}</span>
+              <span className={styles.meatCartBarArrow}>View Cart →</span>
+            </div>
+          )}
+
+          {/* Cart panel */}
+          {showCart && (
+            <div className={styles.meatCartOverlay}>
+              <div className={styles.meatCartPanel}>
+                <div className={styles.meatCartHeader}>
+                  <h3 className={styles.meatCartTitle}>Your Cart</h3>
+                  <button className={styles.meatCartClose} onClick={() => setShowCart(false)}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                  </button>
+                </div>
+                <div className={styles.meatCartItems}>
+                  {cartItems.map(item => (
+                    <div key={item.id} className={styles.meatCartItem}>
+                      <div className={styles.meatCartItemInfo}>
+                        <span className={styles.meatCartItemCode}>{item.product_code}</span>
+                        <span className={styles.meatCartItemDesc}>{item.description}</span>
+                        <span className={styles.meatCartItemSub}>{fmtPrice(item.price_per_kg)} × {item.quantity} kg = ${(item.price_per_kg * item.quantity).toFixed(2)}</span>
+                      </div>
+                      <div className={styles.meatQtyControl}>
+                        <button className={styles.meatQtyBtn} onClick={() => setQty(item, Math.max(0, +(item.quantity - 0.5).toFixed(3)))}>−</button>
+                        <input
+                          className={styles.meatQtyInput}
+                          type="number"
+                          min="0"
+                          step="0.5"
+                          value={item.quantity}
+                          onChange={e => { const v = parseFloat(e.target.value); if (!isNaN(v)) setQty(item, v) }}
+                        />
+                        <button className={styles.meatQtyBtn} onClick={() => setQty(item, +(item.quantity + 0.5).toFixed(3))}>+</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className={styles.meatCartFooter}>
+                  <div className={styles.meatCartTotal}>Est. Total: <strong>${cartTotal.toFixed(2)}</strong></div>
+                  <button className={styles.meatCartSubmitBtn} onClick={() => { setShowCart(false); setShowSig(true) }}>
+                    Sign & Submit
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {section === 'past' && (
+        orders.length === 0 ? (
+          <div className={styles.comingSoon}>
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" style={{color:'var(--text-secondary)'}}>
+              <path d="M17.5 5.5a5 5 0 0 1 0 7.07L12 18l-5.5-5.43a5 5 0 0 1 7.07-7.07z"/>
+              <path d="M12 18v3M9 21h6"/>
+            </svg>
+            <h3 className={styles.comingSoonTitle}>No Orders Yet</h3>
+            <p className={styles.comingSoonText}>Your submitted meat orders will appear here.</p>
+          </div>
+        ) : (
+          <div className={styles.meatPastOrders}>
+            {orders.map(order => {
+              const items = order.meat_order_items || []
+              const total = items.reduce((s, i) => s + Number(i.price_per_kg) * Number(i.quantity), 0)
+              const placed = order.status === 'order_placed'
+              return (
+                <div key={order.id} className={`${styles.meatPastCard} ${placed ? styles.meatPastPlaced : ''}`}>
+                  <div className={styles.meatPastCardHeader}>
+                    <span className={styles.meatPastDate}>{fmt(order.submitted_at)}</span>
+                    <span className={`${styles.meatPastStatus} ${placed ? styles.meatPastStatusPlaced : styles.meatPastStatusPending}`}>
+                      {placed ? 'Order Placed' : 'Pending'}
+                    </span>
+                  </div>
+                  <div className={styles.meatPastItemList}>
+                    {items.map(item => (
+                      <div key={item.id} className={styles.meatPastItem}>
+                        <span className={styles.meatPastItemCode}>{item.product_code}</span>
+                        <span className={styles.meatPastItemDesc}>{item.description}</span>
+                        <span className={styles.meatPastItemQty}>{Number(item.quantity).toFixed(3)} kg</span>
+                        <span className={styles.meatPastItemSub}>${(Number(item.price_per_kg) * Number(item.quantity)).toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className={styles.meatPastCardFooter}>
+                    <span className={styles.meatPastTotal}>Est. Total: ${total.toFixed(2)}</span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )
+      )}
+    </div>
+  )
+}
+
 export default function EmployeePortal() {
   const { account, signOut } = useAuth()
   const [activeTab, setActiveTab] = useState('announcement')
@@ -977,6 +1399,7 @@ export default function EmployeePortal() {
       case 'leave': return <LeaveTab employeeId={account?.employee_id} accountId={account?.id} />
       case 'knife': return <KnifeTab />
       case 'wi': return <WorkInstructionTab employeeId={account?.employee_id} employee={employee} />
+      case 'meat': return <OrderMeatTab employee={employee} />
       default: return null
     }
   }

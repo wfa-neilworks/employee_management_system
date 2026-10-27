@@ -19,6 +19,7 @@ import TodayOverviewPage from './pages/TodayOverviewPage'
 import WorkInstructionsPage from './pages/WorkInstructionsPage'
 import WorkInstructionEditorPage from './pages/WorkInstructionEditorPage'
 import WorkInstructionViewPage from './pages/WorkInstructionViewPage'
+import MeatOfferPage from './pages/MeatOfferPage'
 import Layout from './components/Layout'
 
 function PrivateRoute({ children }) {
@@ -87,6 +88,7 @@ function AppRoutes() {
         <Route path="work-instructions/new" element={<WorkInstructionEditorPage />} />
         <Route path="work-instructions/:id" element={<WorkInstructionViewPage />} />
         <Route path="work-instructions/:id/edit" element={<WorkInstructionEditorPage />} />
+        <Route path="meat-offer" element={<MeatOfferPage />} />
       </Route>
     </Routes>
   )
