@@ -127,14 +127,16 @@ export default function MeatOfferPage() {
       }
       cols.push(cur.trim())
       if (cols.length < 4) continue
-      const price = parseFloat(cols[2].replace(/[^0-9.]/g, ''))
-      if (!cols[0] || !cols[1] || isNaN(price) || !cols[3]) continue
+      if (!cols[0] || !cols[1] || !cols[3]) continue
+      const rawPrice = cols[2].trim()
+      const isNA = rawPrice.toLowerCase() === 'na' || rawPrice === ''
+      const price = isNA ? null : parseFloat(rawPrice.replace(/[^0-9.]/g, ''))
+      if (!isNA && isNaN(price)) continue
       const catName = cols[3]
       if (!knownNames.has(catName.toLowerCase())) {
         warnings.push(`"${catName}" is not a known category — row skipped: ${cols[0]}`)
         continue
       }
-      // Use the canonical casing from the categories table
       const canonical = categories.find(c => c.name.toLowerCase() === catName.toLowerCase())
       rows.push({
         product_code: cols[0],
@@ -182,7 +184,7 @@ export default function MeatOfferPage() {
   }
 
   const fmt = (d) => d ? new Date(d).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'
-  const fmtPrice = (p) => `$${Number(p).toFixed(2)}/kg`
+  const fmtPrice = (p) => p == null ? 'N/A' : `$${Number(p).toFixed(2)}/kg`
 
   // Group products by category using category description as label
   const catMap = Object.fromEntries(categories.map(c => [c.name, c]))
@@ -434,7 +436,7 @@ export default function MeatOfferPage() {
             <div className={styles.empty}>No orders yet.</div>
           ) : orders.map(order => {
             const items = order.meat_order_items || []
-            const total = items.reduce((sum, i) => sum + (Number(i.price_per_kg) * Number(i.quantity)), 0)
+            const total = items.reduce((sum, i) => sum + (i.price_per_kg != null ? Number(i.price_per_kg) * Number(i.quantity) : 0), 0)
             return (
               <div key={order.id} className={`${styles.orderCard} ${order.status === 'order_placed' ? styles.orderPlaced : ''}`}>
                 <div className={styles.orderCardHeader}>

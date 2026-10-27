@@ -1060,7 +1060,7 @@ function OrderMeatTab({ employee }) {
   }
 
   const cartItems = Object.values(cart)
-  const cartTotal = cartItems.reduce((s, i) => s + i.price_per_kg * i.quantity, 0)
+  const cartTotal = cartItems.reduce((s, i) => s + (i.price_per_kg != null ? i.price_per_kg * i.quantity : 0), 0)
   const cartCount = cartItems.length
 
   const filtered = products.filter(p => {
@@ -1078,7 +1078,7 @@ function OrderMeatTab({ employee }) {
   // Order category groups by the admin-defined display_order
   const groupedKeys = categories.map(c => c.name).filter(n => grouped[n])
 
-  const fmtPrice = (p) => `$${Number(p).toFixed(2)}/kg`
+  const fmtPrice = (p) => p == null ? 'N/A' : `$${Number(p).toFixed(2)}/kg`
   const fmt = (d) => d ? new Date(d).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
 
   const handleSubmitted = async () => {
@@ -1187,7 +1187,9 @@ function OrderMeatTab({ employee }) {
                                 <span className={styles.meatProductPrice}>{fmtPrice(p.price_per_kg)}</span>
                               </div>
                               <div className={styles.meatQtyControl}>
-                                {inCart ? (
+                                {p.price_per_kg == null ? (
+                                  <span className={styles.meatNaLabel}>N/A</span>
+                                ) : inCart ? (
                                   <>
                                     <button
                                       className={styles.meatQtyBtn}
@@ -1254,7 +1256,11 @@ function OrderMeatTab({ employee }) {
                       <div className={styles.meatCartItemInfo}>
                         <span className={styles.meatCartItemCode}>{item.product_code}</span>
                         <span className={styles.meatCartItemDesc}>{item.description}</span>
-                        <span className={styles.meatCartItemSub}>{fmtPrice(item.price_per_kg)} × {item.quantity} kg = ${(item.price_per_kg * item.quantity).toFixed(2)}</span>
+                        <span className={styles.meatCartItemSub}>
+                          {item.price_per_kg != null
+                            ? `${fmtPrice(item.price_per_kg)} × ${item.quantity} kg = $${(item.price_per_kg * item.quantity).toFixed(2)}`
+                            : `N/A × ${item.quantity} kg`}
+                        </span>
                       </div>
                       <div className={styles.meatQtyControl}>
                         <button className={styles.meatQtyBtn} onClick={() => setQty(item, Math.max(0, +(item.quantity - 0.5).toFixed(3)))}>−</button>
@@ -1313,7 +1319,9 @@ function OrderMeatTab({ employee }) {
                         <span className={styles.meatPastItemCode}>{item.product_code}</span>
                         <span className={styles.meatPastItemDesc}>{item.description}</span>
                         <span className={styles.meatPastItemQty}>{Number(item.quantity).toFixed(3)} kg</span>
-                        <span className={styles.meatPastItemSub}>${(Number(item.price_per_kg) * Number(item.quantity)).toFixed(2)}</span>
+                        <span className={styles.meatPastItemSub}>
+                          {item.price_per_kg != null ? `$${(Number(item.price_per_kg) * Number(item.quantity)).toFixed(2)}` : 'N/A'}
+                        </span>
                       </div>
                     ))}
                   </div>
