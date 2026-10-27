@@ -1015,6 +1015,7 @@ function MeatSigModal({ employee, cart, onClose, onSubmitted }) {
 
 // ─── Order Meat Tab ─────────────────────────────────────────────────────────
 function OrderMeatTab({ employee }) {
+  const [categories, setCategories] = useState([])
   const [products, setProducts] = useState([])
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
@@ -1028,7 +1029,8 @@ function OrderMeatTab({ employee }) {
 
   useEffect(() => {
     const load = async () => {
-      const [{ data: prods }, { data: ords }] = await Promise.all([
+      const [{ data: cats }, { data: prods }, { data: ords }] = await Promise.all([
+        supabase.from('meat_categories').select('*').order('display_order').order('name'),
         supabase.from('meat_products').select('*').order('category').order('product_code'),
         employee?.id
           ? supabase.from('meat_orders')
@@ -1037,12 +1039,15 @@ function OrderMeatTab({ employee }) {
               .order('submitted_at', { ascending: false })
           : { data: [] },
       ])
+      setCategories(cats || [])
       setProducts(prods || [])
       setOrders(ords || [])
       setLoading(false)
     }
     load()
   }, [employee?.id])
+
+  const catMap = Object.fromEntries((categories).map(c => [c.name, c]))
 
   const toggleCat = (cat) => setCollapsedCats(prev => ({ ...prev, [cat]: !prev[cat] }))
 
@@ -1069,6 +1074,9 @@ function OrderMeatTab({ employee }) {
     acc[p.category].push(p)
     return acc
   }, {})
+
+  // Order category groups by the admin-defined display_order
+  const groupedKeys = categories.map(c => c.name).filter(n => grouped[n])
 
   const fmtPrice = (p) => `$${Number(p).toFixed(2)}/kg`
   const fmt = (d) => d ? new Date(d).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
@@ -1150,13 +1158,13 @@ function OrderMeatTab({ employee }) {
 
               {/* Category groups */}
               <div className={styles.meatCategoryList}>
-                {Object.keys(grouped).sort().map(cat => (
+                {groupedKeys.map(cat => (
                   <div key={cat} className={styles.meatCatBlock}>
                     <button
                       className={styles.meatCatHeader}
                       onClick={() => toggleCat(cat)}
                     >
-                      <span className={styles.meatCatName}>{cat}</span>
+                      <span className={styles.meatCatName}>{catMap[cat]?.description || cat}</span>
                       <span className={styles.meatCatRight}>
                         <span className={styles.meatCatCount}>{grouped[cat].length}</span>
                         <svg
