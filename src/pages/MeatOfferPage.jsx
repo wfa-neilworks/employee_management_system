@@ -436,7 +436,6 @@ export default function MeatOfferPage() {
             <div className={styles.empty}>No orders yet.</div>
           ) : orders.map(order => {
             const items = order.meat_order_items || []
-            const total = items.reduce((sum, i) => sum + (i.price_per_kg != null ? Number(i.price_per_kg) * Number(i.quantity) : 0), 0)
             return (
               <div key={order.id} className={`${styles.orderCard} ${order.status === 'order_placed' ? styles.orderPlaced : ''}`}>
                 <div className={styles.orderCardHeader}>
@@ -459,7 +458,7 @@ export default function MeatOfferPage() {
                 </div>
                 <table className={styles.orderItemsTable}>
                   <thead>
-                    <tr><th>Code</th><th>Description</th><th>Category</th><th>Qty (kg)</th><th>Price/kg</th><th>Subtotal</th></tr>
+                    <tr><th>Code</th><th>Description</th><th>Category</th><th>Qty (ctns)</th><th>Price/kg</th></tr>
                   </thead>
                   <tbody>
                     {items.map(item => (
@@ -467,19 +466,17 @@ export default function MeatOfferPage() {
                         <td className={styles.codeCell}>{item.product_code}</td>
                         <td>{item.description}</td>
                         <td>{catMap[item.category]?.description || item.category}</td>
-                        <td>{Number(item.quantity).toFixed(3)}</td>
-                        <td>{fmtPrice(item.price_per_kg)}</td>
-                        <td className={styles.priceCell}>${(Number(item.price_per_kg) * Number(item.quantity)).toFixed(2)}</td>
+                        <td>{Number(item.quantity)}</td>
+                        <td className={styles.priceCell}>{fmtPrice(item.price_per_kg)}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-                <div className={styles.orderFooter}>
-                  <span className={styles.orderTotal}>Est. Total: ${total.toFixed(2)}</span>
-                  {order.signature_url && (
+                {order.signature_url && (
+                  <div className={styles.orderFooter}>
                     <img src={order.signature_url} alt="Signature" className={styles.orderSig} />
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             )
           })}

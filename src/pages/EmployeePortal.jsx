@@ -1060,7 +1060,6 @@ function OrderMeatTab({ employee }) {
   }
 
   const cartItems = Object.values(cart)
-  const cartTotal = cartItems.reduce((s, i) => s + (i.price_per_kg != null ? i.price_per_kg * i.quantity : 0), 0)
   const cartCount = cartItems.length
 
   const filtered = products.filter(p => {
@@ -1187,34 +1186,32 @@ function OrderMeatTab({ employee }) {
                                 <span className={styles.meatProductPrice}>{fmtPrice(p.price_per_kg)}</span>
                               </div>
                               <div className={styles.meatQtyControl}>
-                                {p.price_per_kg == null ? (
-                                  <span className={styles.meatNaLabel}>N/A</span>
-                                ) : inCart ? (
+                                {inCart ? (
                                   <>
                                     <button
                                       className={styles.meatQtyBtn}
-                                      onClick={() => setQty(p, Math.max(0, +(inCart.quantity - 0.5).toFixed(3)))}
+                                      onClick={() => setQty(p, Math.max(0, inCart.quantity - 1))}
                                     >−</button>
                                     <input
                                       className={styles.meatQtyInput}
                                       type="number"
-                                      min="0"
-                                      step="0.5"
+                                      min="1"
+                                      step="1"
                                       value={inCart.quantity}
                                       onChange={e => {
-                                        const v = parseFloat(e.target.value)
+                                        const v = parseInt(e.target.value, 10)
                                         if (!isNaN(v)) setQty(p, v)
                                       }}
                                     />
                                     <button
                                       className={styles.meatQtyBtn}
-                                      onClick={() => setQty(p, +(inCart.quantity + 0.5).toFixed(3))}
+                                      onClick={() => setQty(p, inCart.quantity + 1)}
                                     >+</button>
                                   </>
                                 ) : (
                                   <button
                                     className={styles.meatAddBtn}
-                                    onClick={() => setQty(p, 0.5)}
+                                    onClick={() => setQty(p, 1)}
                                   >Add</button>
                                 )}
                               </div>
@@ -1232,9 +1229,8 @@ function OrderMeatTab({ employee }) {
           {/* Floating cart bar */}
           {cartCount > 0 && !showCart && (
             <div className={styles.meatCartBar} onClick={() => setShowCart(true)}>
-              <span className={styles.meatCartBarLabel}>{cartCount} item{cartCount !== 1 ? 's' : ''} in cart</span>
-              <span className={styles.meatCartBarTotal}>${cartTotal.toFixed(2)}</span>
-              <span className={styles.meatCartBarArrow}>View Cart →</span>
+              <span className={styles.meatCartBarLabel}>{cartCount} item{cartCount !== 1 ? 's' : ''} in order</span>
+              <span className={styles.meatCartBarArrow}>View Order →</span>
             </div>
           )}
 
@@ -1243,7 +1239,7 @@ function OrderMeatTab({ employee }) {
             <div className={styles.meatCartOverlay}>
               <div className={styles.meatCartPanel}>
                 <div className={styles.meatCartHeader}>
-                  <h3 className={styles.meatCartTitle}>Your Cart</h3>
+                  <h3 className={styles.meatCartTitle}>Your Order</h3>
                   <button className={styles.meatCartClose} onClick={() => setShowCart(false)}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M18 6L6 18M6 6l12 12"/>
@@ -1256,29 +1252,24 @@ function OrderMeatTab({ employee }) {
                       <div className={styles.meatCartItemInfo}>
                         <span className={styles.meatCartItemCode}>{item.product_code}</span>
                         <span className={styles.meatCartItemDesc}>{item.description}</span>
-                        <span className={styles.meatCartItemSub}>
-                          {item.price_per_kg != null
-                            ? `${fmtPrice(item.price_per_kg)} × ${item.quantity} kg = $${(item.price_per_kg * item.quantity).toFixed(2)}`
-                            : `N/A × ${item.quantity} kg`}
-                        </span>
+                        <span className={styles.meatCartItemSub}>{fmtPrice(item.price_per_kg)}</span>
                       </div>
                       <div className={styles.meatQtyControl}>
-                        <button className={styles.meatQtyBtn} onClick={() => setQty(item, Math.max(0, +(item.quantity - 0.5).toFixed(3)))}>−</button>
+                        <button className={styles.meatQtyBtn} onClick={() => setQty(item, Math.max(0, item.quantity - 1))}>−</button>
                         <input
                           className={styles.meatQtyInput}
                           type="number"
-                          min="0"
-                          step="0.5"
+                          min="1"
+                          step="1"
                           value={item.quantity}
-                          onChange={e => { const v = parseFloat(e.target.value); if (!isNaN(v)) setQty(item, v) }}
+                          onChange={e => { const v = parseInt(e.target.value, 10); if (!isNaN(v)) setQty(item, v) }}
                         />
-                        <button className={styles.meatQtyBtn} onClick={() => setQty(item, +(item.quantity + 0.5).toFixed(3))}>+</button>
+                        <button className={styles.meatQtyBtn} onClick={() => setQty(item, item.quantity + 1)}>+</button>
                       </div>
                     </div>
                   ))}
                 </div>
                 <div className={styles.meatCartFooter}>
-                  <div className={styles.meatCartTotal}>Est. Total: <strong>${cartTotal.toFixed(2)}</strong></div>
                   <button className={styles.meatCartSubmitBtn} onClick={() => { setShowCart(false); setShowSig(true) }}>
                     Sign & Submit
                   </button>
@@ -1303,7 +1294,6 @@ function OrderMeatTab({ employee }) {
           <div className={styles.meatPastOrders}>
             {orders.map(order => {
               const items = order.meat_order_items || []
-              const total = items.reduce((s, i) => s + Number(i.price_per_kg) * Number(i.quantity), 0)
               const placed = order.status === 'order_placed'
               return (
                 <div key={order.id} className={`${styles.meatPastCard} ${placed ? styles.meatPastPlaced : ''}`}>
@@ -1318,15 +1308,10 @@ function OrderMeatTab({ employee }) {
                       <div key={item.id} className={styles.meatPastItem}>
                         <span className={styles.meatPastItemCode}>{item.product_code}</span>
                         <span className={styles.meatPastItemDesc}>{item.description}</span>
-                        <span className={styles.meatPastItemQty}>{Number(item.quantity).toFixed(3)} kg</span>
-                        <span className={styles.meatPastItemSub}>
-                          {item.price_per_kg != null ? `$${(Number(item.price_per_kg) * Number(item.quantity)).toFixed(2)}` : 'N/A'}
-                        </span>
+                        <span className={styles.meatPastItemQty}>Qty: {Number(item.quantity)}</span>
+                        <span className={styles.meatPastItemSub}>{item.price_per_kg != null ? fmtPrice(item.price_per_kg) : 'N/A'}</span>
                       </div>
                     ))}
-                  </div>
-                  <div className={styles.meatPastCardFooter}>
-                    <span className={styles.meatPastTotal}>Est. Total: ${total.toFixed(2)}</span>
                   </div>
                 </div>
               )
