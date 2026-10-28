@@ -25,6 +25,12 @@ export default function MeatOfferPage() {
   const [csvPreview, setCsvPreview] = useState(null) // { rows, warnings }
   const fileRef = useRef(null)
 
+  // Mark placed modal state
+  const [placingOrder, setPlacingOrder] = useState(null) // order object
+  const [orderNumberInput, setOrderNumberInput] = useState('')
+  const [orderNumberError, setOrderNumberError] = useState('')
+  const [markingPlaced, setMarkingPlaced] = useState(false)
+
   useEffect(() => { fetchCategories(); fetchProducts(); fetchOrders() }, [])
 
   const fetchCategories = async () => {
@@ -41,7 +47,7 @@ export default function MeatOfferPage() {
   const fetchOrders = async () => {
     const { data } = await supabase
       .from('meat_orders')
-      .select('*, employees(name, english_name, departments(display_name)), meat_order_items(*)')
+      .select('*, employees(name, english_name, payroll_number, wage_status, departments(display_name)), meat_order_items(*)')
       .order('submitted_at', { ascending: false })
     setOrders(data || [])
   }
@@ -178,9 +184,106 @@ export default function MeatOfferPage() {
     fetchProducts()
   }
 
-  const handleMarkPlaced = async (orderId) => {
-    await supabase.from('meat_orders').update({ status: 'order_placed', updated_at: new Date().toISOString() }).eq('id', orderId)
+  const openMarkPlaced = (order) => {
+    setPlacingOrder(order)
+    setOrderNumberInput('')
+    setOrderNumberError('')
+  }
+
+  const handleMarkPlaced = async () => {
+    const num = orderNumberInput.trim()
+    if (!/^\d{6}$/.test(num)) { setOrderNumberError('Order number must be exactly 6 digits.'); return }
+    setMarkingPlaced(true)
+    await supabase.from('meat_orders').update({
+      status: 'order_placed',
+      order_number: num,
+      updated_at: new Date().toISOString(),
+    }).eq('id', placingOrder.id)
+    setMarkingPlaced(false)
+    setPlacingOrder(null)
     fetchOrders()
+  }
+
+  const handlePrintOrder = (order) => {
+    const emp = order.employees || {}
+    const items = order.meat_order_items || []
+    const placed = order.status === 'order_placed'
+    const fmtD = (d) => d ? new Date(d).toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'
+
+    const itemRows = items.map(item => `
+      <tr>
+        <td>${item.product_code}</td>
+        <td>${item.description}</td>
+        <td>${catMap[item.category]?.description || item.category}</td>
+        <td style="text-align:center">${Number(item.quantity)}</td>
+        <td style="text-align:right">${item.price_per_kg != null ? '$' + Number(item.price_per_kg).toFixed(2) + '/kg' : 'N/A'}</td>
+      </tr>`).join('')
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+    <title>Meat Order</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body { font-family: Arial, sans-serif; font-size: 12px; color: #111; padding: 32px; }
+      .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; border-bottom: 2px solid #111; padding-bottom: 16px; }
+      .logo { height: 56px; }
+      .header-right { text-align: right; }
+      .doc-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+      .order-num { font-size: 13px; color: #555; }
+      .status-badge { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+      .status-placed { background: #d1fae5; color: #065f46; }
+      .status-pending { background: #fef3c7; color: #92400e; }
+      .emp-section { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; background: #f5f5f5; border-radius: 6px; padding: 14px 18px; margin-bottom: 20px; }
+      .emp-row { display: flex; flex-direction: column; gap: 2px; }
+      .emp-label { font-size: 10px; font-weight: 700; color: #777; text-transform: uppercase; letter-spacing: 0.5px; }
+      .emp-val { font-size: 13px; font-weight: 600; color: #111; }
+      table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+      th { background: #111; color: #fff; padding: 8px 10px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+      td { padding: 8px 10px; border-bottom: 1px solid #e5e5e5; font-size: 12px; }
+      tr:last-child td { border-bottom: none; }
+      tr:nth-child(even) td { background: #fafafa; }
+      .sig-section { margin-top: 16px; display: flex; justify-content: flex-end; }
+      .sig-box { text-align: center; }
+      .sig-img { height: 56px; margin-bottom: 4px; border-bottom: 1px solid #111; }
+      .sig-label { font-size: 10px; color: #777; }
+      .footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid #ddd; font-size: 10px; color: #999; text-align: center; }
+      @media print { body { padding: 16px; } }
+    </style></head><body>
+    <div class="header">
+      <img src="${window.location.origin}/WFA_LOGO.png" class="logo" alt="WFA" />
+      <div class="header-right">
+        <div class="doc-title">Staff Meat Order</div>
+        ${order.order_number ? `<div class="order-num">Order No: <strong>${order.order_number}</strong></div>` : ''}
+        <div style="margin-top:6px">
+          <span class="status-badge ${placed ? 'status-placed' : 'status-pending'}">${placed ? 'Order Placed' : 'Pending'}</span>
+        </div>
+        <div style="margin-top:4px;font-size:11px;color:#555">Submitted: ${fmtD(order.submitted_at)}</div>
+      </div>
+    </div>
+    <div class="emp-section">
+      <div class="emp-row"><span class="emp-label">Employee Name</span><span class="emp-val">${emp.name || '—'}${emp.english_name ? ' (' + emp.english_name + ')' : ''}</span></div>
+      <div class="emp-row"><span class="emp-label">Payroll Number</span><span class="emp-val">${emp.payroll_number || '—'}</span></div>
+      <div class="emp-row"><span class="emp-label">Department</span><span class="emp-val">${emp.departments?.display_name || '—'}</span></div>
+      <div class="emp-row"><span class="emp-label">Wage Status</span><span class="emp-val">${emp.wage_status?.replace(/_/g, ' ') || '—'}</span></div>
+    </div>
+    <table>
+      <thead><tr><th>Code</th><th>Description</th><th>Category</th><th style="text-align:center">Qty (ctns)</th><th style="text-align:right">Price/kg</th></tr></thead>
+      <tbody>${itemRows}</tbody>
+    </table>
+    ${order.signature_url ? `
+    <div class="sig-section">
+      <div class="sig-box">
+        <img src="${order.signature_url}" class="sig-img" alt="Signature" />
+        <div class="sig-label">Employee Signature</div>
+      </div>
+    </div>` : ''}
+    <div class="footer">Woodward Foods Australia — Staff Meat Offer</div>
+    </body></html>`
+
+    const w = window.open('', '_blank')
+    w.document.write(html)
+    w.document.close()
+    w.focus()
+    setTimeout(() => { w.print() }, 400)
   }
 
   const fmt = (d) => d ? new Date(d).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'
@@ -436,24 +539,44 @@ export default function MeatOfferPage() {
             <div className={styles.empty}>No orders yet.</div>
           ) : orders.map(order => {
             const items = order.meat_order_items || []
+            const placed = order.status === 'order_placed'
             return (
-              <div key={order.id} className={`${styles.orderCard} ${order.status === 'order_placed' ? styles.orderPlaced : ''}`}>
+              <div key={order.id} className={`${styles.orderCard} ${placed ? styles.orderPlaced : ''}`}>
                 <div className={styles.orderCardHeader}>
                   <div>
                     <span className={styles.orderEmp}>{order.employees?.name}</span>
                     {order.employees?.english_name && <span className={styles.orderEmpEng}> ({order.employees.english_name})</span>}
                     <span className={styles.orderDept}>{order.employees?.departments?.display_name}</span>
+                    {order.employees?.payroll_number && (
+                      <span className={styles.orderMeta}>Payroll: {order.employees.payroll_number}</span>
+                    )}
+                    {order.employees?.wage_status && (
+                      <span className={styles.orderMeta}>{order.employees.wage_status.replace(/_/g, ' ')}</span>
+                    )}
                   </div>
                   <div className={styles.orderCardRight}>
-                    <span className={`${styles.orderStatus} ${order.status === 'order_placed' ? styles.statusPlaced : styles.statusPending}`}>
-                      {order.status === 'order_placed' ? 'Order Placed' : 'Pending'}
+                    <span className={`${styles.orderStatus} ${placed ? styles.statusPlaced : styles.statusPending}`}>
+                      {placed ? 'Order Placed' : 'Pending'}
                     </span>
-                    <span className={styles.orderDate}>{fmt(order.submitted_at)}</span>
-                    {order.status === 'pending' && (
-                      <button className={styles.markPlacedBtn} onClick={() => handleMarkPlaced(order.id)}>
-                        Mark as Order Placed
-                      </button>
+                    {placed && order.order_number && (
+                      <span className={styles.orderNumber}>Order #{order.order_number}</span>
                     )}
+                    <span className={styles.orderDate}>{fmt(order.submitted_at)}</span>
+                    <div className={styles.orderActions}>
+                      {!placed && (
+                        <button className={styles.markPlacedBtn} onClick={() => openMarkPlaced(order)}>
+                          Mark as Order Placed
+                        </button>
+                      )}
+                      <button className={styles.printOrderBtn} onClick={() => handlePrintOrder(order)}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="6 9 6 2 18 2 18 9"/>
+                          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+                          <rect x="6" y="14" width="12" height="8"/>
+                        </svg>
+                        Print
+                      </button>
+                    </div>
                   </div>
                 </div>
                 <table className={styles.orderItemsTable}>
@@ -480,6 +603,46 @@ export default function MeatOfferPage() {
               </div>
             )
           })}
+        </div>
+      )}
+
+      {/* ── Mark Placed Modal ── */}
+      {placingOrder && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>Mark as Order Placed</h3>
+              <button className={styles.modalClose} onClick={() => setPlacingOrder(null)}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+            <p className={styles.modalText}>
+              Enter the 6-digit supplier order number for <strong>{placingOrder.employees?.name}</strong>'s order.
+            </p>
+            <div className={styles.modalField}>
+              <label className={styles.modalLabel}>Order Number</label>
+              <input
+                className={styles.modalInput}
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
+                placeholder="e.g. 123456"
+                value={orderNumberInput}
+                onChange={e => { setOrderNumberInput(e.target.value.replace(/\D/g, '')); setOrderNumberError('') }}
+                onKeyDown={e => e.key === 'Enter' && handleMarkPlaced()}
+                autoFocus
+              />
+              {orderNumberError && <p className={styles.modalError}>{orderNumberError}</p>}
+            </div>
+            <div className={styles.modalActions}>
+              <button className={styles.modalCancelBtn} onClick={() => setPlacingOrder(null)}>Cancel</button>
+              <button className={styles.modalConfirmBtn} onClick={handleMarkPlaced} disabled={markingPlaced}>
+                {markingPlaced ? 'Saving...' : 'Confirm'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
